@@ -496,7 +496,6 @@ namespace KNT_ToolsAndAccessories
             return dotsRet;
         }
 
-
         #endregion
 
         #region Manages DB and Error to the Log
