@@ -193,275 +193,453 @@ namespace KNT_ToolsAndAccessories
 
         #region Units of Measurements
 
-   /*     public List<UnitsOfPropertiesModel> unitsOfProperties;
-
-        private string UnitsFindUnitForProperty(string property)
+        /// <summary>
+        /// bar to unit conversion
+        /// </summary>
+        /// <param name="barPressure"></param>
+        /// <param name="unit"></param>
+        /// <returns></returns>
+        public static double BarToUnit(double barPressure, string unit)
         {
-            foreach (UnitsOfPropertiesModel p in unitsOfProperties)
-            {
-                if (p.PropertyName == property)
-                    return p.UnitName;
-            }
+            double convertedPressure = barPressure; // bar
 
-            return "Error";
-        }
-
-        public (double outputValue, string unit) UnitsSensor1(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Sensor1");
-
-            Pressure value;
             switch (unit)
             {
-                case "bar": return (inputValue, unit);
                 case "mbar":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.Millibars, 1), "mbar");
-                case "psi":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.PoundsForcePerSquareInch, 2), "psi");
-                case "kPa":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.Kilopascals, 1), "kPa");
-                default:
-                    return (inputValue, unit);
-            }
-        }
-
-        public (double outputValue, string unit) UnitsSensor1Set(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Sensor1");
-
-            Pressure value = Pressure.FromBars(inputValue);
-            switch (unit)
-            {
-                case "bar": break;
-                case "mbar":
-                    value = Pressure.FromMillibars(inputValue);
+                case "hPa":
+                    convertedPressure *= 1000;
                     break;
-                case "psi":
-                    value = Pressure.FromPoundsForcePerSquareInch(inputValue);
+                case "atm":
+                    convertedPressure *= 1.01325;
+                    break;
+                case "Pa":
+                    convertedPressure *= 100000;
                     break;
                 case "kPa":
-                    value = Pressure.FromKilopascals(inputValue);
+                    convertedPressure *= 100;
                     break;
-                default:
+                case "Torr": // mmHg
+                    convertedPressure *= 750.06;
+                    break;
+                case "psi": // pounds per square inch
+                    convertedPressure *= 14.5038;
+                    break;
+                case "mmH2O":
+                    convertedPressure *= 10197.3;
                     break;
             }
-
-            return (Math.Round(Convert.ToDouble(value.Bars), 2), "bar");
+            return convertedPressure;
         }
 
-        public (double outputValue, string unit) UnitsSensor2(double inputValue)
+        /// <summary>
+        /// unit to bar conversion
+        /// </summary>
+        /// <param name="unitPressure"></param>
+        /// <param name="unit"></param>
+        /// <returns></returns>
+        public static double UnitToBar(double unitPressure, string unit)
         {
-            string unit = UnitsFindUnitForProperty("Sensor2");
+            double barPressure = unitPressure; // unit
 
-            Pressure value;
             switch (unit)
             {
-                case "Pa": return (inputValue, unit);
                 case "mbar":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.Millibars, 1), "mbar");
-                case "psi":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.PoundsForcePerSquareInch, 2), "psi");
-                case "kPa":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.Kilopascals, 2), "kPa");
-                default:
-                    return (inputValue, unit);
-            }
-        }
-
-        public (double outputValue, string unit) UnitsSensor2Set(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Sensor2");
-
-            Pressure value = Pressure.FromPascals(inputValue);
-            switch (unit)
-            {
-                case "bar": break;
-                case "mbar":
-                    value = Pressure.FromMillibars(inputValue);
+                case "hPa":
+                    barPressure /= 1000;
                     break;
-                case "psi":
-                    value = Pressure.FromPoundsForcePerSquareInch(inputValue);
+                case "atm":
+                    barPressure /= 1.01325;
+                    break;
+                case "Pa":
+                    barPressure /= 100000;
                     break;
                 case "kPa":
-                    value = Pressure.FromKilopascals(inputValue);
+                    barPressure /= 100;
                     break;
-                default:
+                case "Torr": // mmHg
+                    barPressure /= 750.06;
+                    break;
+                case "psi": // pounds per square inch
+                    barPressure /= 14.5038;
+                    break;
+                case "mmH2O":
+                    barPressure /= 10197.3;
                     break;
             }
-
-            return (Math.Round(Convert.ToDouble(value.Pascals), 2), "bar");
+            return barPressure;
         }
 
-        public (double outputValue, string unit) UnitsOutput(double inputValue)
+        /// <summary>
+        /// ml/min to unit conversion
+        /// </summary>
+        /// <param name="leak"></param>
+        /// <param name="unit"></param>
+        /// <returns></returns>
+        public static double LeakToUnit(double leak, string unit)
         {
-            string unit = UnitsFindUnitForProperty("Output");
+            double convertedLeak = leak; // ml/min
 
-            Pressure value;
             switch (unit)
             {
-                case "bar": return (inputValue, unit);
-                case "mbar":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.Millibars, 1), "mbar");
-                case "psi":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.PoundsForcePerSquareInch, 2), "psi");
-                case "kPa":
-                    value = Pressure.FromBars(inputValue);
-                    return (Math.Round(value.Kilopascals, 1), "kPa");
-                default:
-                    return (inputValue, unit);
+                case "mbar*l/s":
+                    convertedLeak *= 0.0168875;
+                    break;
+                case "Torr*l/s":
+                    convertedLeak *= 0.0126666667;
+                    break;
+                case "sccm":
+                case "atm*ml/min":
+                case "cm3/min":
+                    convertedLeak *= 1;
+                    break;
+                case "atm*cc/s":
+                case "cm3/s":
+                case "ml/s":
+                    convertedLeak /= 60;
+                    break;
+                case "Pa*m3/s":
+                    convertedLeak *= 0.00168875;
+                    break;
+                case "slm":
+                    convertedLeak /= 1000;
+                    break;
+                case "kg Mole/s":
+                    convertedLeak *= (28.97 / (1000 * 22.414 * 60)); // 28.97 - molar mass for air !
+                    break;
+                case "sft3/zr":
+                    convertedLeak *= (0.035315 / 1000 * 525600);
+                    break;
+                case "mm3/s":
+                    convertedLeak *= (1000 / 60);
+                    break;
+                case "cm3/h":
+                case "ml/h":
+                    convertedLeak *= 60;
+                    break;
             }
+            return convertedLeak;
         }
 
-        public (double outputValue, string unit) UnitsOutputSet(double inputValue)
+        /// <summary>
+        /// unit to ml/min conversion
+        /// </summary>
+        /// <param name="unitVal"></param>
+        /// <param name="unit"></param>
+        /// <returns></returns>
+        public static double UnitToLeak(double unitVal, string unit)
         {
-            string unit = UnitsFindUnitForProperty("Output");
+            double leak = unitVal; // unit
 
-            Pressure value = Pressure.FromBars(inputValue);
             switch (unit)
             {
-                case "bar": break;
-                case "mbar":
-                    value = Pressure.FromMillibars(inputValue);
+                case "mbar*l/s":
+                    leak /= 0.0168875;
                     break;
-                case "psi":
-                    value = Pressure.FromPoundsForcePerSquareInch(inputValue);
+                case "Torr*l/s":
+                    leak /= 0.0126666667;
                     break;
-                case "kPa":
-                    value = Pressure.FromKilopascals(inputValue);
+                case "sccm":
+                case "atm*ml/min":
+                case "cm3/min":
+                    leak /= 1;
                     break;
-                default:
+                case "atm*cc/s":
+                case "cm3/s":
+                case "ml/s":
+                    leak *= 60;
+                    break;
+                case "Pa*m3/s":
+                    leak /= 0.00168875;
+                    break;
+                case "slm":
+                    leak *= 1000;
+                    break;
+                case "kg Mole/s":
+                    leak /= (28.97 / (1000 * 22.414 * 60)); // 28.97 - molar mass for air !
+                    break;
+                case "sft3/zr":
+                    leak /= (0.035315 / 1000 * 525600);
+                    break;
+                case "mm3/s":
+                    leak /= (1000 / 60);
+                    break;
+                case "cm3/h":
+                case "ml/h":
+                    leak /= 60;
                     break;
             }
-
-            return (Math.Round(Convert.ToDouble(value.Bars), 2), "bar");
+            return leak;
         }
 
-        public (double outputValue, string unit) UnitsLeak(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Leak");
+        /*     public List<UnitsOfPropertiesModel> unitsOfProperties;
 
-            VolumeFlow value;
-            switch (unit)
-            {
-                case "ml/min": return (inputValue, unit);
-                case "ccm/min":
-                    value = VolumeFlow.FromMillilitersPerMinute(inputValue);
-                    return (Math.Round(value.CubicCentimetersPerMinute, 1), "ccm/min");
-                default:
-                    return (inputValue, unit);
-            }
-        }
+             private string UnitsFindUnitForProperty(string property)
+             {
+                 foreach (UnitsOfPropertiesModel p in unitsOfProperties)
+                 {
+                     if (p.PropertyName == property)
+                         return p.UnitName;
+                 }
 
-        public (double outputValue, string unit) UnitsLeakSet(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Leak");
+                 return "Error";
+             }
 
-            VolumeFlow value = VolumeFlow.FromCubicCentimetersPerMinute(inputValue);
-            switch (unit)
-            {
-                case "ml/min": break;
-                case "ccm/min":
-                    value = VolumeFlow.FromMillilitersPerMinute(inputValue);
-                    break;
-                default:
-                    break;
-            }
+             public (double outputValue, string unit) UnitsSensor1(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Sensor1");
 
-            return (Math.Round(Convert.ToDouble(value.MillilitersPerMinute), 2), "bar");
-        }
+                 Pressure value;
+                 switch (unit)
+                 {
+                     case "bar": return (inputValue, unit);
+                     case "mbar":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.Millibars, 1), "mbar");
+                     case "psi":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.PoundsForcePerSquareInch, 2), "psi");
+                     case "kPa":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.Kilopascals, 1), "kPa");
+                     default:
+                         return (inputValue, unit);
+                 }
+             }
 
-        public (double outputValue, string unit) UnitsTime(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Time");
+             public (double outputValue, string unit) UnitsSensor1Set(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Sensor1");
 
-            double value;
-            switch (unit)
-            {
-                case "sec": return (Math.Round(inputValue, 2), unit);
-                case "ms":
-                    value = Math.Round(inputValue * 1000);
-                    return (value, "ms");
-                case "min":
-                    value = Math.Round(inputValue / 60, 2);
-                    return (value, "ms");
-                case "hour":
-                    value = Math.Round(inputValue / 60 / 60, 2);
-                    return (value, "hour");
-                default:
-                    return (Math.Round(inputValue, 2), unit);
-            }
-        }
-        public (double outputValue, string unit) UnitsTimeSet(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Time");
+                 Pressure value = Pressure.FromBars(inputValue);
+                 switch (unit)
+                 {
+                     case "bar": break;
+                     case "mbar":
+                         value = Pressure.FromMillibars(inputValue);
+                         break;
+                     case "psi":
+                         value = Pressure.FromPoundsForcePerSquareInch(inputValue);
+                         break;
+                     case "kPa":
+                         value = Pressure.FromKilopascals(inputValue);
+                         break;
+                     default:
+                         break;
+                 }
 
-            double value = inputValue;
-            switch (unit)
-            {
-                case "sec": break;
-                case "ms":
-                    value = inputValue / 1000;
-                    break;
-                case "min":
-                    value = inputValue * 60;
-                    break;
-                case "hour":
-                    value = inputValue * 60 * 60;
-                    break;
-                default:
-                    break;
-            }
+                 return (Math.Round(Convert.ToDouble(value.Bars), 2), "bar");
+             }
 
-            return (Math.Round(value, 2), "sec");
-        }
+             public (double outputValue, string unit) UnitsSensor2(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Sensor2");
 
-        public (double outputValue, string unit) UnitsVolume(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Volume");
+                 Pressure value;
+                 switch (unit)
+                 {
+                     case "Pa": return (inputValue, unit);
+                     case "mbar":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.Millibars, 1), "mbar");
+                     case "psi":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.PoundsForcePerSquareInch, 2), "psi");
+                     case "kPa":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.Kilopascals, 2), "kPa");
+                     default:
+                         return (inputValue, unit);
+                 }
+             }
 
-            Volume value;
-            switch (unit)
-            {
-                case "ml": return (inputValue, unit);
-                case "l":
-                    value = Volume.FromMilliliters(inputValue);
-                    return (value.Liters, "l");
-                case "ccm":
-                    value = Volume.FromCubicCentimeters(inputValue);
-                    return (value.Liters, "ccm");
-                default:
-                    return (inputValue, unit);
-            }
-        }
+             public (double outputValue, string unit) UnitsSensor2Set(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Sensor2");
 
-        public (double outputValue, string unit) UnitsVolumeSet(double inputValue)
-        {
-            string unit = UnitsFindUnitForProperty("Volume");
+                 Pressure value = Pressure.FromPascals(inputValue);
+                 switch (unit)
+                 {
+                     case "bar": break;
+                     case "mbar":
+                         value = Pressure.FromMillibars(inputValue);
+                         break;
+                     case "psi":
+                         value = Pressure.FromPoundsForcePerSquareInch(inputValue);
+                         break;
+                     case "kPa":
+                         value = Pressure.FromKilopascals(inputValue);
+                         break;
+                     default:
+                         break;
+                 }
 
-            Volume value = Volume.FromMilliliters(inputValue);
-            switch (unit)
-            {
-                case "ml": break;
-                case "l":
-                    value = Volume.FromLiters(inputValue);
-                    break;
-                case "ccm":
-                    value = Volume.FromCubicCentimeters(inputValue);
-                    break;
-                default:
-                    break;
-            }
+                 return (Math.Round(Convert.ToDouble(value.Pascals), 2), "bar");
+             }
 
-            return (Math.Round(Convert.ToDouble(value.Milliliters), 2), "ml");
-        }*/
+             public (double outputValue, string unit) UnitsOutput(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Output");
+
+                 Pressure value;
+                 switch (unit)
+                 {
+                     case "bar": return (inputValue, unit);
+                     case "mbar":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.Millibars, 1), "mbar");
+                     case "psi":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.PoundsForcePerSquareInch, 2), "psi");
+                     case "kPa":
+                         value = Pressure.FromBars(inputValue);
+                         return (Math.Round(value.Kilopascals, 1), "kPa");
+                     default:
+                         return (inputValue, unit);
+                 }
+             }
+
+             public (double outputValue, string unit) UnitsOutputSet(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Output");
+
+                 Pressure value = Pressure.FromBars(inputValue);
+                 switch (unit)
+                 {
+                     case "bar": break;
+                     case "mbar":
+                         value = Pressure.FromMillibars(inputValue);
+                         break;
+                     case "psi":
+                         value = Pressure.FromPoundsForcePerSquareInch(inputValue);
+                         break;
+                     case "kPa":
+                         value = Pressure.FromKilopascals(inputValue);
+                         break;
+                     default:
+                         break;
+                 }
+
+                 return (Math.Round(Convert.ToDouble(value.Bars), 2), "bar");
+             }
+
+             public (double outputValue, string unit) UnitsLeak(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Leak");
+
+                 VolumeFlow value;
+                 switch (unit)
+                 {
+                     case "ml/min": return (inputValue, unit);
+                     case "ccm/min":
+                         value = VolumeFlow.FromMillilitersPerMinute(inputValue);
+                         return (Math.Round(value.CubicCentimetersPerMinute, 1), "ccm/min");
+                     default:
+                         return (inputValue, unit);
+                 }
+             }
+
+             public (double outputValue, string unit) UnitsLeakSet(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Leak");
+
+                 VolumeFlow value = VolumeFlow.FromCubicCentimetersPerMinute(inputValue);
+                 switch (unit)
+                 {
+                     case "ml/min": break;
+                     case "ccm/min":
+                         value = VolumeFlow.FromMillilitersPerMinute(inputValue);
+                         break;
+                     default:
+                         break;
+                 }
+
+                 return (Math.Round(Convert.ToDouble(value.MillilitersPerMinute), 2), "bar");
+             }
+
+             public (double outputValue, string unit) UnitsTime(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Time");
+
+                 double value;
+                 switch (unit)
+                 {
+                     case "sec": return (Math.Round(inputValue, 2), unit);
+                     case "ms":
+                         value = Math.Round(inputValue * 1000);
+                         return (value, "ms");
+                     case "min":
+                         value = Math.Round(inputValue / 60, 2);
+                         return (value, "ms");
+                     case "hour":
+                         value = Math.Round(inputValue / 60 / 60, 2);
+                         return (value, "hour");
+                     default:
+                         return (Math.Round(inputValue, 2), unit);
+                 }
+             }
+             public (double outputValue, string unit) UnitsTimeSet(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Time");
+
+                 double value = inputValue;
+                 switch (unit)
+                 {
+                     case "sec": break;
+                     case "ms":
+                         value = inputValue / 1000;
+                         break;
+                     case "min":
+                         value = inputValue * 60;
+                         break;
+                     case "hour":
+                         value = inputValue * 60 * 60;
+                         break;
+                     default:
+                         break;
+                 }
+
+                 return (Math.Round(value, 2), "sec");
+             }
+
+             public (double outputValue, string unit) UnitsVolume(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Volume");
+
+                 Volume value;
+                 switch (unit)
+                 {
+                     case "ml": return (inputValue, unit);
+                     case "l":
+                         value = Volume.FromMilliliters(inputValue);
+                         return (value.Liters, "l");
+                     case "ccm":
+                         value = Volume.FromCubicCentimeters(inputValue);
+                         return (value.Liters, "ccm");
+                     default:
+                         return (inputValue, unit);
+                 }
+             }
+
+             public (double outputValue, string unit) UnitsVolumeSet(double inputValue)
+             {
+                 string unit = UnitsFindUnitForProperty("Volume");
+
+                 Volume value = Volume.FromMilliliters(inputValue);
+                 switch (unit)
+                 {
+                     case "ml": break;
+                     case "l":
+                         value = Volume.FromLiters(inputValue);
+                         break;
+                     case "ccm":
+                         value = Volume.FromCubicCentimeters(inputValue);
+                         break;
+                     default:
+                         break;
+                 }
+
+                 return (Math.Round(Convert.ToDouble(value.Milliliters), 2), "ml");
+             }*/
 
         public static string FormatTo3DecimalValues(int format, double val)
         {
@@ -478,6 +656,38 @@ namespace KNT_ToolsAndAccessories
                 strVal = string.Format("{0,1:0.###}", val); // 3 decimal
             return strVal;
         }
+
+        /// <summary>
+        /// format to any decimal places
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="val"></param>
+        /// <returns></returns>
+        public static string FormatToDecimalValues(int format, double val)
+        {
+            if (format == 0) // 15 decimal
+                return string.Format("{0,1:0.###############}", val);
+            string strVal = "0";
+
+            if ((format == 3 && Math.Abs(val) < 0.01) && val != 0)
+                strVal = string.Format("{0:0.###E+00}", val); // Exp, 3 decimal
+            else if ((format == 2 && Math.Abs(val) < 0.001) && val != 0)
+                strVal = string.Format("{0:0.##E+00}", val); // Exp, 2 decimal
+            else if ((format == 1 && Math.Abs(val) < 0.0001) && val != 0)
+                strVal = string.Format("{0:0.#E+00}", val); // Exp, 1 decimal
+            else if (((format == 3 && Math.Abs(val) < 0.1) || (format == 2 && Math.Abs(val) < 0.01) || (format == 1 && Math.Abs(val) < 0.001)) && val != 0)
+                strVal = string.Format("{0:0.#####}", val); // 5 decimal
+            else if (((format == 3 && Math.Abs(val) < 1) || (format == 2 && Math.Abs(val) < 0.1) || (format == 1 && Math.Abs(val) < 0.01)) && val != 0)
+                strVal = string.Format("{0:0.####}", val); // 4 decimal
+            else if ((format == 3 || (format == 2 && Math.Abs(val) < 1) || (format == 1 && Math.Abs(val) < 0.1)) && val != 0)
+                strVal = string.Format("{0:0.###}", val); // 3 decimal
+            else if ((format == 2 || (format == 1 && Math.Abs(val) < 1)) && val != 0)
+                strVal = string.Format("{0:0.##}", val); // 2 decimal
+            else
+                strVal = string.Format("{0:0.#}", val); // 1 decimal
+            return strVal;
+        }
+
 
         /// <summary>
         /// dots ...
