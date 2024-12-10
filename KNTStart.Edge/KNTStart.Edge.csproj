@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Driver 124.0.2478.80\**" />
+    <Compile Remove="Driver 126.0.2592.81\**" />
+    <EmbeddedResource Remove="Driver 124.0.2478.80\**" />
+    <EmbeddedResource Remove="Driver 126.0.2592.81\**" />
+    <None Remove="Driver 124.0.2478.80\**" />
+    <None Remove="Driver 126.0.2592.81\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Plotly.Blazor" Version="5.3.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.25.0" />
+    <PackageReference Include="Selenium.WebDriver.MSEdgeDriver" Version="129.0.2792.65" />
+    <PackageReference Include="System.Collections" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Driver\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Driver 128.0.2739.63\msedgedriver.exe">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="Driver\msedgedriver.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KNTLeakTester.Edge.lnk">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KNTStartLT.Edge.lnk">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KNTStartSMM.Edge.lnk">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
