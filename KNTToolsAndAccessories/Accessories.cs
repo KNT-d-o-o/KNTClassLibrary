@@ -10,7 +10,7 @@ using UnitsNet;
 using System.Linq;
 using System.Net;
 
-namespace KNT_ToolsAndAccessories
+namespace KNTToolsAndAccessories
 {
     public class Accessories
     {

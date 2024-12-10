@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace KNT_ToolsAndAccessories
+namespace KNTToolsAndAccessories
 {
     public class Tools
     {
