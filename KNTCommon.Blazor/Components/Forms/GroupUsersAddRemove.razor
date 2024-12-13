@@ -1,0 +1,94 @@
+﻿@inject HelperService Helper
+@inject DialogService DialogService
+@inject IUsersAndGroupsRepository UsersRepository
+@inject IAuthenticationRepository AuthRepo
+
+@* GroupUsersAddRemove *@
+
+<div class="Animation">
+<RadzenDataGrid Data="Users" TItem="UserDTO" AllowFiltering="false" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true"
+                AllowSorting="true" AllowColumnResize="true" PageSize="4" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
+    <Columns>
+        <RadzenDataGridColumn TItem="UserDTO" Property="UserName" Title="Username">
+            <FilterTemplate>
+                <AlphanumericInput LabelTitle="Find by Username" InputValue="@UsernameFilterInput" ReturnedValue="ReturnUsernameFilter"></AlphanumericInput>
+            </FilterTemplate>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+</div>
+
+@code {
+    [Parameter]
+    public int GroupId { get; set; }
+
+    private UserGroupDTO? SelectedGroup;
+
+    public IEnumerable<UserDTO>? Users { get; set; }
+
+    string? UsernameFilterInput;
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+        base.OnInitialized();
+    }
+
+    private void LoadData()
+    {
+        SelectedGroup = UsersRepository.GetGroupById(GroupId);
+        Users = UsersRepository.GetAllUsersFromASingleGroup(GroupId);
+    }
+
+    private void ReturnUsernameFilter(string? username)
+    {
+        UsernameFilterInput = username;
+    }
+
+    public async Task OpenEditInsertDialog(bool isInsert, UserDTO userForEdit)
+    {
+        string labelName = isInsert ? "Add a new user" : "Edit a user";
+        var param = !isInsert ? Helper.CreateDialogBlazorComponentParameters("UserId", userForEdit.UserId) : Helper.CreateDialogBlazorComponentParameters();
+        var result = await DialogService.OpenAsync<UsersEditInsert>(labelName, param, Helper.GetDialogOptions("DialogLarge"));
+
+        if (result != null)
+        {
+            //add new
+            var user = (UserCredentialsDTO?)result;
+            if (user is null)
+            {
+                Helper.NotifyError();
+                return;
+            }
+            var insertResult = AuthRepo.Register(0, user.UserName, user.Password, user.GroupId, user.logout, isInsert);
+            if (insertResult)
+            {
+                Helper.NotifySuccess();
+                LoadData();
+            }
+            else
+            {
+                Helper.NotifyError();
+            }
+        }
+    } 
+
+    public async Task OpenDeleteDialog(UserDTO user)
+    {
+        var result = await DialogService.OpenAsync<ConfirmationDialog>
+            ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", $"{user.UserName}, id: {user.UserId}", "weight", 2),
+            Helper.GetDialogOptions("ConfirmationWrapper"));
+        if (result == true)
+        {
+            //repository delete the programe with the id
+            //load data again
+            UsersRepository.DeleteUser(user);
+            Helper.NotifySuccess();
+            LoadData();
+        }
+        else
+        {
+
+        } 
+    }
+}

@@ -1,0 +1,79 @@
+﻿@inject DialogService dialogService
+
+<div class="numericKeyboardWrapper Animation">
+  @*  <RadzenTextBox id="RadzenTextboxNDialog" Value="@Value" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox> *@
+    <RadzenTextBox id="RadzenTextboxNDialog" Value="@Value" @onkeydown="SearchInputKeyDown"></RadzenTextBox>
+    <br />
+    <br />
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <div class="numericKeyboard">
+            <table>
+                <tr>
+                    <td><button id="num7" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("1"))'>1</button></td>
+                    <td><button id="num8" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("2"))'>2</button></td>
+                    <td><button id="num9" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("3"))'>3</button></td>
+                </tr>
+                <tr>
+                    <td><button id="num4" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("4"))'>4</button></td>
+                    <td><button id="num5" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("5"))'>5</button></td>
+                    <td><button id="num6" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("6"))'>6</button></td>
+                    <td><button id="enterNumeric" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Enter"))'><RadzenIcon Icon="done" IconColor="@Colors.Success" class="large-icon"></RadzenIcon></button></td>
+                </tr>
+                <tr>
+                    <td><button id="num3" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("7"))'>7</button></td>
+                    <td><button id="num2" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("8"))'>8</button></td>
+                    <td><button id="num1" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("9"))'>9</button></td>
+                    <td><button id="Backspace" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Backspace"))'><RadzenIcon Icon="west" IconColor="@Colors.Warning" class="large-icon"></RadzenIcon></button></td>
+                </tr>
+                <tr>
+                    <td><button id="comma" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator))'>@CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator</button></td>
+                    <td><button id="num0" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("0"))'>0</button></td>
+                    <td> <button id="minus" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("-"))'>-</button></td>
+                    <button id="Clear" keyboardButtonLarge class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Clear"))'><RadzenIcon Icon="close" IconColor="@Colors.Danger" class="large-icon"></RadzenIcon></button>
+                </tr>
+            </table>
+        </div>
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public string? InputValue { get; set; }
+
+    [Parameter]
+    public string? LabelValue { get; set; }
+
+    private string? Value { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (InputValue != null)
+        {
+            Value = InputValue;
+        }
+    }
+
+    private void SearchInputKeyDown(KeyboardEventArgs args)
+    {
+        GetButtonValue(args.Key);
+    }
+
+    string? valPrev = string.Empty;
+    private void GetButtonValue(string input)
+    {
+        if (input == "Enter")
+        {
+            dialogService.Close(Value);
+        }
+        if (input != null)
+        {
+            Value = KeyboardUtilities.ParseKeyboardInputForNumericKeyboard(input, Value);
+        }
+        else
+        {
+            //error?
+        }
+        valPrev = Value;
+    }
+
+}

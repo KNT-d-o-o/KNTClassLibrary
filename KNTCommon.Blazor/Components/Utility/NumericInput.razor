@@ -1,0 +1,47 @@
+﻿@inject DialogService dialogService
+@inject HelperService Helper
+
+<div class="Animation">
+    <RadzenTextBox Value="@InputValue" @onclick="OpenKeyboard" id="@CSSId" class="defaultNumericInput" Placeholder="@Placeholder" @onkeydown="OpenKeyboard" ReadOnly="@ReadOnly"></RadzenTextBox>
+</div>
+
+@code {
+    [Parameter]
+    public string? InputValue { get; set; }
+
+    [Parameter]
+    public string? LabelTitle { get; set; }
+
+    [Parameter]
+    public string? CSSId { get; set; }
+
+    [Parameter]
+    public string? Placeholder { get; set; }
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ReturnedValue { get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    async Task OpenKeyboard()
+    {
+        if (ReadOnly)
+            return;
+        if (InputValue is null)
+            InputValue = string.Empty;
+        var result = await dialogService.OpenAsync<NumericKeyboardDialog>
+        (LabelTitle, Helper.CreateDialogBlazorComponentParameters("InputValue", InputValue), Helper.GetDialogOptions("NumericKeyboardOptions halfSizeWindow"));
+        if (result != null)
+        {
+            InputValue = result.ToString();
+            await ReturnedValue.InvokeAsync(InputValue);
+        }
+    }
+}

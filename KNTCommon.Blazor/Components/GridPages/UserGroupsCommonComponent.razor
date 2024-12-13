@@ -1,0 +1,229 @@
+﻿@inject IUsersAndGroupsRepository UsersRepository
+@inject HelperService Helper
+@inject DialogService DialogService
+@inject SharedContainerCommon SharedContainer
+
+@* UserGroupsCommonComponent *@
+
+<div class="Animation">
+    <RadzenDataGrid Data="Groups" TItem="UserGroupDTO" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true" AllowFiltering="@SharedContainer.Additional"
+                    AllowSorting="true" AllowColumnResize="true" PageSize="@pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
+        <Columns>
+            <RadzenDataGridColumn TItem="UserGroupDTO" Property="GroupName" Title="Name">
+                <FilterTemplate>
+
+                    <div class="Animation FixContainer">
+                        <AlphanumericInput LabelTitle="Find by Group name" InputValue="@GroupNameFilterInput" ReturnedValue="ReturnGroupNameFilter"></AlphanumericInput>
+                    </div>
+
+                </FilterTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="UserGroupDTO" Sortable="false" FrozenPosition="FrozenColumnPosition.Right" Width="130px">
+                <FilterTemplate>
+                    <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="ShowInlineAddGroupDialog"></RadzenButton>
+                </FilterTemplate>
+                <Template Context="GroupContext">
+                    <div>
+                        <RadzenButton Click="() => OpenEditInsertDialog(GroupContext.GroupId)" class="RadzenGridContextButtons rz-ripple" Icon="groups" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker"></RadzenButton>
+                        @if (GroupContext.GroupName != "Default")
+                        {
+                            <RadzenButton Click="() => OpenDeleteDialog(GroupContext)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Darker" Style="margin-left:8px;"></RadzenButton>
+                        }
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Parameter]
+    public int? UserId { get; set; }
+
+    [Parameter]
+    public string? ButtonText { get; set; }
+
+    private UserCredentialsDTO? UserCreds;
+    private UserDTO? User;
+
+    private IEnumerable<UserGroupDTO>? Groups;
+    private IEnumerable<UserGroupDTO>? GroupsReference;
+    private UserGroupDTO? Group;
+
+    Timer? aTimer;
+
+    protected override void OnInitialized()
+    {
+        SharedContainerCommon.actionTitle = "User Groups";
+        aTimer = new Timer(Tick, null, 0, 1000);
+        LoadUserData();
+        LoadGroupsData();
+        base.OnInitialized();
+    }
+
+    int pageSize = 5;
+    bool additionalPrev = false;
+    private void Tick(object? _)
+    {
+        if (SharedContainer.Additional != additionalPrev)
+        {
+            if (SharedContainer.Additional)
+            {
+                pageSize = 4;
+                ApplyUserFilter();
+            }
+            else
+            {
+                pageSize = 5;
+                LoadGroupsData();
+            }
+            InvokeAsync(StateHasChanged);
+        }
+
+        additionalPrev = SharedContainer.Additional;
+    }
+
+    private void LoadUserData()
+    {
+        if (UserId != null)
+        {
+            User = UsersRepository.GetUserById(UserId.Value);
+            if (User.UserName != null)
+            {
+                UserCreds = new UserCredentialsDTO
+                        {
+                            UserName = User.UserName
+                        };
+            }
+        }
+        else
+        {
+            User = new();
+            UserCreds = new();
+        }
+        ButtonText = false ? "Edit" : "Add";
+        User.ControlGroup = new();
+        User.UsersRelationsMaps = new();
+    }
+
+    private void LoadGroupsData()
+    {
+        Groups = UsersRepository.GetAllGroups();
+        GroupsReference = Groups;
+        Group = new();
+    }
+
+    //GROUPS GRID
+
+    private void AddUserGroup()
+    {
+        if (Group != null && Group.GroupName != null && Group.GroupName != string.Empty)
+        {
+            var result = UsersRepository.CreateUserGroup(Group);
+            if (result)
+            {
+                LoadGroupsData();
+                Group = null;
+                Helper.NotifySuccess("");
+                DialogService.Close();
+            }
+            else
+            {
+                Helper.NotifyError("Error! Contact KNT");
+            }
+
+        }
+        else
+        {
+            //group name is empty
+            Helper.NotifyError("Group name is empty.");
+        }
+
+    }
+
+    private void ReturnGroupName(string? groupName)
+    {
+        if (groupName != null)
+        {
+            UserGroupDTO? groupExist = UsersRepository.GetGroupByName(groupName);
+            if (groupExist != null && groupExist.GroupName != null && groupName == groupExist.GroupName)
+            {
+                Helper.NotifyError("Group name already exists!");
+                groupName = string.Empty;
+            }
+        }
+
+        if (Group != null)
+            Group.GroupName = groupName;
+    }
+
+    public async Task OpenEditInsertDialog(int groupId)
+    {
+        var result = await DialogService.OpenAsync<GroupUsersAddRemove>
+    ("", Helper.CreateDialogBlazorComponentParameters("GroupId", groupId), Helper.GetDialogOptions());
+
+    }
+
+    public async Task OpenDeleteDialog(UserGroupDTO group)
+    {
+        // check if group is used
+        if (UsersRepository.CheckIfUsersExistdInGroup(group.GroupId))
+        {
+            Helper.NotifyError("Group is used by Users!");
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<ConfirmationDialog>
+        ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", $"{group.GroupName}", "weight", 2),
+        Helper.GetDialogOptions("ConfirmationWrapper"));
+        if (result == true)
+        {
+            if (UsersRepository.DeleteGroup(group))
+            {
+                Helper.NotifySuccess();
+                LoadGroupsData();
+            }
+            else
+                Helper.NotifyError();
+        }
+        else
+        {
+            Helper.NotifyWarning("Not deleted!");
+        }
+    }
+
+    private void ShowInlineAddGroupDialog()
+    {
+        var result = DialogService.OpenAsync("Add User Group", ds =>
+    @<RadzenStack>
+        <RadzenRow>
+            <div class="GroupAddRow">
+                <p id="RadzenAddGroupLabel">Name</p>
+                <AlphanumericInput LabelTitle="Edit Name" CSSId="GroupInput" ReturnedValue="ReturnGroupName" InputValue="@Group?.GroupName"></AlphanumericInput>
+                <RadzenButton id="RadzenAddGroupButton" Variant="Variant.Filled" Shade="Shade.Dark" Icon="check" ButtonStyle="ButtonStyle.Success" Click="AddUserGroup" class="rz-ripple"></RadzenButton>
+            </div>
+        </RadzenRow>
+    </RadzenStack>
+    , new DialogOptions { CloseDialogOnOverlayClick = true, CssClass = "AddGroupDialog", });
+    }
+
+    string? GroupNameFilterInput;
+
+    private void ReturnGroupNameFilter(string? username)
+    {
+        GroupNameFilterInput = username;
+        ApplyUserFilter();
+    }
+
+    private void ApplyUserFilter()
+    {
+        Groups = GroupsReference;
+
+        if (Groups != null)
+        {
+            if (GroupNameFilterInput != null && GroupNameFilterInput != string.Empty)
+                Groups = Groups.Where(x => x.GroupName != null && x.GroupName.Contains(GroupNameFilterInput));
+        }
+    }
+
+}

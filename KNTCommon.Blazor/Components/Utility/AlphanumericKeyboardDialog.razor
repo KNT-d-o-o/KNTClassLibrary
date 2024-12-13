@@ -1,0 +1,359 @@
+﻿@* @page "/Value/{Value}" *@
+@inject DialogService dialogService
+
+<div class="alphanumericKeyboardWrapper Animation">
+    <RadzenTextBox id="RadzenTextboxANDialog" Value="@Value" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox>
+    <br />
+    <div style="height:10px" />
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <div class="alphanumericKeyboard">
+            <table>
+                <tr>
+                    <td><button id="1" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn1))'>@btn1</button></td>
+                    <td><button id="2" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn2))'>@btn2</button></td>
+                    <td><button id="3" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn3))'>@btn3</button></td>
+                    <td><button id="4" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn4))'>@btn4</button></td>
+                    <td><button id="5" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn5))'>@btn5</button></td>
+                    <td><button id="6" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn6))'>@btn6</button></td>
+                    <td><button id="7" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn7))'>@btn7</button></td>
+                    <td><button id="8" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn8))'>@btn8</button></td>
+                    <td><button id="9" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn9))'>@btn9</button></td>
+                    <td><button id="0" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn0))'>@btn0</button></td>
+                    <td colspan="2"><button id="Backspace" style="width:10.2vw;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Backspace"))'><RadzenIcon Icon="west" IconColor="@Colors.Warning"></RadzenIcon></button></td>
+                </tr>
+                <tr>
+                    <td><button id="q" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnQ))'>@btnQ</button></td>
+                    <td><button id="w" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnW))'>@btnW</button></td>
+                    <td><button id="e" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnE))'>@btnE</button></td>
+                    <td><button id="r" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnR))'>@btnR</button></td>
+                    <td><button id="t" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnT))'>@btnT</button></td>
+                    <td><button id="y" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnY))'>@btnY</button></td>
+                    <td><button id="u" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnU))'>@btnU</button></td>
+                    <td><button id="i" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnI))'>@btnI</button></td>
+                    <td><button id="o" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnO))'>@btnO</button></td>
+                    <td><button id="p" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnP))'>@btnP</button></td>
+                    <td><button id="leftBracket" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnBracket1))'>@btnBracket1</button></td>
+                    <td><button id="rightBracket" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnBracket2))'>@btnBracket2</button></td>
+                </tr>
+                <tr>
+                    <td><button id="CapsLock" class="keyboardButton rz-ripple" style="background-color:@bgcolorCL" @onclick='(() => GetButtonValue("CapsLock"))'>CapsLock</button></td>
+                    <td><button id="a" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnA))'>@btnA</button></td>
+                    <td><button id="s" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnS))'>@btnS</button></td>
+                    <td><button id="d" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnD))'>@btnD</button></td>
+                    <td><button id="f" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnF))'>@btnF</button></td>
+                    <td><button id="g" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnG))'>@btnG</button></td>
+                    <td><button id="h" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnH))'>@btnH</button></td>
+                    <td><button id="j" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnJ))'>@btnJ</button></td>
+                    <td><button id="k" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnK))'>@btnK</button></td>
+                    <td><button id="l" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnL))'>@btnL</button></td>
+                    <td><button id="semicolon" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnBackslash))'>@btnBackslash</button></td>
+                    <td colspan="2"><button id="Enter" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Enter"))'><span style="color:rgb(60, 180, 0);n;">Enter</span></button></td>
+                </tr>
+                <tr>
+                    <td><button id="Shift" style="background-color:@bgcolorShift;font-size:2vw;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Shift"))'>Shift</button></td>
+                    <td><button id="z" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnZ))'>@btnZ</button></td>
+                    <td><button id="x" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnX))'>@btnX</button></td>
+                    <td><button id="c" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnC))'>@btnC</button></td>
+                    <td><button id="v" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnV))'>@btnV</button></td>
+                    <td><button id="b" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnB))'>@btnB</button></td>
+                    <td><button id="n" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnN))'>@btnN</button></td>
+                    <td><button id="m" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnM))'>@btnM</button></td>
+                    <td><button id="comma" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnComma))'>@btnComma</button></td>
+                    <td><button id="dot" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnDot))'>@btnDot</button></td>
+                    <td><button id="slash" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnMinus))'>@btnMinus</button></td>
+                    <td><button id="plus" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnPlus))'>@btnPlus</button></td>                  
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button id="triangleBracket" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnBracket3))'>@btnBracket3</button></td>
+                    <td><button id="s" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnSS))'>@btnSS</button></td>
+                    <td><button id="c" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnCC))'>@btnCC</button></td>
+                    <td><button id="z" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnZZ))'>@btnZZ</button></td>
+                    <td><button id="a" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnAA))'>@btnAA</button></td>
+                    <td><button id="o" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnOO))'>@btnOO</button></td>
+                    <td><button id="u" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnUU))'>@btnUU</button></td>
+                    <td><button id="ss" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("ß"))'>ß</button></td>
+                    <td><button id="d" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnDD))'>@btnDD</button></td>
+                    <td><button id="c2" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnCCC))'>@btnCCC</button></td>
+                    <td><button id="questionMark" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnAsk))'>@btnAsk</button></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td colspan="4"><button id="space" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("space"))'>space</button></td>
+                    <td><button id="dot" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnApnea))'>@btnApnea</button></td>
+                    <td><button id="equal2" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnTilde))'>@btnTilde</button></td>
+                    <td><button id="Clear" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Clear"))'><RadzenIcon Icon="close" IconColor="@Colors.Danger"></RadzenIcon></button></td>
+                </tr>
+            </table>
+        </div>
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public string? InputValue { get; set; }
+
+    [Parameter]
+    public bool? IsPassword { get; set; }
+
+    string? Value;
+
+    string bgcolorShift { get; set; } = Colors.Black; // (starting value)
+    string bgcolorCL { get; set; } = Colors.Black; // (starting value)
+
+    string btnQ = "q";
+    string btnW = "w";
+    string btnE = "e";
+    string btnR = "r";
+    string btnT = "t";
+    string btnY = "y";
+    string btnU = "u";
+    string btnI = "i";
+    string btnO = "o";
+    string btnP = "p";
+    string btnA = "a";
+    string btnS = "s";
+    string btnD = "d";
+    string btnF = "f";
+    string btnG = "g";
+    string btnH = "h";
+    string btnJ = "j";
+    string btnK = "k";
+    string btnL = "l";
+    string btnZ = "z";
+    string btnX = "x";
+    string btnC = "c";
+    string btnV = "v";
+    string btnB = "b";
+    string btnN = "n";
+    string btnM = "m";
+    string btnSS = "š";
+    string btnCC = "č";
+    string btnZZ = "ž";
+    string btnAA = "ä";
+    string btnOO = "ö";
+    string btnUU = "ü";
+    string btnDD = "đ";
+    string btnCCC = "ć";
+    string btn1 = "1";
+    string btn2 = "2";
+    string btn3 = "3";
+    string btn4 = "4";
+    string btn5 = "5";
+    string btn6 = "6";
+    string btn7 = "7";
+    string btn8 = "8";
+    string btn9 = "9";
+    string btn0 = "0";
+    string btnBracket1 = "[";
+    string btnBracket2 = "]";
+    string btnBackslash = "\\";
+    string btnComma = ",";
+    string btnDot = ".";
+    string btnMinus = "-";
+    string btnPlus = "+";
+    string btnAsk = "?";
+    string btnBracket3 = "<";
+    string btnApnea = "@";
+    string btnTilde = "~";
+
+    protected override void OnInitialized()
+    {
+        if (InputValue != null)
+        {
+            Value = InputValue;
+        }
+    }
+
+    protected void SearchInputKeyDown(KeyboardEventArgs args)
+    {
+        GetButtonValue(args.Key);
+    }
+
+    private void GetButtonValue(string input)
+    {
+        if (input == "Enter")
+        {
+            // Value = InputValue;
+            // await InsertedValueReturned.InvokeAsync(Value);
+            dialogService.Close(Value);
+        }
+
+        // set selected color
+        if (input == "Shift")
+        {
+            if (bgcolorShift == Colors.Black)
+                bgcolorShift = Colors.SuccessLight;
+            else 
+                bgcolorShift = Colors.Black;
+            //     StateHasChanged();
+        }
+        else if (input == "CapsLock")
+        {
+            if (bgcolorCL == Colors.Black)
+                bgcolorCL = Colors.SuccessLight;
+            else
+                bgcolorCL = Colors.Black;
+            //   StateHasChanged();
+        }
+        else if (bgcolorShift == Colors.SuccessLight) 
+        {
+            bgcolorShift = Colors.Black;
+            // StateHasChanged();
+        }
+
+        if (input != null)
+        {
+            Value = KeyboardUtilities.ParseKeyboardInputForAlphanumericKeyboard(input, Value);
+        }
+        else
+        {
+            //error?
+        }
+
+        // set button titles
+        if (bgcolorShift == Colors.SuccessLight && bgcolorCL == Colors.Black || bgcolorShift == Colors.Black && bgcolorCL == Colors.SuccessLight)
+            SetButtonsTitlesLetter(true);
+        else
+            SetButtonsTitlesLetter(false);
+        if (bgcolorShift == Colors.SuccessLight)
+            SetButtonsTitlesSign(true);
+        else
+            SetButtonsTitlesSign(false);
+
+        StateHasChanged();
+    }
+
+
+    private void SetButtonsTitlesSign(bool shift)
+    {
+        if (shift)
+        {
+            btn1 = "!";
+            btn2 = "\"";
+            btn3 = "#";
+            btn4 = "$";
+            btn5 = "%";
+            btn6 = "&";
+            btn7 = "/";
+            btn8 = "(";
+            btn9 = ")";
+            btn0 = "=";
+            btnBracket1 = "{";
+            btnBracket2 = "}";
+            btnBackslash = "|";
+            btnComma = ";";
+            btnDot = ":";
+            btnMinus = "_";
+            btnPlus = "*";
+            btnAsk = "'";
+            btnBracket3 = ">";
+            btnApnea = "€";
+            btnTilde = "`";
+        }
+        else
+        {
+            btn1 = "1";  
+            btn2 = "2";
+            btn3 = "3";
+            btn4 = "4";
+            btn5 = "5";
+            btn6 = "6";
+            btn7 = "7";
+            btn8 = "8";
+            btn9 = "9";
+            btn0 = "0";
+            btnBracket1 = "[";
+            btnBracket2 = "]";
+            btnBackslash = "\\";
+            btnComma = ",";
+            btnDot = ".";
+            btnMinus = "-";
+            btnPlus = "+";
+            btnAsk = "?";
+            btnBracket3 = "<";
+            btnApnea = "@";
+            btnTilde = "~";
+        }
+    }
+
+    private void SetButtonsTitlesLetter(bool big)
+    {
+        if (big) {
+            btnQ = "Q";
+            btnW = "W";
+            btnE = "E";
+            btnR = "R";
+            btnT = "T";
+            btnY = "Y";
+            btnU = "U";
+            btnI = "I";
+            btnO = "O";
+            btnP = "P";
+            btnA = "A";
+            btnS = "S";
+            btnD = "D";
+            btnF = "F";
+            btnG = "G";
+            btnH = "H";
+            btnJ = "J";
+            btnK = "K";
+            btnL = "L";
+            btnZ = "Z";
+            btnX = "X";
+            btnC = "C";
+            btnV = "V";
+            btnB = "B";
+            btnN = "N";
+            btnM = "M";
+            btnSS = "Š";
+            btnCC = "Č";
+            btnZZ = "Ž";
+            btnAA = "Ä";
+            btnOO = "Ö";
+            btnUU = "Ü";
+            btnDD = "Đ";
+            btnCCC = "Ć";
+        }
+        else
+        {
+            btnQ = "q";
+            btnW = "w";
+            btnE = "e";
+            btnR = "r";
+            btnT = "t";
+            btnY = "y";
+            btnU = "u";
+            btnI = "i";
+            btnO = "o";
+            btnP = "p";
+            btnA = "a";
+            btnS = "s";
+            btnD = "d";
+            btnF = "f";
+            btnG = "g";
+            btnH = "h";
+            btnJ = "j";
+            btnK = "k";
+            btnL = "l";
+            btnZ = "z";
+            btnX = "x";
+            btnC = "c";
+            btnV = "v";
+            btnB = "b";
+            btnN = "n";
+            btnM = "m";
+            btnSS = "š";
+            btnCC = "č";
+            btnZZ = "ž";
+            btnAA = "ä";
+            btnOO = "ö";
+            btnUU = "ü";
+            btnDD = "đ";
+            btnCCC = "ć";
+        }
+
+    }
+}

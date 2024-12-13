@@ -1,0 +1,46 @@
+﻿@inject Radzen.DialogService dialogService
+@inject HelperService Helper
+
+<div class="Animation">
+    <RadzenTextBox Style="width:100%;" Value="@InputValue" @onclick="OpenKeyboard" id="@CSSId" class="defaultAlphanumericInput" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" Placeholder="@Placeholder" @onkeydown="OpenKeyboard"></RadzenTextBox>
+</div>
+
+@code {
+    [Parameter]
+    public string? InputValue { get; set; }
+
+    [Parameter]
+    public string? LabelTitle { get; set; }
+
+    [Parameter]
+    public string? CSSId { get; set; }
+
+    [Parameter]
+    public string? Placeholder { get; set; }
+
+    [Parameter]
+    public bool? IsPassword { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ReturnedValue { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    async Task OpenKeyboard()
+    {
+        if (InputValue is null)
+            InputValue = string.Empty;
+        if (IsPassword is null)
+            IsPassword = false;
+        var result = await dialogService.OpenAsync<AlphanumericKeyboardDialog>
+        (LabelTitle, Helper.CreateDialogBlazorComponentParameters("InputValue", InputValue, "IsPassword", IsPassword), Helper.GetDialogOptions("AlphanumericKeyboardOptions MaxSizeWindow"));
+        if(result != null)
+        {
+            InputValue = result.ToString();
+            await ReturnedValue.InvokeAsync(InputValue);
+        }
+    }
+}

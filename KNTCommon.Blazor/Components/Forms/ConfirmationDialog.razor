@@ -1,0 +1,57 @@
+﻿@inject DialogService DialogService
+
+@* ConfirmationDialog *@
+
+<div class="ConfirmationInner Animation">
+    <span>Confirm to @((action ?? string.Empty).ToLower())</span>
+    <br />
+    <span style="font-size:2rem;">@details</span>
+    <br />
+    <br />
+    <RadzenStack AlignItems="AlignItems.End">
+        <RadzenButton class="RadzenGridAddButtonForm rz-ripple" ButtonStyle="@bStyle" Click="() => ReturnResult(true)" style="color: black;">@action</RadzenButton>
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public string? action { get; set; }
+
+    [Parameter]
+    public string? details { get; set; }
+
+    [Parameter]
+    public int weight { get; set; }
+
+    ButtonStyle bStyle;
+
+    protected override void OnInitialized()
+    {
+        switch (weight)
+        {
+            case 0:
+                bStyle = ButtonStyle.Success;
+                break;
+            case 1:
+                bStyle = ButtonStyle.Warning;
+                break;
+            case 2:
+                bStyle = ButtonStyle.Danger;
+                break;
+            default:
+                bStyle = ButtonStyle.Primary;
+                break;
+        }
+        base.OnInitialized();
+    }
+
+    private void ReturnResult(bool apply)
+    {
+        if (apply)
+        {
+            DialogService.Close(true);
+        }
+
+        DialogService.Close(false);
+    }
+}

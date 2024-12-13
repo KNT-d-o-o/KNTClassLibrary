@@ -1,0 +1,219 @@
+﻿@inject IUsersAndGroupsRepository UsersRepository
+@inject HelperService Helper
+@inject DialogService DialogService
+@inject IEncryption Encryption
+
+@* UsersEditInsert *@
+
+<div class="UsersWrapper Animation">
+    <RadzenStack id="RadzenCredentialsStack">
+        
+        <EditForm Model="@UserCreds" OnSubmit="ConfirmUser">
+            <RadzenRow Class="rz-p-0 rz-p-lg-4">
+                <RadzenColumn Size="12" SizeMD="12">
+                    <RadzenStack Gap="1rem">
+
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">Username</span></h3></RadzenLabel>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                            <AlphanumericInput LabelTitle="Edit Username" InputValue="@UserCreds.UserName" ReturnedValue="ReturnUsername"></AlphanumericInput>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">Group</span></h3></RadzenLabel>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenDropDown id="RadzenDropdownNormal" Data="Groups" @bind-Value="UserCreds.GroupId" TextProperty="GroupName" ValueProperty="GroupId"></RadzenDropDown>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">Password</span></h3></RadzenLabel>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                            <AlphanumericInput LabelTitle="Edit Password" InputValue="@UserCreds.Password" ReturnedValue="ReturnPassword" IsPassword="true"></AlphanumericInput>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                       <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">Logout time [min]</span></h3></RadzenLabel>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="4">
+                                <NumericInput LabelTitle="Edit Logout time" InputValue=@UserCreds.logout.ToString() ReturnedValue="ReturnLogout"></NumericInput>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                    </RadzenStack>
+                </RadzenColumn>
+
+            </RadzenRow>
+            <br />
+            <RadzenStack AlignItems="AlignItems.End">
+            <RadzenButton class="RadzenGridAddButtonForm rz-ripple" Icon="check" ButtonStyle="ButtonStyle.Success" ButtonType="ButtonType.Submit" Shade="Shade.Darker"></RadzenButton>
+            </RadzenStack>
+        </EditForm>
+            
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public int? UserId { get; set; }
+
+    [Parameter]
+    public string? ButtonText { get; set; }
+
+    private UserCredentialsDTO UserCreds = new();
+    private UserDTO? User;
+
+    private IEnumerable<UserGroupDTO>? Groups;
+    private UserGroupDTO? Group;
+
+    protected override void OnInitialized()
+    {
+        LoadUserData();
+        LoadGroupsData();
+        base.OnInitialized();
+    }
+
+    private void LoadUserData()
+    {
+        if (UserId != null)
+        {
+            User = UsersRepository.GetUserById(UserId.Value);
+
+            if (User != null && User.UserName != null && User.PasswordHash != null && User.InitializationVector != null)
+            {
+                var password = Encryption.Decrypt(User.PasswordHash, User.InitializationVector).GetAwaiter().GetResult();
+
+                UserCreds = new UserCredentialsDTO
+                    {
+                        UserName = User.UserName,
+                        Password = password,
+                        logout = User.logout
+                    };
+            }
+        }
+        else
+        {
+            User = new();
+            UserCreds = new();
+        }
+        ButtonText = false ? "Edit" : "Add";
+        if (User != null)
+            User.ControlGroup = new();
+    }
+
+    private void LoadGroupsData()
+    {
+        Groups = UsersRepository.GetAllGroups();
+
+        if (UserCreds != null) {
+            if (User != null && User.GroupId != null)
+                UserCreds.GroupId = User.GroupId;
+            else
+                UserCreds.GroupId = Groups.First().GroupId;
+        }
+        Group = new();
+    }
+
+    private void ConfirmUser()
+    {
+        if (UserCreds.UserName is null || UserCreds.UserName == string.Empty)
+        {
+            Helper.NotifyError("Username is empty.");
+            return;
+        }
+
+        DialogService.Close(UserCreds);
+    }
+
+    private void ReturnUsername(string? username)
+    {
+        if (username != null)
+        {
+            UserDTO? userExist = UsersRepository.GetUserByUsername(username);
+            if (userExist != null && userExist.UserName != null && username == userExist.UserName && userExist.UserId != UserCreds.UserId)
+            {
+                Helper.NotifyError("Username already exists!");
+                username = UserCreds.UserName;
+                return;
+            }
+        }
+
+        if (UserCreds != null && username != null)
+            UserCreds.UserName = username;
+    }
+
+    private void ReturnPassword(string? password)
+    {
+        if (UserCreds != null && password != null)
+            UserCreds.Password = password;
+    }
+
+    private void ReturnLogout(string? val)
+    {
+        if (UserCreds != null && val != null && val != string.Empty)
+            UserCreds.logout = int.Parse(val);
+    }
+
+    //GROUPS GRID
+
+    private void AddUserGroup()
+    {
+        if (Group != null && Group.GroupName != null)
+        {
+            var result = UsersRepository.CreateUserGroup(Group);
+            if (result)
+            {
+                LoadGroupsData();
+                Group = null;
+                Helper.NotifySuccess("");
+            }
+            else
+            {
+                Helper.NotifyError("");
+            }
+
+        }
+        else
+        {
+            //group name is empty
+            Helper.NotifyError("Group name is empty.");
+        }
+
+    }
+
+    private void ReturnGroupName(string? groupName)
+    {
+        if(Group != null)
+            Group.GroupName = groupName;
+    }
+
+    public async Task OpenDeleteDialog(UserGroupDTO group)
+    {
+        var result = await DialogService.OpenAsync<ConfirmationDialog>
+            ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", $"{group.GroupName}", "weight", 2),
+            Helper.GetDialogOptions("ConfirmationWrapper"));
+        if (result == true)
+        {
+            //repository delete the programe with the id
+            //load data again
+            UsersRepository.DeleteGroup(group);
+            Helper.NotifySuccess();
+            LoadGroupsData();
+        }
+        else
+        {
+
+        }
+    }
+
+
+}

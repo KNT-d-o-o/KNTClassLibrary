@@ -1,0 +1,207 @@
+﻿@inject HelperService Helper
+@inject DialogService DialogService
+@inject IUsersAndGroupsRepository UsersRepository
+@inject IAuthenticationRepository AuthRepo
+@inject SharedContainerCommon SharedContainer
+
+@* UsersCommonComponent *@
+
+<div class="Animation">
+    <RadzenDataGrid Data="Users" TItem="UserDTO" AllowFiltering="@SharedContainer.Additional" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true"
+                    AllowSorting="true" AllowColumnResize="true" PageSize="@pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
+        <Columns>
+
+            <RadzenDataGridColumn TItem="UserDTO" Property="UserName" Title="Username">
+                <FilterTemplate>
+                    <div class="Animation FixContainer">
+                        <AlphanumericInput LabelTitle="Find by Username" InputValue="@UsernameFilterInput" ReturnedValue="ReturnUsernameFilter"></AlphanumericInput>
+                    </div>
+                </FilterTemplate>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="UserDTO" Title="Group">
+                <FilterTemplate>
+                    <div class="Animation FixContainer">
+                        <RadzenDropDown Data="@findGroupConditions" @bind-Value="@groupCondition" Change="@FilterGroupCondition" Style="width:100%;" />
+                    </div>
+                </FilterTemplate>
+                <Template>
+                    @{
+                        var user = context as UserDTO;
+                        if (user.GroupId != null)
+                            @UsersRepository.GetGroupById(user.GroupId.Value).GroupName;
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Width="130px" TItem="UserDTO" Sortable="false" FrozenPosition="FrozenColumnPosition.Right">
+                <FilterTemplate>
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="() => OpenEditInsertDialog(true, null)"></RadzenButton>
+                </FilterTemplate>
+                <Template Context="UserContext">
+                    <div>
+                            <RadzenButton Click="() => OpenEditInsertDialog(false, UserContext)" class="RadzenGridContextButtons rz-ripple" Icon="edit" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker"></RadzenButton>
+                            <RadzenButton Click="() => OpenDeleteDialog(UserContext)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Darker"></RadzenButton>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+
+        </Columns>
+</RadzenDataGrid>
+</div>
+
+@code {
+    public IEnumerable<UserDTO>? Users { get; set; }
+    public IEnumerable<UserDTO>? UsersReference { get; set; }
+
+    string? UsernameFilterInput;
+    Timer? aTimer;
+    private IEnumerable<UserGroupDTO>? Groups;
+    static string[] findGroupConditions = { "..." };
+
+    protected override void OnInitialized()
+    {
+        KNTCommon.Blazor.Services.SharedContainerCommon.actionTitle = "Users";
+        aTimer = new Timer(Tick, null, 0, 1000);
+        LoadData();
+        base.OnInitialized();
+    }
+
+    private void LoadData()
+    {
+        Users = UsersRepository.GetAllUsers();
+        UsersReference = Users;
+        Groups = UsersRepository.GetAllGroups();
+        int i = 1;
+        foreach (UserGroupDTO g in Groups)
+            if (g.GroupName != null) {
+                Array.Resize(ref findGroupConditions, i + 1);
+                findGroupConditions[i] = g.GroupName;
+                i++;
+            }
+        groupCondition = findGroupConditions[0];
+    }
+
+    private void ReturnUsernameFilter(string? username)
+    {
+        UsernameFilterInput = username;
+        ApplyUserFilter();
+    }
+
+    string? groupCondition;
+    private void FilterGroupCondition(object value)
+    {
+        groupCondition = value.ToString();
+        ApplyUserFilter();
+    }
+
+    private int GetGroupIdByGroupName(string groupName)
+    {
+        int ret = 0;
+        if (Groups != null)
+        {
+            foreach (UserGroupDTO g in Groups)
+            {
+                if (g.GroupName != null)
+                {
+                    if (g.GroupName == groupName)
+                    {
+                        ret = g.GroupId;
+                        break;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    private void ApplyUserFilter()
+    {
+        Users = UsersReference;
+
+        if (Users != null)
+        {
+            if (UsernameFilterInput != null && UsernameFilterInput != string.Empty)
+                Users = Users.Where(x => x.UserName != null && x.UserName.Contains(UsernameFilterInput));
+
+            if (groupCondition != null && groupCondition != "...")
+                Users = Users.Where(x => x.GroupId != null && x.GroupId == GetGroupIdByGroupName(groupCondition));
+        }
+    }
+
+    int pageSize = 5;
+    bool additionalPrev = false;
+    private void Tick(object? _)
+    {
+        if (SharedContainer.Additional != additionalPrev)
+        {
+            if (SharedContainer.Additional)
+            {
+                pageSize = 4;
+                ApplyUserFilter();
+            }
+            else
+            {
+                pageSize = 5;
+                LoadData();
+            }
+            InvokeAsync(StateHasChanged);
+        }
+
+        additionalPrev = SharedContainer.Additional;
+    }
+
+    public async Task OpenEditInsertDialog(bool isInsert, UserDTO? userForEdit)
+    {
+        string labelName = isInsert ? "Add a new user" : "Edit a user";
+        var param = !isInsert && userForEdit != null ? Helper.CreateDialogBlazorComponentParameters("UserId", userForEdit.UserId) : Helper.CreateDialogBlazorComponentParameters();
+        var result = await DialogService.OpenAsync<UsersEditInsert>(labelName, param, Helper.GetDialogOptions("DialogLarge"));
+        if (result != null)
+        {
+            //add new
+            var user = (UserCredentialsDTO)result;
+
+            if (user.UserName == string.Empty)
+            {
+                Helper.NotifyError("Username must be defined!");
+                return;
+            }
+
+            int userIdChanged = 0;
+            if (!isInsert && userForEdit != null)
+                userIdChanged = userForEdit.UserId;
+            var insertResult = AuthRepo.Register(userIdChanged, user.UserName, user.Password, user.GroupId, user.logout, isInsert);
+            if (insertResult)
+            {
+                Helper.NotifySuccess();
+                LoadData();
+            }
+            else
+            {
+                Helper.NotifyError();
+            }
+        }
+
+    }
+
+    public async Task OpenDeleteDialog(UserDTO user)
+    {
+        var result = await DialogService.OpenAsync<ConfirmationDialog>
+            ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", $"{user.UserName}", "weight", 2),
+            Helper.GetDialogOptions("ConfirmationWrapper"));
+        if (result == true)
+        {
+            if (UsersRepository.DeleteUser(user))
+            {
+                Helper.NotifySuccess();
+                LoadData();
+            }
+            else
+                Helper.NotifyError();
+        }
+        else
+        {
+            Helper.NotifyWarning("Not deleted!");
+        }
+    }
+}
