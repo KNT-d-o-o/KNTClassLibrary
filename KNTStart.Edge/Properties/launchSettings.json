@@ -2,7 +2,7 @@
   "profiles": {
     "KNTStart.Edge": {
       "commandName": "Project",
-      "commandLineArgs": "5005"
+      "commandLineArgs": "5015"
     }
   }
 }

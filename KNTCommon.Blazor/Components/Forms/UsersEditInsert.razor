@@ -90,14 +90,26 @@
 
             if (User != null && User.UserName != null && User.PasswordHash != null && User.InitializationVector != null)
             {
-                var password = Encryption.Decrypt(User.PasswordHash, User.InitializationVector).GetAwaiter().GetResult();
+                if (User.PasswordHash.Length == 16 && User.InitializationVector.Length == 16)
+                {
+                    var password = Encryption.Decrypt(User.PasswordHash, User.InitializationVector).GetAwaiter().GetResult();
 
-                UserCreds = new UserCredentialsDTO
-                    {
-                        UserName = User.UserName,
-                        Password = password,
-                        logout = User.logout
-                    };
+                    UserCreds = new UserCredentialsDTO
+                        {
+                            UserName = User.UserName,
+                            Password = password,
+                            logout = User.logout
+                        };
+                }
+                else // not defined password yet
+                {
+                    UserCreds = new UserCredentialsDTO
+                        {
+                            UserName = User.UserName,
+                            logout = User.logout
+                        };
+    
+                }
             }
         }
         else
