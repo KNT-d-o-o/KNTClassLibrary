@@ -24,18 +24,13 @@ namespace KNTLeakTester.Edge
                 Console.WriteLine(DateTime.Now + $" start web server, Port {port}.");
             }
 
-            string logFolderPath = "C:/PUBLISH/Log";
+            string logFolderPath = string.Empty;
 
             if (port == "5005")
-                logFolderPath = "C:/KntLeakTester/PUBLISH/Log";
-            else if (port == "5015")
-                logFolderPath = "C:/Programs/PUBLISH-SMM/Log";
-//fstaaaaa #if DEBUG
-//            if (port == "5005")
-  //              logFolderPath = "D:/RAZVOJ/PUBLISH/Log";
-    //        else if(port == "5015")
-      //          logFolderPath = "D:/RAZVOJ/PUBLISH-SMM/Log";
-//#endif
+                logFolderPath = "C:/KntLeakTester/Log";
+            else if(port == "5015")
+                logFolderPath = "D:/RAZVOJ/PUBLISH-SMM/Log";
+
             if (!Directory.Exists(logFolderPath))
             {
                 Directory.CreateDirectory(logFolderPath);
