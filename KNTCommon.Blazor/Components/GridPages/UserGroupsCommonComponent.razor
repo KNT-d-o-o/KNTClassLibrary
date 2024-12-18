@@ -1,12 +1,12 @@
 ﻿@inject IUsersAndGroupsRepository UsersRepository
 @inject HelperService Helper
 @inject DialogService DialogService
-@inject SharedContainerCommon SharedContainer
+@inject SharedContainerCommon SharedContainerCommon
 
 @* UserGroupsCommonComponent *@
 
 <div class="Animation">
-    <RadzenDataGrid Data="Groups" TItem="UserGroupDTO" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true" AllowFiltering="@SharedContainer.Additional"
+    <RadzenDataGrid Data="Groups" TItem="UserGroupDTO" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true" AllowFiltering="@SharedContainerCommon.Additional"
                     AllowSorting="true" AllowColumnResize="true" PageSize="@pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
         <Columns>
             <RadzenDataGridColumn TItem="UserGroupDTO" Property="GroupName" Title="Name">
@@ -65,9 +65,9 @@
     bool additionalPrev = false;
     private void Tick(object? _)
     {
-        if (SharedContainer.Additional != additionalPrev)
+        if (SharedContainerCommon.Additional != additionalPrev)
         {
-            if (SharedContainer.Additional)
+            if (SharedContainerCommon.Additional)
             {
                 pageSize = 4;
                 ApplyUserFilter();
@@ -80,7 +80,7 @@
             InvokeAsync(StateHasChanged);
         }
 
-        additionalPrev = SharedContainer.Additional;
+        additionalPrev = SharedContainerCommon.Additional;
     }
 
     private void LoadUserData()

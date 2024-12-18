@@ -36,7 +36,7 @@ namespace KNTCommon.Data.Models
             string password = PasswordManager.DecryptPassword(encryptedPassword);
             optionsBuilder.UseMySQL($"server=localhost;database=edn_knt_machinemanagement;user=KNT;password={password}");
 
-            //fstaaaaa optionsBuilder.UseMySQL($"server=192.168.240.170;database=edn_knt_machinemanagement;user=KNT;password={password}"); // remote
+            //fsta DB optionsBuilder.UseMySQL($"server=192.168.240.170;database=edn_knt_machinemanagement;user=KNT;password={password}"); // remote
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
