@@ -63,13 +63,15 @@ namespace KNTCommon.Blazor
 
         private ClaimsIdentity CreateClaimIdentity(UserDTO creds)
         {
-            var identity = new ClaimsIdentity(
-            [
-                new Claim(ClaimTypes.Name, creds.UserName),
-                new Claim(ClaimTypes.Role, Convert.ToString(creds.GroupId)),
-            ], "login");
+            {
+                var identity = new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.Name, creds.UserName ?? string.Empty),
+                    new Claim(ClaimTypes.Role, Convert.ToString(creds.GroupId ?? 0)),
+                ], "login");
 
-            return identity;
+                return identity;
+            }
         }
     }
 }
