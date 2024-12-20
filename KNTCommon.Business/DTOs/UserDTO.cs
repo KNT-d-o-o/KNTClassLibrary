@@ -22,20 +22,7 @@ namespace KNTCommon.Business.DTOs
         public int? GroupId { get; set; }
 
         public List<UserGroupDTO>? UserGroup { get; set; }
-        public List<UsersRelationsMapDTO>? UsersRelationsMaps { get; set; }
         public List<ControlGroupDTO>? ControlGroup { get; set; }
-    }
-
-    public class UsersRelationsMapDTO
-    {
-        public int UserRelationsMapId { get; set; }
-
-        public int? UserId { get; set; }
-
-        public int? GroupId { get; set; }
-
-        public int? ControlGroupId { get; set; }
-
     }
 
     public class ControlGroupDTO
