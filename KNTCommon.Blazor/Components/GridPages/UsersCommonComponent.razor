@@ -2,12 +2,12 @@
 @inject DialogService DialogService
 @inject IUsersAndGroupsRepository UsersRepository
 @inject IAuthenticationRepository AuthRepo
-@inject SharedContainerCommon SharedContainer
+@inject SharedContainerCommon SharedContainerCommon
 
 @* UsersCommonComponent *@
 
 <div class="Animation">
-    <RadzenDataGrid Data="Users" TItem="UserDTO" AllowFiltering="@SharedContainer.Additional" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true"
+    <RadzenDataGrid Data="Users" TItem="UserDTO" AllowFiltering="@SharedContainerCommon.Additional" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true"
                     AllowSorting="true" AllowColumnResize="true" PageSize="@pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
         <Columns>
 
@@ -61,7 +61,7 @@
 
     protected override void OnInitialized()
     {
-        KNTCommon.Blazor.Services.SharedContainerCommon.actionTitle = "Users";
+        SharedContainerCommon.actionTitle = "Users";
         aTimer = new Timer(Tick, null, 0, 1000);
         LoadData();
         base.OnInitialized();
@@ -69,9 +69,9 @@
 
     private void LoadData()
     {
-        Users = UsersRepository.GetAllUsers();
+        Users = UsersRepository.GetAllUsers(SharedContainerCommon.LoggedPower);
         UsersReference = Users;
-        Groups = UsersRepository.GetAllGroups();
+        Groups = UsersRepository.GetAllGroups(SharedContainerCommon.LoggedPower);
         int i = 1;
         foreach (UserGroupDTO g in Groups)
             if (g.GroupName != null) {
@@ -133,9 +133,9 @@
     bool additionalPrev = false;
     private void Tick(object? _)
     {
-        if (SharedContainer.Additional != additionalPrev)
+        if (SharedContainerCommon.Additional != additionalPrev)
         {
-            if (SharedContainer.Additional)
+            if (SharedContainerCommon.Additional)
             {
                 pageSize = 4;
                 ApplyUserFilter();
@@ -148,7 +148,7 @@
             InvokeAsync(StateHasChanged);
         }
 
-        additionalPrev = SharedContainer.Additional;
+        additionalPrev = SharedContainerCommon.Additional;
     }
 
     public async Task OpenEditInsertDialog(bool isInsert, UserDTO? userForEdit)

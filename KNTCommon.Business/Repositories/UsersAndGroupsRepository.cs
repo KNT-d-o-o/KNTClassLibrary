@@ -26,14 +26,18 @@ namespace KNTCommon.Business.Repositories
             AutoMapper = automapper;
         }
 
-        public IEnumerable<UserDTO>? GetAllUsers()
+        public IEnumerable<UserDTO>? GetAllUsers(int pwr)
         {
             var ret = new List<UserDTO>();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    ret = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UserId != 0 || x.UserId != 1 || x.UserId != 2).ToList());
+                    // pwr = 0; //fsta TO INIT PASSWD
+                    if(pwr > 0)
+                        ret = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UserId != 0 && x.UserId != 1 && x.UserId != 2).ToList());
+                    else
+                        ret = AutoMapper.Map<List<UserDTO>>(context.Users.ToList());
                 }
             }
             catch (Exception ex)
@@ -41,6 +45,29 @@ namespace KNTCommon.Business.Repositories
                 t.LogEvent("KNTCommon.Business.Repositories.UsersAndGroupsRepository #1 " + ex.Message);
             }
             return ret; 
+        }
+
+        public IEnumerable<string>? GetAllUserNames()
+        {
+            var ret = new List<string>();
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    List<UserDTO> users = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UserId != 0 && x.UserId != 1 && x.UserId != 2).ToList());
+
+                    foreach (UserDTO u in users)
+                    {
+                        if(u.UserName != null)
+                            ret.Add(u.UserName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.UsersAndGroupsRepository #15 " + ex.Message);
+            }
+            return ret;
         }
 
         public IEnumerable<UserDTO>? GetAllUsersFromASingleGroup(int groupId)
@@ -140,20 +167,24 @@ namespace KNTCommon.Business.Repositories
             return user;
         }
 
-        public IEnumerable<UserGroupDTO> GetAllGroups()
+        public IEnumerable<UserGroupDTO> GetAllGroups(int pwr)
         {
-              var ret = new List<UserGroupDTO>();
-              try
-              {
-                  using (var context = new EdnKntControllerMysqlContext())
-                  {
-                      ret = AutoMapper.Map<List<UserGroupDTO>>(context.UserGroups.Where(x => x.GroupId != 0 && x.GroupId != 1 && x.GroupId != 2 && x.GroupId != 3));
-                  }
-              }
-              catch (Exception ex)
-              {
-                  t.LogEvent("KNTCommon.Business.Repositories.UsersAndGroupsRepository #6 " + ex.Message);
-              }
+            var ret = new List<UserGroupDTO>();
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    // pwr = 0; //fsta TO INIT PASSWD
+                    if (pwr > 0)
+                        ret = AutoMapper.Map<List<UserGroupDTO>>(context.UserGroups.Where(x => x.GroupId != 0 && x.GroupId != 1 && x.GroupId != 2 && x.GroupId != 3));
+                    else
+                        ret = AutoMapper.Map<List<UserGroupDTO>>(context.UserGroups);
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.UsersAndGroupsRepository #6 " + ex.Message);
+            }
               return ret;
         }
 
@@ -270,5 +301,6 @@ namespace KNTCommon.Business.Repositories
 
             return ret;
         }
+
     }
 }

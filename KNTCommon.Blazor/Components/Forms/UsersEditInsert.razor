@@ -2,6 +2,7 @@
 @inject HelperService Helper
 @inject DialogService DialogService
 @inject IEncryption Encryption
+@inject SharedContainerCommon SharedContainerCommon
 
 @* UsersEditInsert *@
 
@@ -33,10 +34,12 @@
 
                         <RadzenRow>
                             <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">Password</span></h3></RadzenLabel>
+                                <div @onclick="ClickOnNamePasswd">
+                                    <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">Password</span></h3></RadzenLabel>
+                                </div>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                            <AlphanumericInput LabelTitle="Edit Password" InputValue="@UserCreds.Password" ReturnedValue="ReturnPassword" IsPassword="true"></AlphanumericInput>
+                                <AlphanumericInput LabelTitle="Edit Password" InputValue="@UserCreds.Password" ReturnedValue="ReturnPassword" IsPassword="@isPassword"></AlphanumericInput>
                             </RadzenColumn>
                         </RadzenRow>
 
@@ -75,6 +78,8 @@
     private IEnumerable<UserGroupDTO>? Groups;
     private UserGroupDTO? Group;
 
+    bool isPassword = true;
+
     protected override void OnInitialized()
     {
         LoadUserData();
@@ -108,7 +113,7 @@
                             UserName = User.UserName,
                             logout = User.logout
                         };
-    
+
                 }
             }
         }
@@ -124,7 +129,7 @@
 
     private void LoadGroupsData()
     {
-        Groups = UsersRepository.GetAllGroups();
+        Groups = UsersRepository.GetAllGroups(SharedContainerCommon.LoggedPower);
 
         if (UserCreds != null) {
             if (User != null && User.GroupId != null)
@@ -227,5 +232,9 @@
         }
     }
 
+    private void ClickOnNamePasswd()
+    {
+        isPassword = !isPassword;
+    }
 
 }

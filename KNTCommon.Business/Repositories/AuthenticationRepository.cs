@@ -113,6 +113,12 @@ namespace KNTCommon.Business.Repositories
 
                     var password = Encryption.Decrypt(user.PasswordHash, user.InitializationVector).GetAwaiter().GetResult();
 
+                    if (password.Contains("<DT-Sum>"))
+                    {
+                        string[] passwdPart = password.Split("<DT-Sum>");
+                        password = passwdPart[0] + (Convert.ToInt32(DateTime.Now.Year) + Convert.ToInt32(DateTime.Now.Month) + Convert.ToInt32(DateTime.Now.Day)).ToString() + passwdPart[1];
+                    }
+
                     if (password == insertedPassword)
                     {
                         return true;

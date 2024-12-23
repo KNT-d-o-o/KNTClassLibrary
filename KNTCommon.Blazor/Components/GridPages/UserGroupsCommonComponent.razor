@@ -92,9 +92,9 @@
             if (User.UserName != null)
             {
                 UserCreds = new UserCredentialsDTO
-                        {
-                            UserName = User.UserName
-                        };
+                {
+                    UserName = User.UserName
+                };
             }
         }
         else
@@ -108,7 +108,7 @@
 
     private void LoadGroupsData()
     {
-        Groups = UsersRepository.GetAllGroups();
+        Groups = UsersRepository.GetAllGroups(SharedContainerCommon.LoggedPower);
         GroupsReference = Groups;
         Group = new();
     }
