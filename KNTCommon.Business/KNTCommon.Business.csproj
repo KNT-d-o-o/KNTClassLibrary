@@ -21,4 +21,13 @@
     <ProjectReference Include="..\KNTToolsAndAccessories\KNTToolsAndAccessories.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Scripts\RestartServer.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Scripts\ShutdownServer.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
