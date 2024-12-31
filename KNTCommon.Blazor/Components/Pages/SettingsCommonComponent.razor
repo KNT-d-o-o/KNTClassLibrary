@@ -1,4 +1,5 @@
-﻿@inject IParametersRepository Parameters
+﻿@using KNTCommon.Business.EventHandlers
+@inject IParametersRepository Parameters
 @inject HelperService Helper
 
 @* SettingsCommonComponent *@
@@ -17,36 +18,29 @@
 
             <RadzenRow id="RadzenRowMarginFormsSettingsLeft">
                 <RadzenColumn Size="3">
-                    <RadzenLabel class="labelEdit" Text="Date"></RadzenLabel>
+                    <RadzenLabel class="labelEdit" Text="Date and Time"></RadzenLabel>
                 </RadzenColumn>
-                <RadzenColumn Size="5">
-                    <AlphanumericInput></AlphanumericInput>
+                <RadzenColumn Size="7">
+                    <RadzenDatePicker class="custom-datepicker" @bind-Value="@selectedDate" ShowTime="true" HoursStep="1" MinutesStep="1" DateFormat="dd.MM.yyyy HH:mm" Change="OnDateChange" Inline="true" />
                 </RadzenColumn>
             </RadzenRow>
 
-            <RadzenRow id="RadzenRowMarginFormsSettingsLeft">
-                <RadzenColumn Size="3">
-                    <RadzenLabel class="labelEdit" Text="Clock"></RadzenLabel>
-                </RadzenColumn>
-                <RadzenColumn Size="5">
-                    <AlphanumericInput></AlphanumericInput>
-                </RadzenColumn>
-            </RadzenRow>
         </RadzenFieldset>
 
     </RadzenStack>
 </div>
 
 @code {
+    private DateTime selectedDate;
 
     protected override void OnInitialized()
     {
         LoadData();
-        base.OnInitialized();
     }
 
     public void LoadData()
     {
+        selectedDate = DateTime.Now;
         selectedLanguage = Convert.ToInt16(Parameters.GetParametersStr("activeLanguage"));
     }
 
@@ -65,5 +59,16 @@
         Helper.Notify(Parameters.UpdateParameters("activeLanguage", selectedLanguage.ToString()));
     }
 
+    private void OnDateChange(DateTime? value)
+    {
+        selectedDate = value ?? DateTime.Now;
+        selectedDate = new DateTime(selectedDate.Year, selectedDate.Month, selectedDate.Day, selectedDate.Hour, selectedDate.Minute, 0);
+
+        #if DEBUG
+        Console.WriteLine($"Novi datum: {selectedDate}");
+        #endif
+
+        PowerShellHelper.SetSystemTime(selectedDate);
+    }
 
 }
