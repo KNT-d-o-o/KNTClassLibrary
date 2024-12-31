@@ -25,10 +25,10 @@
                 </FilterTemplate>
                 <Template Context="GroupContext">
                     <div>
-                        <RadzenButton Click="() => OpenEditInsertDialog(GroupContext.GroupId)" class="RadzenGridContextButtons rz-ripple" Icon="groups" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker"></RadzenButton>
+                        <RadzenButton Click="() => OpenEditInsertDialog(GroupContext.GroupId)" class="RadzenGridContextButtons rz-ripple" Icon="groups" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" title="Group"></RadzenButton>
                         @if (GroupContext.GroupName != "Default")
                         {
-                            <RadzenButton Click="() => OpenDeleteDialog(GroupContext)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Darker" Style="margin-left:8px;"></RadzenButton>
+                            <RadzenButton Click="() => OpenDeleteDialog(GroupContext)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Darker" Style="margin-left:8px;" title="Delete"></RadzenButton>
                         }
                     </div>
                 </Template>

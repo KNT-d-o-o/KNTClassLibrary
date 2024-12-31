@@ -13,6 +13,9 @@ namespace KNTCommon.Business.AutoMapper
     {
         public MappingProfiles()
         {
+            CreateMap<Parameter, ParameterDTO>().ReverseMap();
+            CreateMap<ParameterDTO, Parameter>().ReverseMap();
+
             CreateMap<User, UserCredentialsDTO>().ReverseMap();
             CreateMap<UserCredentialsDTO, User>().ReverseMap();
 

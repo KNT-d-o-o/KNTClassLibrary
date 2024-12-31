@@ -16,6 +16,8 @@ namespace KNTCommon.Data.Models
         // fsta add DbSet here
 
 
+        public virtual DbSet<Parameter> Parameters { get; set; }
+
         public virtual DbSet<UserGroup> UserGroups { get; set; }
 
         public virtual DbSet<User> Users { get; set; }
@@ -42,6 +44,11 @@ namespace KNTCommon.Data.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Parameter>(entity =>
+            {
+                entity.HasKey(e => e.ParametersId);
+            });
 
             modelBuilder.Entity<UserGroup>(entity =>
             {

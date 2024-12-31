@@ -40,8 +40,8 @@
                 </FilterTemplate>
                 <Template Context="UserContext">
                     <div>
-                            <RadzenButton Click="() => OpenEditInsertDialog(false, UserContext)" class="RadzenGridContextButtons rz-ripple" Icon="edit" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker"></RadzenButton>
-                            <RadzenButton Click="() => OpenDeleteDialog(UserContext)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Darker"></RadzenButton>
+                        <RadzenButton Click="() => OpenEditInsertDialog(false, UserContext)" class="RadzenGridContextButtons rz-ripple" Icon="edit" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" title="Edit"></RadzenButton>
+                        <RadzenButton Click="() => OpenDeleteDialog(UserContext)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Darker" title="Delete"></RadzenButton>
                     </div>
                 </Template>
             </RadzenDataGridColumn>

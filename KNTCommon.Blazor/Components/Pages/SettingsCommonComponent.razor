@@ -1,4 +1,7 @@
-﻿@* SettingsCommonComponent *@
+﻿@inject IParametersRepository Parameters
+@inject HelperService Helper
+
+@* SettingsCommonComponent *@
 
 <div class="ScrollableOuterDiv Animation">
     <RadzenStack>
@@ -8,7 +11,7 @@
                     <RadzenLabel class="labelEdit" Text="Language"></RadzenLabel>
                 </RadzenColumn>
                 <RadzenColumn Size="5">
-                    <AlphanumericInput></AlphanumericInput>
+                    <RadzenDropDown class="OverviewDropdown" Data="@languages" TextProperty="Text" ValueProperty="Value" @bind-Value="selectedLanguage" Change="OnChangeLanguage"></RadzenDropDown>
                 </RadzenColumn>
             </RadzenRow>
 
@@ -35,5 +38,32 @@
 </div>
 
 @code {
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+        base.OnInitialized();
+    }
+
+    public void LoadData()
+    {
+        selectedLanguage = Convert.ToInt16(Parameters.GetParametersStr("activeLanguage"));
+    }
+
+    private short selectedLanguage = 1;
+    private List<Language> languages = new List<Language>
+    {
+        new Language { Text = "English", Value = 1 },
+        new Language { Text = "Slovene", Value = 2 },
+        new Language { Text = "German", Value = 3 },
+        new Language { Text = "Croatian", Value = 4 },
+        new Language { Text = "Serbian", Value = 5 }
+    };
+
+    private void OnChangeLanguage(object value)
+    {
+        Helper.Notify(Parameters.UpdateParameters("activeLanguage", selectedLanguage.ToString()));
+    }
+
 
 }
