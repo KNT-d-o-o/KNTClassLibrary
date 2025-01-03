@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MySql.EntityFrameworkCore;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace KNTCommon.Data.Models
 {
@@ -34,11 +36,25 @@ namespace KNTCommon.Data.Models
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var encryptedPassword = File.ReadAllText("password.txt");
-            string password = PasswordManager.DecryptPassword(encryptedPassword);
-            optionsBuilder.UseMySQL($"server=localhost;database={File.ReadAllText("dbstring.txt")};user=KNT;password={password}");
+            XmlDocument doc = new XmlDocument();
+            doc.Load("config.xml");
+            if (doc.DocumentElement != null)
+            {
+                string dbString = string.Empty, p = string.Empty;
+                XmlNode? node = doc.DocumentElement.SelectSingleNode("/config/dbstring");
+                if (node != null)
+                {
+                    dbString = node.InnerText;
+                }
+                node = doc.DocumentElement.SelectSingleNode("/config/p");
+                if (node != null)
+                {
+                    p = PasswordManager.DecryptPassword(node.InnerText);
+                }
+                optionsBuilder.UseMySQL($"server=localhost;database={dbString};user=KNT;password={p}");
 
-            //fsta DB optionsBuilder.UseMySQL($"server=192.168.240.170;database={File.ReadAllText("dbstring.txt")};user=KNT;password={password}"); // remote
+                //fsta DB optionsBuilder.UseMySQL($"server=192.168.240.170;database={dbString};user=KNT;password={p}");
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
