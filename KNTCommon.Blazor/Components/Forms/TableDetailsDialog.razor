@@ -1,0 +1,247 @@
+﻿@inject DialogService DialogService
+@inject ITablesRepository TablesRepository
+@inject KNTCommon.Blazor.Services.HelperService Helper
+
+@* TableDetailsDialog*@
+
+<div class="Animation">
+    <RadzenDataGrid TItem="Dictionary<string, object>" Data=@Data @ref="ordersGrid"
+                    AllowFiltering="true" FilterMode="FilterMode.Simple" AllowAlternatingRows="false"
+                    AllowSorting="true" AllowColumnResize="true" PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                    ColumnWidth="300px" EditMode="DataGridEditMode.Single" LogicalFilterOperator="LogicalFilterOperator.And" PageNumbersCount="10" style="height: 75vh"
+                    LoadData="@OnLoadData">
+        <Columns>
+            @if (ColumnNames != null)
+            {
+                foreach (var columnName in ColumnNames)
+                {
+                    <RadzenDataGridColumn TItem="Dictionary<string, object>"
+                                          Property="@columnName"
+                                          Title="@columnName">
+
+                        <Template Context="row">
+                            @if (row.ContainsKey(columnName))
+                            {
+                            var value = row[columnName];
+                            <p>@(value?.ToString())</p>
+                            }
+                        </Template> 
+
+                        <EditTemplate Context="row">
+                            @if (row.ContainsKey(columnName))
+                            {
+                                bool readOnly = false;
+                                if (ColumnPkNames != null && ColumnPkNames.Contains(columnName))
+                                    readOnly = true;
+                                string value = row[columnName]?.ToString() ?? string.Empty;
+                                <RadzenTextBox @bind-Value="value" Style="width: 100%;" ReadOnly="@(insertingRow == null && readOnly)"
+                                               Change="(args) => row[columnName] = args" />
+                            }
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                }
+            }
+
+            <RadzenDataGridColumn Sortable="false">
+                <FilterTemplate>
+                    <div class="Animation FixContainer">
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Light" Icon="refresh" Click="() => OnRefreshClick()" Size="ButtonSize.Large" title="Add"></RadzenButton>
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="() => AddNewRow(null)" Size="ButtonSize.Large" title="Add"></RadzenButton>
+                    </div>
+                </FilterTemplate>
+                <Template Context="row">
+                    <div>
+                        <RadzenButton Click="() => EditRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "close" : "edit")" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Edit"></RadzenButton>
+                        <RadzenButton Click="() => DeleteDbRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Delete"></RadzenButton>
+                        <RadzenButton Click="@((editingRow == row || insertingRow == row) ? () => UpdateDbRow(row) : () => AddNewRow(row))" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "save" : "library_add")" ButtonStyle="ButtonStyle.Success" Variant="Variant.Filled" Shade="Shade.Dark" Size="ButtonSize.Large" title="Copy"></RadzenButton>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Parameter]
+    public string? TableName { get; set; }
+
+    private IEnumerable<Dictionary<string, object>>? Data;
+    private List<string>? ColumnNames;
+    private List<string>? ColumnPkNames;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadData()
+    {
+        if (TableName != null)
+            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, new Dictionary<string, object>(), string.Empty);
+    }
+
+    private LoadDataArgs? lastLoadDataArgs;
+    private async Task OnLoadData(LoadDataArgs args)
+    {
+        lastLoadDataArgs = args;
+
+        Dictionary<string, object> filterArray = new();
+        foreach (FilterDescriptor filter in args.Filters)
+        {
+            filterArray.Add(filter.Property, filter.FilterValue);
+        }
+
+        if (TableName != null)
+            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, filterArray, args.OrderBy);
+    }
+
+    private async Task OnRefreshClick()
+    {
+        if (lastLoadDataArgs is null)
+            await LoadData();
+        else
+            await OnLoadData(lastLoadDataArgs);
+    }
+
+    Dictionary<string, object>? insertingRow;
+    private async Task AddNewRow(Dictionary<string, object>? row)
+    {
+        if (row != null)
+            originalRowValues = new Dictionary<string, object>(row);
+        else
+            originalRowValues = null;
+
+        row = new Dictionary<string, object>();
+
+        // check columns
+        if (ColumnNames != null && ColumnNames.Any())
+        {
+            foreach (var column in ColumnNames)
+            {
+                if (!row.ContainsKey(column)) // add keys
+                {
+                    row[column] = originalRowValues?.ContainsKey(column) == true
+                        ? originalRowValues[column]
+                        : string.Empty;
+                }
+            }
+        }
+
+        if (insertingRow == row)
+        {
+            insertingRow = null;
+        }
+        else
+        {
+            editingRow = null;
+            insertingRow = row;
+            await ordersGrid.InsertRow(row);
+        }
+    }
+
+    RadzenDataGrid<Dictionary<string, object>> ordersGrid = new();
+    Dictionary<string, object>? editingRow;
+    Dictionary<string, object>? originalRowValues;
+    // update data
+    async Task EditRow(Dictionary<string, object> row)
+    {
+        if (editingRow == row)
+        {
+            // cancel edit
+            await ordersGrid.UpdateRow(row);
+            editingRow = null;
+            originalRowValues = null;
+            if (lastLoadDataArgs is null)
+                await LoadData();
+            else
+                await OnLoadData(lastLoadDataArgs);
+        }
+        else
+        {
+            insertingRow = null;
+            originalRowValues = new Dictionary<string, object>(row);
+            editingRow = row; //current row
+            await ordersGrid.EditRow(row); // start edit
+        }
+    }
+
+    async Task UpdateDbRow(Dictionary<string, object> row)
+    {
+        if (editingRow == row)
+        {
+            // save changes
+            await ordersGrid.UpdateRow(row);
+            if (TableName != null)
+            {
+                bool ret = TablesRepository.UpdateTableRow(TableName, row, ColumnPkNames);
+                Helper.Notify(ret);
+
+                if (!ret)
+                {
+                    if (lastLoadDataArgs is null)
+                        await LoadData();
+                    else
+                        await OnLoadData(lastLoadDataArgs);
+                }
+            }
+            editingRow = null; // stop edit
+        }
+        else if (insertingRow == row)
+        {
+            // save new
+            await ordersGrid.UpdateRow(row);
+            if (TableName != null)
+            {
+                bool ret = TablesRepository.InsertTableRow(TableName, row);
+                Helper.Notify(ret);
+
+                if (!ret)
+                {
+                    if (lastLoadDataArgs is null)
+                        await LoadData();
+                    else
+                        await OnLoadData(lastLoadDataArgs);
+                }
+            }
+            insertingRow = null; // stop edit
+        }
+    }
+
+    // delete
+    async Task DeleteDbRow(Dictionary<string, object> row)
+    {
+        if (TableName != null)
+        {
+            string parStr = string.Empty;
+
+            if (ColumnPkNames != null)
+            {
+                int i = 0;
+                foreach (string pk in ColumnPkNames)
+                {
+                    if (i > 0)
+                        parStr += ",\n";
+                    parStr += pk + ": " + row[pk];
+                    i++;
+                }
+            }
+
+            var result = await DialogService.OpenAsync<ConfirmationDialog>
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", parStr, "weight", 2),
+                Helper.GetDialogOptions("ConfirmationWrapper"));
+            if (result == true)
+            {
+                bool ret = TablesRepository.DeleteTableRow(TableName, row, ColumnPkNames);
+                Helper.Notify(ret);
+
+                if (lastLoadDataArgs is null)
+                    await LoadData();
+                else
+                    await OnLoadData(lastLoadDataArgs);
+            }
+        }
+    }
+
+}

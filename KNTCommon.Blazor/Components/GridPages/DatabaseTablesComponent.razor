@@ -1,0 +1,49 @@
+﻿@inject DialogService DialogService
+@inject ITablesRepository TablesRepository
+@inject KNTCommon.Blazor.Services.HelperService Helper
+
+@* DatabaseTablesComponent *@
+
+<div class="Animation">
+    <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText="No tables found">
+        <Columns>
+            <RadzenDataGridColumn TItem="string" Property="." Title="Table Name">
+                <Template Context="table">
+                    <span @onclick="(() => OnCellClick(table))" style="cursor: pointer;">@table</span>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    private List<string> Tables { get; set; } = new();
+    private bool IsLoading { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        try
+        {
+            Tables = await TablesRepository.GetDatabaseTablesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Logiranje ali obravnava napak
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnCellClick(string tableName)
+    {
+        var param = Helper.CreateDialogBlazorComponentParameters("TableName", tableName);
+        var result = await DialogService.OpenAsync<TableDetailsDialog>($"Edit table: {tableName}", param, Helper.GetDialogOptions("MaxSizeWindow"));
+
+    }
+
+}
