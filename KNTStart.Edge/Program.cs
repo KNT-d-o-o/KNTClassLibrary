@@ -29,7 +29,7 @@ namespace KNTLeakTester.Edge
             if (port == "5005")
                 logFolderPath = "C:/KntLeakTester/Log";
             else if(port == "5015")
-                logFolderPath = "D:/RAZVOJ/PUBLISH-SMM/Log";
+                logFolderPath = "C:/Programs/PUBLISH-SMM/Log";
 
             if (!Directory.Exists(logFolderPath))
             {
