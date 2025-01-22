@@ -6,9 +6,9 @@
 
 @* UsersCommonComponent *@
 
-<div class="Animation">
+<div class="Animation OverflowY">
     <RadzenDataGrid Data="Users" TItem="UserDTO" AllowFiltering="@SharedContainerCommon.Additional" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true"
-                    AllowSorting="true" AllowColumnResize="true" PageSize="@pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
+                    AllowSorting="true" AllowColumnResize="true" PageSize="@SharedContainerCommon.pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
         <Columns>
 
             <RadzenDataGridColumn TItem="UserDTO" Property="UserName" Title="Username">
@@ -129,7 +129,6 @@
         }
     }
 
-    int pageSize = 5;
     bool additionalPrev = false;
     private void Tick(object? _)
     {
@@ -137,12 +136,10 @@
         {
             if (SharedContainerCommon.Additional)
             {
-                pageSize = 4;
                 ApplyUserFilter();
             }
             else
             {
-                pageSize = 5;
                 LoadData();
             }
             InvokeAsync(StateHasChanged);

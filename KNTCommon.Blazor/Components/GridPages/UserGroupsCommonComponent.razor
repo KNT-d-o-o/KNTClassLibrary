@@ -5,10 +5,10 @@
 
 @* UserGroupsCommonComponent *@
 
-<div class="Animation">
+<div class="Animation OverflowY">
     
     <RadzenDataGrid Data="Groups" TItem="UserGroupDTO" FilterMode="FilterMode.Simple" AllowAlternatingRows="true" ShowPagingSummary="true" AllowFiltering="@SharedContainerCommon.Additional"
-                    AllowSorting="true" AllowColumnResize="true" PageSize="@pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
+                    AllowSorting="true" AllowColumnResize="true" PageSize="@SharedContainerCommon.pageSize" PagerAlwaysVisible="true" AllowPaging="true" EditMode="DataGridEditMode.Single" GridLines="Radzen.DataGridGridLines.Both">
         <Columns>
             <RadzenDataGridColumn TItem="UserGroupDTO" Property="GroupName" Title="Name">
                 <FilterTemplate>
@@ -62,7 +62,6 @@
         base.OnInitialized();
     }
 
-    int pageSize = 5;
     bool additionalPrev = false;
     private void Tick(object? _)
     {
@@ -70,12 +69,10 @@
         {
             if (SharedContainerCommon.Additional)
             {
-                pageSize = 4;
                 ApplyUserFilter();
             }
             else
             {
-                pageSize = 5;
                 LoadGroupsData();
             }
             InvokeAsync(StateHasChanged);
