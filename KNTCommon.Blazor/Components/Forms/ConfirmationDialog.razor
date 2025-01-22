@@ -3,13 +3,13 @@
 @* ConfirmationDialog *@
 
 <div class="ConfirmationInner Animation">
-    <span>Confirm to @((action ?? string.Empty).ToLower())</span>
+    <span style="font-size:1.5rem;">Confirm to @((action ?? string.Empty).ToLower())</span>
     <br />
     <span style="font-size:2rem;">@details</span>
     <br />
     <br />
     <RadzenStack AlignItems="AlignItems.End">
-        <RadzenButton class="RadzenGridAddButtonForm rz-ripple" ButtonStyle="@bStyle" Click="() => ReturnResult(true)" style="color: black;">@action</RadzenButton>
+        <RadzenButton class="RadzenGridAddButtonForm rz-ripple" ButtonStyle="@bStyle" Click="() => ReturnResult(true)" style="color: black; width: 20vw;">@action</RadzenButton>
     </RadzenStack>
 </div>
 

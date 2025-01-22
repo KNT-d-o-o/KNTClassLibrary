@@ -4,9 +4,9 @@
 @* SettingsActionsComponent *@
 
 <div class="ScrollableOuterDiv Animation">
-    <RadzenButton Click='() => RestartServer(true)' Icon="restart_alt" class="MenuIcons rz-ripple" Size="ButtonSize.Large" ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined" title="Restart system"></RadzenButton>
+    <RadzenButton Click='() => RestartServer(true)' Icon="restart_alt" class="MenuIcons rz-ripple action-button" Size="ButtonSize.Large" ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined" Text="Restart system" title="Restart system"></RadzenButton>
 
-    <RadzenButton Click='() => RestartServer(false)' Icon="highlight_off" class="MenuIcons rz-ripple" Size="ButtonSize.Large" ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined" title="Stop system"></RadzenButton>
+    <RadzenButton Click='() => RestartServer(false)' Icon="highlight_off" class="MenuIcons rz-ripple action-button" Size="ButtonSize.Large" ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined" Text="Stop system" title="Stop system"></RadzenButton>
 </div>
 
 @code {
