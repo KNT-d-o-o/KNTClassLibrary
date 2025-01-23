@@ -46,16 +46,22 @@
     <None Update="Driver 128.0.2739.63\msedgedriver.exe">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="Driver 129.0.2792.79\msedgedriver.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Driver\msedgedriver.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="KNTLeakTester.Edge.lnk">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="KNTStartLT.Edge.lnk">
+    <None Update="KNTStartLeakTester.Edge.lnk">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="KNTStartSMM.Edge.lnk">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="readme.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
