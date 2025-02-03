@@ -34,27 +34,44 @@ namespace KNTCommon.Data.Models
 
         public virtual DbSet<S7net> S7nets { get; set; }
 
+        public virtual DbSet<IoTasks> IoTasks { get; set; }
+
+        public virtual DbSet<IoTaskDetails> IoTaskDetails { get; set; }
+
+        public virtual DbSet<Transactions> Transactions { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            string[] connStr = GetConnectionData(false);
+            optionsBuilder.UseMySQL($"server=localhost;database={connStr[0]};user=KNT;password={connStr[1]}");
+        }
+
+        public static string[] GetConnectionData(bool archive)
+        {
+            string[] connectionData = new string[2];
+
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string configPath = Path.Combine(basePath, "config.xml");
+
             XmlDocument doc = new XmlDocument();
-            doc.Load("config.xml");
+            doc.Load(configPath);
             if (doc.DocumentElement != null)
             {
-                string dbString = string.Empty, p = string.Empty;
                 XmlNode? node = doc.DocumentElement.SelectSingleNode("/config/dbstring");
+                if (archive)
+                    node = doc.DocumentElement.SelectSingleNode("/config/dbstring_archive");
+
                 if (node != null)
                 {
-                    dbString = node.InnerText;
+                    connectionData[0] = node.InnerText;
                 }
                 node = doc.DocumentElement.SelectSingleNode("/config/p");
                 if (node != null)
                 {
-                    p = PasswordManager.DecryptPassword(node.InnerText);
+                    connectionData[1] = PasswordManager.DecryptPassword(node.InnerText);
                 }
-                optionsBuilder.UseMySQL($"server=localhost;database={dbString};user=KNT;password={p}");
-
-                //fsta DB optionsBuilder.UseMySQL($"server=192.168.240.170;database={dbString};user=KNT;password={p}");
             }
+            return connectionData;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -174,6 +191,27 @@ namespace KNTCommon.Data.Models
 
                 entity.Property(e => e.InitializationVector).HasMaxLength(32);
                 entity.Property(e => e.PasswordHash).HasMaxLength(32);
+            });
+
+            modelBuilder.Entity<IoTasks>(entity =>
+            {
+                entity.HasKey(e => e.IoTaskId);
+
+                entity.ToTable("IoTasks");
+            });
+
+            modelBuilder.Entity<IoTaskDetails>(entity =>
+            {
+                entity.HasKey(e => e.IoTaskDetailId);
+
+                entity.ToTable("IoTaskDetails");
+            });
+
+            modelBuilder.Entity<Transactions>(entity =>
+            {
+                entity.HasKey(e => e.TransactionId);
+
+                entity.ToTable("Transactions");
             });
 
         }

@@ -1,17 +1,41 @@
 ﻿using KNTCommon.BusinessIO;
+using KNTCommon.Business.Repositories;
+using KNTCommon.BusinessIO.Repositories;
+using KNTCommon.BusinessIO.AutoMapper;
+using KNTCommon.Data.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 
 namespace KNTCommon.BusinessIO.Test
 {
     internal class Program
     {
-        private static readonly BusinessIOProcess proc = new();
-        private static readonly CancellationTokenSource cts = new();
-
         static async Task Main()
         {
+            var builder = Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddDbContextFactory<EdnKntControllerMysqlContext>(opt =>
+                        opt.UseMySQL("Server=.;Initial Catalog=EDN-KNTControllerMT;Trusted_Connection=True;TrustServerCertificate=True;"));
+                    services.AddDbContextFactory<EdnKntControllerMysqlContextArchive>(options =>
+                       options.UseMySQL("Server=.;Initial Catalog=EDN-KNTControllerMTArchive;Trusted_Connection=True;TrustServerCertificate=True;"));
+                    services.AddAutoMapper(typeof(MappingProfiles));
+                    services.AddScoped<IoTasksRepository>();
+                    services.AddScoped<ArchiveRepository>();
+                    services.AddScoped<ParametersRepository>();
+                    services.AddSingleton<BusinessIOProcess>();                
+                });
+            var host = builder.Build();
+
+            var proc = host.Services.GetRequiredService<BusinessIOProcess>();
+            using var cts = new CancellationTokenSource();
+
+
 #if DEBUG
             Console.WriteLine("Start KNTCommon.BusinessIO.Test application.");
 #endif
@@ -39,5 +63,7 @@ namespace KNTCommon.BusinessIO.Test
             Console.WriteLine("Exit KNTCommon.BusinessIO.Test application.");
 #endif
         }
+
+
     }
 }

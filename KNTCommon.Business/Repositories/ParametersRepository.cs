@@ -48,7 +48,7 @@ namespace KNTCommon.Business.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.Business.Repositories.ParametersRepository #1 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.ParametersRepository #1 " + ex.Message);
             }
 
             return ret;
@@ -56,21 +56,21 @@ namespace KNTCommon.Business.Repositories
 
         public string GetParametersStr(string key)
         {
-            string? ret = string.Empty;
+            string ret = string.Empty;
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    ret = context.Parameters.Where(x => x.ParName == key).First().ParValue;
+                    ret = context.Parameters.Where(x => x.ParName == key).First().ParValue ?? string.Empty;
                 }
+                if (ret is null)
+                    ret = string.Empty;
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.Business.Repositories.ParametersRepository #2 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.ParametersRepository #2 " + ex.Message);
             }
 
-            if (ret is null)
-                ret = string.Empty;
             return ret;
         }
 
@@ -96,7 +96,7 @@ namespace KNTCommon.Business.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.Business.Repositories.ParametersRepository #3 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.ParametersRepository #3 " + ex.Message);
                 return false;
             }
             return true;
