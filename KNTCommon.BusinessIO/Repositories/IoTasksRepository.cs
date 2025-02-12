@@ -17,11 +17,40 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Mysqlx.Crud;
 using MySqlX.XDevAPI.Common;
 using System.Transactions;
+using System.Globalization;
+using DocumentFormat.OpenXml.Vml.Office;
+using System.IO.Compression;
+using DocumentFormat.OpenXml.Office2021.DocumentTasks;
 
 namespace KNTCommon.BusinessIO.Repositories
 {
     public class IoTasksRepository
     {
+        /// <summary>
+        /// Tasks:
+        ///  Archive (iotasks.IoTaskType = 1)
+        ///  Restore (iotasks.IoTaskType = 2)
+        ///  Export to Excel (iotasks.IoTaskType = 3)
+        ///  DB Export Dump (iotasks.IoTaskType = 4)
+        /// Task mode:
+        ///  Cycling (iotasks.IoTaskMode = 1)
+        ///  On demand (iotasks.IoTaskMode = 2)
+        /// Priority:
+        ///  A lower value indicates priority execution.
+        /// iotasks.Par1:
+        ///  path to export file (types 3, 4)
+        ///  filepath + ' ' + zip means export to compressed zip (type 4)
+        /// iotasks.TimeCriteria (separator between: ';'):
+        ///  NextMonth: means time: <next-month yyyy-MM>-01 00:00:00
+        ///  Day: means exactly day yyyy-MM-<day> HH:mm:ss
+        ///  Time: means exactly time: yyyy-MM-dd <time HH:mm>:00
+        ///  AddDays: set previous time +AddDays
+        ///  AddHours: set previous time +AddHours
+        ///  AddMinutes: set previous time +AddMinutes
+        /// iotasks.ExecuteDateAndTime: next time to execute (+ iotasks.Status<100)
+        /// iotasks.Status: <= 100 to execute (+ iotasks.ExecuteDateAndTime < Now) 
+        /// </summary>
+
         private readonly IDbContextFactory<EdnKntControllerMysqlContext> Factory;
         private readonly IMapper AutoMapper;
         private readonly Tools t = new();
@@ -32,6 +61,7 @@ namespace KNTCommon.BusinessIO.Repositories
             AutoMapper = automapper;
         }
 
+        // get actual IO tasks: Priority > 0, Status < 0
         public IEnumerable<IoTasksDTO> GetIoTasks()
         {
             var ret = new List<IoTasksDTO>();
@@ -39,7 +69,7 @@ namespace KNTCommon.BusinessIO.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    ret = AutoMapper.Map<List<IoTasksDTO>>(context.IoTasks.Where(x => x.Priority > 0 && x.Status < 0).OrderBy(x => x.Priority));
+                    ret = AutoMapper.Map<List<IoTasksDTO>>(context.IoTasks.Where(x => x.Priority > 0).OrderBy(x => x.Priority));
                 }
             }
             catch (Exception ex)
@@ -50,6 +80,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return ret;
         }
 
+        // get IO tasks details except not existed table => Par5 = "none"
         public IEnumerable<IoTaskDetailsDTO> GetIoTaskDetails(int taskId)
         {
             var ret = new List<IoTaskDetailsDTO>();
@@ -57,14 +88,14 @@ namespace KNTCommon.BusinessIO.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId).OrderBy(x => x.TaskDetailOrder);
+                    var details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.Par5 != "none").OrderBy(x => x.TaskDetailOrder);
 
                     // set to none if not exists
                     foreach (IoTaskDetails t in details)
                     {
                         if (t.Par1 != null)
                         {
-                            if (!TableExists(t.Par1))
+                            if (!ArchiveRepository.TableExists(t.Par1))
                             {
                                 t.Par5 = "none";
                             }
@@ -81,22 +112,6 @@ namespace KNTCommon.BusinessIO.Repositories
             }
 
             return ret;
-        }
-
-        bool TableExists(string tableName)
-        {
-            try
-            {
-                using (var context = new EdnKntControllerMysqlContext())
-                {
-                    context.Database.ExecuteSqlRaw("SELECT 1 FROM " + tableName + " LIMIT 1");
-                    return true;
-                }
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         public bool IoTaskSetInfo(int taskId, string str)
@@ -152,6 +167,53 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     var task = context.IoTasks.Where(x => x.IoTaskId == taskId).FirstOrDefault();
+
+                    // set time depend of criteria
+                    if (task != null && task.TimeCriteria != null && task.TimeCriteria.Length > 0)
+                    {
+                        List<string> timeCriteria = task.TimeCriteria.Split(';').ToList();
+
+                        if (task.ExecuteDateAndTime is not null)
+                        {
+                            DateTime dateTimeTmp = (DateTime)task.ExecuteDateAndTime;
+
+                            foreach (string criteria in timeCriteria)
+                            {
+                                List<string> cArray = criteria.Split('=').ToList();
+                                switch (cArray[0])
+                                {
+                                    case "NextMonth":
+                                        dateTime = new DateTime(dateTimeTmp.Year, dateTimeTmp.Month, 1).AddMonths(1);
+                                        dateTimeTmp = dateTime;
+                                        break;
+                                    case "Day":
+                                        dateTime = new DateTime(dateTimeTmp.Year, dateTimeTmp.Month, Convert.ToInt32(cArray[1]),
+                                            dateTimeTmp.Hour, dateTimeTmp.Minute, dateTimeTmp.Second);
+                                        dateTimeTmp = dateTime;
+                                        break;
+                                    case "Time":
+                                        List<string> hhmm = cArray[1].Split(':').ToList();
+                                        dateTime = new DateTime(dateTimeTmp.Year, dateTimeTmp.Month, dateTimeTmp.Day,
+                                            Convert.ToInt32(hhmm[0]), Convert.ToInt32(hhmm[1]), dateTimeTmp.Second);
+                                        dateTimeTmp = dateTime;
+                                        break;
+                                    case "AddDays":
+                                        dateTime = dateTimeTmp.AddDays(Convert.ToInt32(cArray[1]));
+                                        dateTimeTmp = dateTime;
+                                        break;
+                                    case "AddHours":
+                                        dateTime = dateTimeTmp.AddHours(Convert.ToInt32(cArray[1]));
+                                        dateTimeTmp = dateTime;
+                                        break;
+                                    case "AddMinutes":
+                                        dateTime = dateTimeTmp.AddMinutes(Convert.ToInt32(cArray[1]));
+                                        dateTimeTmp = dateTime;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+
                     if (task != null)
                     {
                         task.ExecuteDateAndTime = dateTime;
@@ -164,6 +226,52 @@ namespace KNTCommon.BusinessIO.Repositories
                 t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #5 " + ex.Message);
             }
             return ret;
+        }
+
+        public bool IoTaskSetPar3(int taskId, int order, string val)
+        {
+            var ret = true;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var taskD = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.TaskDetailOrder == order).FirstOrDefault();
+                    if (taskD != null)
+                    {
+                        taskD.Par3 = val;
+                        context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #7 " + ex.Message);
+            }
+            return ret;
+        }
+
+
+        // move file to compressed zip
+        public bool CompressedFileToZip(string filePath)
+        {
+            string zipPath = filePath.Split('.')[0] + ".zip";
+
+            try
+            {
+                using (FileStream zipToCreate = new FileStream(zipPath, FileMode.Create))
+                {
+                    using (ZipArchive archive = new ZipArchive(zipToCreate, ZipArchiveMode.Create))
+                    {
+                        archive.CreateEntryFromFile(filePath, Path.GetFileName(filePath));
+                    }
+                }
+                File.Delete(filePath);
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #6 " + ex.Message);
+            }
+            return true;
         }
 
     }

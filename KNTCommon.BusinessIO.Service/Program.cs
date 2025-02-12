@@ -19,8 +19,7 @@ namespace KNTCommon.BusinessIO.Service
         {
             Console.WriteLine($"Starting service version {ServiceVersion}.");
 
-            //fstaaaaa to do test Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal; // set priority
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle; // set priority
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal; // set priority BelowNormal (lower)
 
             var host = Host.CreateDefaultBuilder(args)
                 .UseWindowsService() // enable Windows Service
@@ -31,7 +30,10 @@ namespace KNTCommon.BusinessIO.Service
                     services.AddDbContextFactory<EdnKntControllerMysqlContextArchive>(options =>
                        options.UseMySQL("Server=.;Initial Catalog=EDN-KNTControllerMTArchive;Trusted_Connection=True;TrustServerCertificate=True;"));
                     services.AddAutoMapper(typeof(MappingProfiles));
+                    services.AddScoped<IoTasksRepository>();
                     services.AddScoped<ArchiveRepository>();
+                    services.AddScoped<ExportRepository>();
+                    services.AddScoped<DumpRepository>();
                     services.AddScoped<ParametersRepository>();
                     services.AddSingleton<BusinessIOProcess>();
                     services.AddHostedService<BusinessIOService>();

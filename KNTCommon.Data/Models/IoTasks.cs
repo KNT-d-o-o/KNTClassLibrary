@@ -15,6 +15,10 @@ public partial class IoTasks
 
     public int Priority { get; set; }
 
+    public string? Par1 { get; set; }
+
+    public string? TimeCriteria { get; set; }
+
     public DateTime? ExecuteDateAndTime { get; set; }
 
     public int Status { get; set; }

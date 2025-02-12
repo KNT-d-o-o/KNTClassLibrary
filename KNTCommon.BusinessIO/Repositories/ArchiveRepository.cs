@@ -25,6 +25,18 @@ namespace KNTCommon.BusinessIO.Repositories
 {
     public class ArchiveRepository
     {
+        /// <summary>
+        /// Backup: iotasks.IoTaskType = 1, restore backup: iotasks.IoTaskType = 2
+        /// iotaskdetails.Par1: table to archive
+        /// iotaskdetails.Par2[0]: column condition for next tables (iotaskdetails.Par1[1..]) *1
+        /// iotaskdetails.Par2[1..]: where condition in string {transactionIdArrayStr}
+        /// iotaskdetails.Par3[0]: time condition to archive {dayBeforeStr}
+        /// iotaskdetails.Par3[1..]: join condition from first table (iotaskdetails.Par1[1]) *1 
+        /// iotaskdetails.Par4: Archived tag in table
+        /// iotaskdetails.Par5: copy or move to archive DB, delete from archive when restore
+        /// TableDetailOrder: order to archive
+        /// </summary>
+
         private readonly IDbContextFactory<EdnKntControllerMysqlContext> Factory;
         private readonly IMapper AutoMapper;
         private readonly Tools t = new();
@@ -148,6 +160,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return 0;
         }
 
+        // get data from any table
         private DataTable GetDataTable(string table, string whereCondition, string whereInt, int whereIntVal, string orderBy, bool orderByDesc, int noRows, DbContext contextIn)
         {
             DataTable dataTable = new DataTable();
@@ -187,13 +200,12 @@ namespace KNTCommon.BusinessIO.Repositories
                     {
                         adapter.Fill(dataTable);
                     }
-
                 }
             }
-
             return dataTable;
         }
 
+        // data from DataTable to list of strings
         private List<string> DataTableToListItems(DataTable dataTable, string column)
         {
             List<string> items = new();
@@ -206,6 +218,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return items;
         }
 
+        // insert from DataTable
         private bool InsertFromDataTable(string table, DataTable dataTable, DbContext contextIn)
         {
             using (var context = contextIn)
@@ -226,8 +239,6 @@ namespace KNTCommon.BusinessIO.Repositories
                                 {
                                     foreach (DataColumn column in dataTable.Columns)
                                     {
-                                //        Console.WriteLine("fstaaaaa I: " + insertCommand.CommandText);
-
                                         insertCommand.Parameters.AddWithValue("@" + column.ColumnName, row[column.ColumnName]);
                                     }
                                     insertCommand.ExecuteNonQuery();
@@ -246,6 +257,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return true;
         }
 
+        // update in table WHERE IN (...) condition
         private bool UpdateWhereInItems(string table, string column, string value, string whereColumn, List<string> whereItems, DbContext contextIn)
         {
             using (var context = contextIn)
@@ -262,8 +274,6 @@ namespace KNTCommon.BusinessIO.Repositories
                             string updateQuery = $"UPDATE {table} SET {column} = {value} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
                             using (MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection))
                             {
-                          //      Console.WriteLine("fstaaaaa U: " + updateCommand.CommandText);
-
                                 updateCommand.ExecuteNonQuery();
                             }
                             transaction.Commit();
@@ -279,6 +289,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return true;
         }
 
+        // delete in table WHERE IN (...) condition
         private bool DeleteWhereInItems(string table, string whereColumn, List<string> whereItems, DbContext contextIn)
         {
             using (var context = contextIn)
@@ -295,8 +306,6 @@ namespace KNTCommon.BusinessIO.Repositories
                             string deleteQuery = $"DELETE FROM {table} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
                             using (MySqlCommand deleteCommand = new MySqlCommand(deleteQuery, connection))
                             {
-                       //         Console.WriteLine("fstaaaaa D: " + deleteCommand.CommandText);
-
                                 deleteCommand.ExecuteNonQuery();
                             }
                             transaction.Commit();
@@ -312,6 +321,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return true;
         }
 
+        // count records in table with WHERE condition
         public int CountRecordsBeforeArchiveRestore(string tableName, string whereCondition, string archivedFlag, bool restore)
         { 
             int count = 0;
@@ -361,7 +371,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return count;
         }
 
-
+        // create archive database if not exists
         public bool CheckOrCreateArchiveDb(out string? err)
         {
             err = string.Empty;
@@ -398,6 +408,7 @@ namespace KNTCommon.BusinessIO.Repositories
             return ret;
         }
 
+        // create archive tables if not exists
         public bool CheckOrCreateArchiveTables(List<string> arcTables, out string? err)
         {
             err = string.Empty;
@@ -446,6 +457,23 @@ namespace KNTCommon.BusinessIO.Repositories
             }
 
             return ret;
+        }
+
+        // check if table exists
+        public static bool TableExists(string tableName)
+        {
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    context.Database.ExecuteSqlRaw("SELECT 1 FROM " + tableName + " LIMIT 1");
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
     }

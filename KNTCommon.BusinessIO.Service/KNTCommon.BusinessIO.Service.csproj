@@ -18,11 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\config.xml" />
+    <ProjectReference Include="..\KNTCommon.BusinessIO\KNTCommon.BusinessIO.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KNTCommon.BusinessIO\KNTCommon.BusinessIO.csproj" />
+    <None Update="config.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="CopyConfig" AfterTargets="Build">

@@ -43,12 +43,13 @@ namespace KNTCommon.Data.Models
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string[] connStr = GetConnectionData(false);
-            optionsBuilder.UseMySQL($"server=localhost;database={connStr[0]};user=KNT;password={connStr[1]}");
+            optionsBuilder.UseMySQL($"server={connStr[2]};database={connStr[0]};user=KNT;password={connStr[1]}");
         }
 
+        // get connection string data
         public static string[] GetConnectionData(bool archive)
         {
-            string[] connectionData = new string[2];
+            string[] connectionData = new string[3];
 
             string basePath = AppDomain.CurrentDomain.BaseDirectory;
             string configPath = Path.Combine(basePath, "config.xml");
@@ -70,6 +71,12 @@ namespace KNTCommon.Data.Models
                 {
                     connectionData[1] = PasswordManager.DecryptPassword(node.InnerText);
                 }
+                node = doc.DocumentElement.SelectSingleNode("/config/dbserver");
+                if (node != null)
+                {
+                    connectionData[2] = node.InnerText;
+                }
+
             }
             return connectionData;
         }

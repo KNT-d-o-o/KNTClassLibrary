@@ -27,6 +27,8 @@ namespace KNTCommon.BusinessIO.Test
                     services.AddAutoMapper(typeof(MappingProfiles));
                     services.AddScoped<IoTasksRepository>();
                     services.AddScoped<ArchiveRepository>();
+                    services.AddScoped<ExportRepository>();
+                    services.AddScoped<DumpRepository>();
                     services.AddScoped<ParametersRepository>();
                     services.AddSingleton<BusinessIOProcess>();                
                 });

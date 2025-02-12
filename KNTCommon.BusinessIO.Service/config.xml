@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+	<dbserver>localhost</dbserver>
+	<dbstring>edn_knt_machinemanagement</dbstring>
+	<dbstring_archive>edn_knt_machinemanagement_archive</dbstring_archive>
+	<p>QY2CkemGZEqdSeZtGHV4ZA==</p>
+</config>

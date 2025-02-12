@@ -21,10 +21,6 @@
     <ProjectReference Include="..\KNTCommon.BusinessIO\KNTCommon.BusinessIO.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="..\config.xml" />
-  </ItemGroup>
-
   <Target Name="CopyConfig" AfterTargets="Build">
     <Copy SourceFiles="$(SolutionDir)config.xml" DestinationFolder="$(OutDir)" OverwriteReadOnlyFiles="true" />
   </Target>
