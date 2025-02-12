@@ -19,7 +19,6 @@
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageReference Include="BootstrapIcons.AspNetCore" Version="1.11.0" />
-    <PackageReference Include="ChartJs.Blazor.Fork" Version="2.0.2" />
     <PackageReference Include="GrpcStateServiceProvider" Version="1.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Connections.Client" Version="8.0.8" />

@@ -1,9 +1,16 @@
 ﻿@* @page "/Value/{Value}" *@
 @inject DialogService dialogService
+@inject IJSRuntime JSRuntime
+
 
 <div class="alphanumericKeyboardWrapper Animation">
-    <RadzenTextBox id="RadzenTextboxANDialog" Value="@Value" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox>
-    <br />
+    @* <RadzenTextBox id="RadzenTextboxANDialog" Value="@Value" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox> *@
+    <RadzenTextBox id="RadzenTextboxANDialog"
+                   type="@(IsPassword == null || IsPassword == false ? "text" : "password")"
+                   @bind-Value="@Value"
+                   @onblur="@(async () => await GetCursorIndexAsync())">
+    </RadzenTextBox>
+    <br /> 
     <div style="height:10px" />
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
         <div class="alphanumericKeyboard">
@@ -19,7 +26,11 @@
                     <td><button id="8" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn8))'>@btn8</button></td>
                     <td><button id="9" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn9))'>@btn9</button></td>
                     <td><button id="0" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btn0))'>@btn0</button></td>
-                    <td colspan="2"><button id="Backspace" style="width:10.2vw;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Backspace"))'><RadzenIcon Icon="west" IconColor="@Colors.Warning"></RadzenIcon></button></td>
+                    <td colspan="2">
+                        <button id="Backspace" style="margin-left:0px; width:10.2vw; display: flex; justify-content: center; align-items: center;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Backspace"))'>
+                            <RadzenIcon Style="font-size:3vw;" Icon="west" IconColor="@Colors.Warning"></RadzenIcon>
+                        </button>
+                    </td>
                 </tr>
                 <tr>
                     <td><button id="q" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnQ))'>@btnQ</button></td>
@@ -47,10 +58,10 @@
                     <td><button id="k" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnK))'>@btnK</button></td>
                     <td><button id="l" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnL))'>@btnL</button></td>
                     <td><button id="semicolon" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnBackslash))'>@btnBackslash</button></td>
-                    <td colspan="2"><button id="Enter" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Enter"))'><span style="color:rgb(60, 180, 0);n;">Enter</span></button></td>
+                    <td colspan="2"><button id="Enter" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Enter"))'><span style="color:rgb(60, 180, 0);">Enter</span></button></td>
                 </tr>
                 <tr>
-                    <td><button id="Shift" style="background-color:@bgcolorShift;font-size:2vw;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Shift"))'>Shift</button></td>
+                    <td><button id="Shift" style="background-color:@bgcolorShift; font-size:2vw;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Shift"))'>Shift</button></td>
                     <td><button id="z" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnZ))'>@btnZ</button></td>
                     <td><button id="x" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnX))'>@btnX</button></td>
                     <td><button id="c" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnC))'>@btnC</button></td>
@@ -61,7 +72,7 @@
                     <td><button id="comma" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnComma))'>@btnComma</button></td>
                     <td><button id="dot" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnDot))'>@btnDot</button></td>
                     <td><button id="slash" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnMinus))'>@btnMinus</button></td>
-                    <td><button id="plus" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnPlus))'>@btnPlus</button></td>                  
+                    <td><button id="plus" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnPlus))'>@btnPlus</button></td>
                 </tr>
                 <tr>
                     <td></td>
@@ -84,7 +95,11 @@
                     <td colspan="4"><button id="space" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("space"))'>space</button></td>
                     <td><button id="dot" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnApnea))'>@btnApnea</button></td>
                     <td><button id="equal2" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue(btnTilde))'>@btnTilde</button></td>
-                    <td><button id="Clear" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Clear"))'><RadzenIcon Icon="close" IconColor="@Colors.Danger"></RadzenIcon></button></td>
+                    <td>
+                        <button id="Clear" style="margin-left:0px; display: flex; justify-content: center; align-items: center;" class="keyboardButton rz-ripple" @onclick='(() => GetButtonValue("Clear"))'>
+                            <RadzenIcon Style="font-size:3vw" Icon="close" IconColor="@Colors.Danger"></RadzenIcon>
+                        </button>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -92,6 +107,7 @@
 </div>
 
 @code {
+
     [Parameter]
     public string? InputValue { get; set; }
 
@@ -99,6 +115,7 @@
     public bool? IsPassword { get; set; }
 
     string? Value;
+    int? cursorIndex = 0;
 
     string bgcolorShift { get; set; } = Colors.Black; // (starting value)
     string bgcolorCL { get; set; } = Colors.Black; // (starting value)
@@ -167,12 +184,12 @@
         }
     }
 
-    protected void SearchInputKeyDown(KeyboardEventArgs args)
+    private async Task GetCursorIndexAsync()
     {
-        GetButtonValue(args.Key);
+        cursorIndex = await JSRuntime.InvokeAsync<int>("getCaretPosition", "RadzenTextboxANDialog");
     }
 
-    private void GetButtonValue(string input)
+    private async void GetButtonValue(string input)
     {
         if (input == "Enter")
         {
@@ -206,7 +223,19 @@
 
         if (input != null)
         {
-            Value = KeyboardUtilities.ParseKeyboardInputForAlphanumericKeyboard(input, Value);
+            int strLen = Value.Length;
+
+            await Task.Delay(50); // Wait for the onblur event of the textbox to finish
+            Value = KeyboardUtilities.ParseKeyboardInputForAlphanumericKeyboard(input, Value, cursorIndex);
+            int strLenDiff = Value.Length - strLen;
+            if (strLenDiff >= 0 || (strLenDiff < 0 && cursorIndex >= (strLenDiff * -1)))
+            {
+                cursorIndex += strLenDiff;
+            }
+            else
+            {
+                cursorIndex = 0;
+            }
         }
         else
         {
@@ -224,6 +253,8 @@
             SetButtonsTitlesSign(false);
 
         StateHasChanged();
+
+        await JSRuntime.InvokeVoidAsync("setFocusAndCursor", "RadzenTextboxANDialog", cursorIndex);
     }
 
 

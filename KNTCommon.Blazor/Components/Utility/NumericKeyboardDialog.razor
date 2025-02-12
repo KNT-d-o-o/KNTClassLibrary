@@ -1,8 +1,12 @@
 ﻿@inject DialogService dialogService
+@inject IJSRuntime JSRuntime
 
 <div class="numericKeyboardWrapper Animation">
   @*  <RadzenTextBox id="RadzenTextboxNDialog" Value="@Value" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox> *@
-    <RadzenTextBox id="RadzenTextboxNDialog" Value="@Value" @onkeydown="SearchInputKeyDown"></RadzenTextBox>
+    <RadzenTextBox id="RadzenTextboxNDialog"
+                   @bind-Value="@Value"
+                   @onblur="@(async () => await GetCursorIndexAsync())">
+    </RadzenTextBox>
     <br />
     <br />
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
@@ -44,6 +48,7 @@
     public string? LabelValue { get; set; }
 
     private string? Value { get; set; } = string.Empty;
+    int? cursorIndex = 0;
 
     protected override void OnInitialized()
     {
@@ -53,13 +58,13 @@
         }
     }
 
-    private void SearchInputKeyDown(KeyboardEventArgs args)
+    private async Task GetCursorIndexAsync()
     {
-        GetButtonValue(args.Key);
+        cursorIndex = await JSRuntime.InvokeAsync<int>("getCaretPosition", "RadzenTextboxNDialog");
     }
 
     string? valPrev = string.Empty;
-    private void GetButtonValue(string input)
+    private async void GetButtonValue(string input)
     {
         if (input == "Enter")
         {
@@ -67,13 +72,17 @@
         }
         if (input != null)
         {
-            Value = KeyboardUtilities.ParseKeyboardInputForNumericKeyboard(input, Value);
+            Value = KeyboardUtilities.ParseKeyboardInputForNumericKeyboard(input, Value, cursorIndex);
         }
         else
         {
             //error?
         }
         valPrev = Value;
+
+        StateHasChanged();
+
+        await JSRuntime.InvokeVoidAsync("setFocusAndCursor", "RadzenTextboxANDialog", cursorIndex);
     }
 
 }
