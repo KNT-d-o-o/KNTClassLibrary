@@ -8,6 +8,7 @@ using KNTCommon.BusinessIO.DTOs;
 using KNTCommon.Data.Models;
 using Microsoft.Extensions.DependencyInjection;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2022.M08.Main;
+using Microsoft.VisualBasic;
 
 namespace KNTCommon.BusinessIO
 {
@@ -44,8 +45,9 @@ namespace KNTCommon.BusinessIO
 #if DEBUG
                 Console.WriteLine("BusinessIOProcess OnStart.");
 #endif
+                if(ioTasksRepository != null)
+                    ioTasksRepository.IoTaskSetInfo(0, "BusinessIOProcess OnStart.", Const.INFO);
 
-                // Simulacija začetne logike
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await OnElapsedTimeAsync();
@@ -56,7 +58,9 @@ namespace KNTCommon.BusinessIO
             }
             else
             {
+#if DEBUG
                 Console.WriteLine("BusinessIoInit fault.");
+#endif
                 OnStop();
                 return false;
             }
@@ -85,12 +89,13 @@ namespace KNTCommon.BusinessIO
             }
             if (!ret)
             {
-                ioTasksRepository.IoTaskSetInfo(TASKID_ARCHIVE, error ?? string.Empty);
+                ioTasksRepository.IoTaskSetInfo(TASKID_ARCHIVE, error ?? string.Empty, Const.ERROR);
             }
 
             return ret;
         }
 
+        int statusPrev = 0;
         public async Task OnElapsedTimeAsync()
         {
             if (procBusy) return;
@@ -142,10 +147,22 @@ namespace KNTCommon.BusinessIO
                                 {
                                     if (ioTask.IoTaskMode == 1) // cycling
                                     {
-                                        if (ioTask.Status < 0)
-                                            ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Remaining minutes: " + Math.Round(((TimeSpan)(ioTask.ExecuteDateAndTime - DateTime.Now)).TotalMinutes).ToString());
-                                        else if (ioTask.Status >= 100)
-                                            ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Disabled, " + DateTime.Now.ToString());
+                                        if (ioTask.Status < 0) // minutes to next
+                                        {
+                                            int minutesTo = -(int)Math.Round(((TimeSpan)(ioTask.ExecuteDateAndTime - DateTime.Now)).TotalMinutes);
+
+                                            if (minutesTo != statusPrev)
+                                            {
+                                                ioTasksRepository.IoTaskSetStatus(ioTask.IoTaskId, minutesTo);
+                                                ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Remaining minutes: " + minutesTo.ToString(), Const.NONE);
+                                                statusPrev = minutesTo;
+                                            }
+                                        }
+                                        else if (ioTask.Status >= 100 && ioTask.Status != statusPrev) // disable manual
+                                        {
+                                            ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Disabled, " + DateTime.Now.ToString(), Const.WARNING);
+                                            statusPrev = ioTask.Status;
+                                        }
                                     }
                                 }
                             }
@@ -170,6 +187,8 @@ namespace KNTCommon.BusinessIO
 #if DEBUG
                 Console.WriteLine("BusinessIOProcess OnStop.");
 #endif
+                if (ioTasksRepository != null)
+                    ioTasksRepository.IoTaskSetInfo(0, "BusinessIOProcess OnStop.", Const.INFO);
             }
             catch (Exception ex)
             {
@@ -208,7 +227,7 @@ namespace KNTCommon.BusinessIO
                         if (noToArchive > 0)
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Archiving...");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Archiving...", Const.INFO);
                         }
                     }
 
@@ -224,7 +243,7 @@ namespace KNTCommon.BusinessIO
                             noArchived += stepArchived;
                             int percentDone = noArchived * 100 / noToArchive;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
                         }
                         else
                         {
@@ -233,7 +252,7 @@ namespace KNTCommon.BusinessIO
                                 archiveRepository.OptimizeTable(AllTables[tableOptimizedIdx]);
                                 int percentDone = (tableOptimizedIdx + 1) * 100 / AllTables.Count;
                                 ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Optimized: {percentDone}%");
+                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Optimized: {percentDone}%", Const.NONE);
                                 tableOptimizedIdx++;
                                 if (tableOptimizedIdx == AllTables.Count)
                                 {
@@ -244,7 +263,7 @@ namespace KNTCommon.BusinessIO
                             else // end archiving
                             {
                                 ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}");
+                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
                                 if (task.IoTaskMode == 1) // periodic
                                 {
                                     ioTasksRepository.IoTaskSetExecuteDateAndTime(task.IoTaskId, DateTime.Now);
@@ -295,7 +314,7 @@ namespace KNTCommon.BusinessIO
                         if (noToRestore > 0)
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Restoring...");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Restoring...", Const.INFO);
                         }
                     }
 
@@ -311,13 +330,13 @@ namespace KNTCommon.BusinessIO
                             noRestored += stepRestored;
                             int percentDone = noRestored * 100 / noToRestore;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
                         }
                         else // end restoring
                         {
                             noToRestore = 0;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
                         }
                     }
                 }
@@ -357,7 +376,7 @@ namespace KNTCommon.BusinessIO
                             whereConditionE += ($" AND {nextDateTimeConditionE.Replace(">", "<")}");
 
                         ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);
-                        ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Exporting...");
+                        ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Exporting...", Const.INFO);
                     }
                 }
                 else
@@ -376,10 +395,7 @@ namespace KNTCommon.BusinessIO
 
                         if (!exportRepository.ExportExcel(tableName, whereConditionE ?? string.Empty, order, filePathXls ?? "C:/tmp.xlsx", altData, out errStr))
                         {
-                            ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 999);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}");
-                            noToExport = 0;
-                            return;
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
                         }
 
                         if (stepExport + 1 < noToExport)
@@ -387,12 +403,12 @@ namespace KNTCommon.BusinessIO
                             stepExport++;
                             int percentDone = stepExport * 100 / noToExport;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
                         }
                         else // end exporting
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
                             if (task.IoTaskMode == 1) // periodic
                             {
                                 // set next datetime condition
@@ -476,7 +492,7 @@ namespace KNTCommon.BusinessIO
                     if (noToDump > 0)
                     {
                         ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);
-                        ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Dumping...");
+                        ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Dumping...", Const.INFO);
                     }
                 }
                 else
@@ -496,10 +512,7 @@ namespace KNTCommon.BusinessIO
 
                         if (!dumpRepository.DumpTable(tableName, whereCondition, whereColumn, filePathDump ?? "C/:tmp.sql", out errStr))
                         {
-                            ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 999);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}");
-                            noToDump = 0;
-                            return;
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
                         }
 
                         if (stepDump + 1 < noToDump)
@@ -507,7 +520,7 @@ namespace KNTCommon.BusinessIO
                             stepDump++;
                             int percentDone = stepDump * 100 / noToDump;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
                         }
                         else // end exporting
                         {
@@ -516,7 +529,7 @@ namespace KNTCommon.BusinessIO
 
                             noToDump = 0;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}");
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
                         }
                     }
                 }

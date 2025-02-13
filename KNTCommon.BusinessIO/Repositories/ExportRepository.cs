@@ -80,7 +80,7 @@ namespace KNTCommon.BusinessIO.Repositories
                             query += $" WHERE t.{where}";
                         }
 
-                        if (altCols.Count >= 5) // alternative columns
+                        if (altCols.Count == 5 || altCols.Count == 6 && altCols[5] != "none") // alternative columns
                         {
                             // for coma decimal separator
                             if(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == ",")
@@ -133,6 +133,7 @@ namespace KNTCommon.BusinessIO.Repositories
 
                         if (order.Length > 0)
                             query += $" ORDER BY t.{order}";
+                        query += $" LIMIT {MAX_ROWS_PER_SHEET}";
 
                         var data = connection.Query(query).ToList();
 
@@ -203,8 +204,8 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                errStr = ex.Message;
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ExportRepository #1 " + errStr);
+                errStr = "KNTCommon.BusinessIO.Repositories.ExportRepository #1; " + ex.Message + $"; Table: {tableName}";
+                t.LogEvent(errStr);
                 ret = false;
             }
 

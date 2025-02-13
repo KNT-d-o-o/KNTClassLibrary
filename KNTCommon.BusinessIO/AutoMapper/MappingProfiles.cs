@@ -19,6 +19,9 @@ namespace KNTCommon.BusinessIO.AutoMapper
             CreateMap<IoTaskDetails, IoTaskDetailsDTO>().ReverseMap();
             CreateMap<IoTaskDetailsDTO, IoTaskDetails>().ReverseMap();
 
+            CreateMap<IoTaskLogs, IoTaskLogsDTO>().ReverseMap();
+            CreateMap<IoTaskLogsDTO, IoTaskLogs>().ReverseMap();
+
             CreateMap<Transactions, TransactionsDTO>().ReverseMap();
             CreateMap<TransactionsDTO, Transactions>().ReverseMap();
 

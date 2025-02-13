@@ -71,7 +71,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #6 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.ArchiveRepository #6 " + ex.Message);
                 ret = false;
             }
 
@@ -115,7 +115,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #1 " + ex.Message);              
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.ArchiveRepository #1 " + ex.Message);              
             }
             return 0;
         }
@@ -155,7 +155,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #5 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.ArchiveRepository #5 " + ex.Message);
             }
             return 0;
         }
@@ -365,7 +365,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #2 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.ArchiveRepository #2 " + ex.Message);
             }
 
             return count;
@@ -400,8 +400,8 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                err = ex.Message;
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #3 " + ex.Message);
+                err = "KNTCommon.BusinessIO.Repositories.ArchiveRepository #3 " + ex.Message;
+                t.LogEvent(err);
                 ret = false;
             }
 
@@ -451,8 +451,8 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                err = ex.Message;
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #4 " + ex.Message);
+                err = "KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #4 " + ex.Message;
+                t.LogEvent(err);
                 ret = false;
             }
 

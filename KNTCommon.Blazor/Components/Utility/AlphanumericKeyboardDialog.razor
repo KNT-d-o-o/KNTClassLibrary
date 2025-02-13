@@ -223,11 +223,11 @@
 
         if (input != null)
         {
-            int strLen = Value.Length;
+            int strLen = (Value ?? string.Empty).Length;
 
             await Task.Delay(50); // Wait for the onblur event of the textbox to finish
             Value = KeyboardUtilities.ParseKeyboardInputForAlphanumericKeyboard(input, Value, cursorIndex);
-            int strLenDiff = Value.Length - strLen;
+            int strLenDiff = (Value ?? string.Empty).Length - strLen;
             if (strLenDiff >= 0 || (strLenDiff < 0 && cursorIndex >= (strLenDiff * -1)))
             {
                 cursorIndex += strLenDiff;

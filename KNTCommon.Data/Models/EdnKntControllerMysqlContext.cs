@@ -38,6 +38,8 @@ namespace KNTCommon.Data.Models
 
         public virtual DbSet<IoTaskDetails> IoTaskDetails { get; set; }
 
+        public virtual DbSet<IoTaskLogs> IoTaskLogs { get; set; }
+
         public virtual DbSet<Transactions> Transactions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -117,8 +117,8 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                errStr = ex.Message;
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.DumpRepository #1 " + errStr);
+                errStr = "KNTCommon.BusinessIO.Repositories.DumpRepository #1 " + ex.Message;
+                t.LogEvent(errStr);
                 ret = false;
             }
 
@@ -165,9 +165,9 @@ namespace KNTCommon.BusinessIO.Repositories
                         {
                             using (StreamReader errorReader = process.StandardError)
                             {
-                                errStr = "Exit Code: " + process.ExitCode.ToString() + " - " + errorReader.ReadToEnd();
+                                errStr = "KNTCommon.BusinessIO.Repositories.DumpRepository #2 Exit Code: " + process.ExitCode.ToString() + " - " + errorReader.ReadToEnd();
                             }
-                            t.LogEvent("KNTLeakTester.BusinessIO.Repositories.DumpRepository #2 " + errStr);
+                            t.LogEvent(errStr);
                             ret = false;
                         }
                     }

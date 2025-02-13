@@ -74,7 +74,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #1 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #1 " + ex.Message);
             }
 
             return ret;
@@ -108,30 +108,53 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #2 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #2 " + ex.Message);
             }
 
             return ret;
         }
 
-        public bool IoTaskSetInfo(int taskId, string str)
+        /// <summary>
+        /// set task info and task log info
+        /// </summary>
+        /// <param name="taskId"></param>
+        /// <param name="str"></param>
+        /// <param name="taskType"></param>
+        /// <returns></returns>
+        public bool IoTaskSetInfo(int taskId, string str, int taskType)
         {
             var ret = true;
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var task = context.IoTasks.Where(x => x.IoTaskId == taskId).FirstOrDefault();
-                    if (task != null)
+                    if (taskId > 0)
                     {
-                        task.Info = str;
-                        context.SaveChanges();
+                        var task = context.IoTasks.Where(x => x.IoTaskId == taskId).FirstOrDefault();
+                        if (task != null)
+                        {
+                            task.Info = str;
+                        }
                     }
+
+                    if (taskType != Const.NONE)
+                    {
+                        var logEntry = new IoTaskLogs
+                        {
+                            IoTaskId = taskId,
+                            IoTaskLogType = taskType,
+                            Info = str,
+                            DateAndTime = DateTime.Now
+                        };
+                        context.IoTaskLogs.Add(logEntry);
+                    }
+
+                    context.SaveChanges();
                 }
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #3 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #3 " + ex.Message);
             }
 
             return ret;
@@ -154,7 +177,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #4 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #4 " + ex.Message);
             }
             return ret;
         }
@@ -223,7 +246,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #5 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #5 " + ex.Message);
             }
             return ret;
         }
@@ -245,7 +268,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #7 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #7 " + ex.Message);
             }
             return ret;
         }
@@ -269,7 +292,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTLeakTester.BusinessIO.Repositories.IoTasksRepository #6 " + ex.Message);
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #6 " + ex.Message);
             }
             return true;
         }
