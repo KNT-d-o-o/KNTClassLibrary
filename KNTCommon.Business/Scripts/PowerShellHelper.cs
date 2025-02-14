@@ -1,101 +1,130 @@
 ﻿using System.Diagnostics;
 
-public class PowerShellHelper
+namespace KNTCommon.Business.Scripts
 {
-    public static void ExecuteRestartScript(bool startAgain)
+    public class PowerShellHelper
     {
-        try
+        public void ExecuteRestartScript(bool startAgain)
         {
-            string baseDirectory = AppContext.BaseDirectory;
-            string scriptPath = Path.Combine(baseDirectory, "Scripts", string.Empty);
-            if (startAgain)
-                scriptPath = Path.Combine(baseDirectory, "Scripts", "RestartServer.ps1");
-            else
-                scriptPath = Path.Combine(baseDirectory, "Scripts", "ShutdownServer.ps1");
-
-            if (!File.Exists(scriptPath))
+            try
             {
-                throw new FileNotFoundException($"Script not found at path: {scriptPath}");
-            }
+                string baseDirectory = AppContext.BaseDirectory;
+                string scriptPath = Path.Combine(baseDirectory, "Scripts", string.Empty);
+                if (startAgain)
+                    scriptPath = Path.Combine(baseDirectory, "Scripts", "RestartServer.ps1");
+                else
+                    scriptPath = Path.Combine(baseDirectory, "Scripts", "ShutdownServer.ps1");
 
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (Process? process = Process.Start(psi))
-            {
-                if (process != null)
+                if (!File.Exists(scriptPath))
                 {
-                    process.WaitForExit();
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
+                    throw new FileNotFoundException($"Script not found at path: {scriptPath}");
+                }
 
-                    if (!string.IsNullOrEmpty(error))
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (Process? process = Process.Start(psi))
+                {
+                    if (process != null)
                     {
-                        throw new Exception($"Error executing script: {error}");
+                        process.WaitForExit();
+                        string output = process.StandardOutput.ReadToEnd();
+                        string error = process.StandardError.ReadToEnd();
+
+                        if (!string.IsNullOrEmpty(error))
+                        {
+                            throw new Exception($"Error executing script: {error}");
+                        }
                     }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            // Log or handle the exception
-            Console.WriteLine($"Exception: {ex.Message}");
-        }
-    }
-
-    public static void SetSystemTime(DateTime newDateTime)
-    {
-        try
-        {
-            string baseDirectory = AppContext.BaseDirectory;
-            string scriptPath = Path.Combine(baseDirectory, "Scripts", "SetDateTime.ps1");
-
-            if (!File.Exists(scriptPath))
+            catch (Exception ex)
             {
-                throw new FileNotFoundException($"Script not found at path: {scriptPath}");
+                // Log or handle the exception
+                Console.WriteLine($"Exception: {ex.Message}");
             }
+        }
 
-            string formattedDateTime = newDateTime.ToString("yyyy-MM-dd HH:mm:ss");
-
-            ProcessStartInfo psi = new ProcessStartInfo
+        public void SetSystemTime(DateTime newDateTime)
+        {
+            try
             {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -DateTime \"{formattedDateTime}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                Verb = "runas"
-            };
+                string baseDirectory = AppContext.BaseDirectory;
+                string scriptPath = Path.Combine(baseDirectory, "Scripts", "SetDateTime.ps1");
 
-            using (Process? process = Process.Start(psi))
-            {
-                if (process != null)
+                if (!File.Exists(scriptPath))
                 {
-                    process.WaitForExit();
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
+                    throw new FileNotFoundException($"Script not found at path: {scriptPath}");
+                }
 
-                    if (!string.IsNullOrEmpty(error))
+                string formattedDateTime = newDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -DateTime \"{formattedDateTime}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    Verb = "runas"
+                };
+
+                using (Process? process = Process.Start(psi))
+                {
+                    if (process != null)
                     {
-                        throw new Exception($"Error executing script: {error}");
+                        process.WaitForExit();
+                        string output = process.StandardOutput.ReadToEnd();
+                        string error = process.StandardError.ReadToEnd();
+
+                        if (!string.IsNullOrEmpty(error))
+                        {
+                            throw new Exception($"Error executing script: {error}");
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                // Log or handle the exception
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+
+        /// <summary>
+        /// Start, stop restart service
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <param name="action"></param>
+        public bool StartStopService(string serviceName, string action)
         {
-            // Log or handle the exception
-            Console.WriteLine($"Exception: {ex.Message}");
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c sc {action} \"{serviceName}\"",
+                Verb = "runas",  // Povzdigne pravice (zahteva UAC)
+                UseShellExecute = true
+            };
+
+            try
+            {
+                Process.Start(psi);
+             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+                return false;
+            }
+            return true;
         }
+
     }
-
-
 }

@@ -1,6 +1,7 @@
 ﻿@using KNTCommon.Business.EventHandlers
 @inject IParametersRepository Parameters
 @inject HelperService Helper
+@inject KNTCommon.Business.Scripts.PowerShellHelper PSHelper
 
 @* SettingsCommonComponent *@
 
@@ -68,7 +69,7 @@
         Console.WriteLine($"Novi datum: {selectedDate}");
         #endif
 
-        PowerShellHelper.SetSystemTime(selectedDate);
+        PSHelper.SetSystemTime(selectedDate);
     }
 
 }

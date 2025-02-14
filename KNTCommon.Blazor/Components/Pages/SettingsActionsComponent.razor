@@ -1,29 +1,57 @@
 ﻿@inject HelperService Helper
+@inject WindowsServiceHelper WHelper
 @inject DialogService DialogService
+@inject KNTCommon.Business.Scripts.PowerShellHelper PSHelper
 
 @* SettingsActionsComponent *@
 
 <div class="ScrollableOuterDiv Animation">
-    <RadzenButton Click='() => RestartServer(true)' Icon="restart_alt" class="MenuIcons rz-ripple action-button" Size="ButtonSize.Large" ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined" Text="Restart system" title="Restart system"></RadzenButton>
 
-    <RadzenButton Click='() => RestartServer(false)' Icon="highlight_off" class="MenuIcons rz-ripple action-button" Size="ButtonSize.Large" ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined" Text="Stop system" title="Stop system"></RadzenButton>
+    <RadzenCard>
+        <RadzenLabel Text="PLC service status: " />
+        <b>@ServiceStatus</b>
+
+        <RadzenButton Text="Refresh" Click="RefreshStatus" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large"/>
+        <RadzenButton Text="Start" Click="StartService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@IsRunning" />
+        <RadzenButton Text="Stop" Click="StopService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@(IsRunning == false)" />
+    </RadzenCard>
+
 </div>
 
 @code {
 
-    private async void RestartServer(bool start)
-    {
-        string msg = " system";
-        if (start)
-            msg = "Restart" + msg;
-        else
-            msg = "Stop" + msg;
+    const string NONE = "None";
+    private string ServiceStatus = NONE;
+    private const string ServiceName = "KNTLeakTester.BusinessPLC"; // fstaaaaa premakni v app
 
-        var result = await DialogService.OpenAsync<ConfirmationDialog>
-        ("", Helper.CreateDialogBlazorComponentParameters("action", msg, "weight", 2),
-        Helper.GetDialogOptions("ConfirmationWrapper"));
-        if (result == true)
-            PowerShellHelper.ExecuteRestartScript(start);
+    private bool IsRunning => ServiceStatus == "Running";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshStatus();
     }
 
+    private async Task RefreshStatus()
+    {
+        ServiceStatus = await Task.Run(() => WHelper.GetServiceStatus(ServiceName));
+    }
+
+    private async Task StartService()
+    {
+        ServiceStatus = NONE;
+        if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "start")))
+        { 
+            await RefreshStatus();
+        }
+    }
+
+    private async Task StopService()
+    {
+        ServiceStatus = NONE;
+        if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "stop")))
+        { 
+            await RefreshStatus();
+        }
+    }
+    
 }

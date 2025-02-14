@@ -71,7 +71,7 @@ namespace KNTCommon.Data.Models
                 node = doc.DocumentElement.SelectSingleNode("/config/p");
                 if (node != null)
                 {
-                    connectionData[1] = PasswordManager.DecryptPassword(node.InnerText);
+                    connectionData[1] = PManager.DecryptPassword(node.InnerText);
                 }
                 node = doc.DocumentElement.SelectSingleNode("/config/dbserver");
                 if (node != null)

@@ -17,7 +17,7 @@ namespace KNTCommon.Data.Models
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string[] connStr = EdnKntControllerMysqlContext.GetConnectionData(true);
-            optionsBuilder.UseMySQL($"server={connStr[0]};database={connStr[0]};user=KNT;password={connStr[1]}");
+            optionsBuilder.UseMySQL($"server={connStr[2]};database={connStr[0]};user=KNT;password={connStr[1]}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

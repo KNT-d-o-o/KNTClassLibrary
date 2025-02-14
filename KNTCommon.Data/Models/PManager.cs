@@ -5,7 +5,7 @@ using System.Text;
 
 namespace KNTCommon.Data.Models
 {
-    public class PasswordManager
+    public class PManager
     {
         private static readonly string EncryptionKey = "VasaZeloMocnaKljuc123";
 
@@ -15,7 +15,7 @@ namespace KNTCommon.Data.Models
             {
                 var key = GetValidKey(EncryptionKey);
                 aes.Key = key;
-                aes.IV = new byte[16]; // Inicializacijski vektor (16 bajtov)
+                aes.IV = new byte[16];
 
                 using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
                 using (var ms = new MemoryStream())

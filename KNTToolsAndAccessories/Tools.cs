@@ -18,5 +18,14 @@ namespace KNTToolsAndAccessories
             // TO DO platforms
         }
 
+        public static string runningDots(string dots, int max)
+        {
+            if (dots.Length < max)
+                dots += ".";
+            else
+                dots = string.Empty;
+            return dots;
+        }
+
     }
 }
