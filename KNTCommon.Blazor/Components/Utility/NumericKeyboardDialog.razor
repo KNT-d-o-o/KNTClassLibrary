@@ -72,7 +72,18 @@
         }
         if (input != null)
         {
+            int strLen = (Value ?? string.Empty).Length;
+
             Value = KeyboardUtilities.ParseKeyboardInputForNumericKeyboard(input, Value, cursorIndex);
+            int strLenDiff = (Value ?? string.Empty).Length - strLen;
+            if (strLenDiff >= 0 || (strLenDiff < 0 && cursorIndex >= (strLenDiff * -1)))
+            {
+                cursorIndex += strLenDiff;
+            }
+            else
+            {
+                cursorIndex = 0;
+            }
         }
         else
         {
