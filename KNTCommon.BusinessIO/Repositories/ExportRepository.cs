@@ -68,7 +68,7 @@ namespace KNTCommon.BusinessIO.Repositories
                 {
                     dbContext.Database.SetCommandTimeout(120); // expand DB connection timeout
                     var connectionString = dbContext.Database.GetConnectionString();
-                    using (MySqlConnection connection = new MySqlConnection(connectionString))
+                    using (MySqlConnection connection = new(connectionString))
                     {
                         connection.Open();
 

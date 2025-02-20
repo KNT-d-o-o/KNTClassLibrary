@@ -281,9 +281,9 @@ namespace KNTCommon.BusinessIO.Repositories
 
             try
             {
-                using (FileStream zipToCreate = new FileStream(zipPath, FileMode.Create))
+                using (FileStream zipToCreate = new(zipPath, FileMode.Create))
                 {
-                    using (ZipArchive archive = new ZipArchive(zipToCreate, ZipArchiveMode.Create))
+                    using (ZipArchive archive = new(zipToCreate, ZipArchiveMode.Create))
                     {
                         archive.CreateEntryFromFile(filePath, Path.GetFileName(filePath));
                     }

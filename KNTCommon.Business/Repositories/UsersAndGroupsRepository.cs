@@ -152,7 +152,7 @@ namespace KNTCommon.Business.Repositories
 
         public UserDTO GetUserById(int userId)
         {
-            UserDTO user = new UserDTO();
+            UserDTO user = new();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())

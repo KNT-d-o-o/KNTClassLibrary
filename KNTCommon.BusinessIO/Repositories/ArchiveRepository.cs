@@ -57,11 +57,11 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var dbContext = new EdnKntControllerMysqlContext())
                 {
                     var connectionString = dbContext.Database.GetConnectionString();
-                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    using (MySqlConnection conn = new(connectionString))
                     {
                         conn.Open();
                         string query = $"OPTIMIZE TABLE `{tableName}`;";
-                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        using (MySqlCommand cmd = new(query, conn))
                         {
                             cmd.ExecuteNonQuery();
                         }
@@ -163,13 +163,13 @@ namespace KNTCommon.BusinessIO.Repositories
         // get data from any table
         private DataTable GetDataTable(string table, string whereCondition, string whereInt, int whereIntVal, string orderBy, bool orderByDesc, int noRows, DbContext contextIn)
         {
-            DataTable dataTable = new DataTable();
+            DataTable dataTable = new();
 
             // get data - common table
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
                     string selectQuery = $"SELECT * FROM {table}";
@@ -195,8 +195,8 @@ namespace KNTCommon.BusinessIO.Repositories
                         selectQuery += $" LIMIT {noRows}";
                     selectQuery += ";";
 
-                    using (MySqlCommand selectCommand = new MySqlCommand(selectQuery, connection))
-                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(selectCommand))
+                    using (MySqlCommand selectCommand = new(selectQuery, connection))
+                    using (MySqlDataAdapter adapter = new(selectCommand))
                     {
                         adapter.Fill(dataTable);
                     }
@@ -224,7 +224,7 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
 
@@ -235,7 +235,7 @@ namespace KNTCommon.BusinessIO.Repositories
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 string insertQuery = $"INSERT INTO {table} ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}) VALUES ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => "@" + c.ColumnName))});";
-                                using (MySqlCommand insertCommand = new MySqlCommand(insertQuery, connection))
+                                using (MySqlCommand insertCommand = new(insertQuery, connection))
                                 {
                                     foreach (DataColumn column in dataTable.Columns)
                                     {
@@ -263,7 +263,7 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
 
@@ -272,7 +272,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         try
                         {
                             string updateQuery = $"UPDATE {table} SET {column} = {value} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
-                            using (MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection))
+                            using (MySqlCommand updateCommand = new(updateQuery, connection))
                             {
                                 updateCommand.ExecuteNonQuery();
                             }
@@ -295,7 +295,7 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
 
@@ -304,7 +304,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         try
                         {
                             string deleteQuery = $"DELETE FROM {table} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
-                            using (MySqlCommand deleteCommand = new MySqlCommand(deleteQuery, connection))
+                            using (MySqlCommand deleteCommand = new(deleteQuery, connection))
                             {
                                 deleteCommand.ExecuteNonQuery();
                             }
@@ -331,7 +331,7 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     var connectionString = context.Database.GetConnectionString();
-                    using (MySqlConnection connection = new MySqlConnection(connectionString))
+                    using (MySqlConnection connection = new(connectionString))
                     {
                         connection.Open();
                         int flag = 0;
@@ -352,7 +352,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         }
                         selectQuery += ";";
 
-                        using (MySqlCommand selectCommand = new MySqlCommand(selectQuery, connection))
+                        using (MySqlCommand selectCommand = new(selectQuery, connection))
                         {
                             object result = selectCommand.ExecuteScalar();
                             if (result != null && int.TryParse(result.ToString(), out int parsedCount))

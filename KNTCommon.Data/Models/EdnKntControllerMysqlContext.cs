@@ -56,7 +56,7 @@ namespace KNTCommon.Data.Models
             string basePath = AppDomain.CurrentDomain.BaseDirectory;
             string configPath = Path.Combine(basePath, "config.xml");
 
-            XmlDocument doc = new XmlDocument();
+            XmlDocument doc = new();
             doc.Load(configPath);
             if (doc.DocumentElement != null)
             {

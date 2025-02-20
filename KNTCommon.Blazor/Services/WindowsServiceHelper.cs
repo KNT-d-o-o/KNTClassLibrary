@@ -16,6 +16,10 @@ namespace KNTCommon.Blazor.Services
                 using ServiceController sc = new ServiceController(serviceName);
                 return sc.Status.ToString();
             }
+            catch (InvalidOperationException)
+            {
+                return "Error";
+            }
             catch (Exception ex)
             {
                 return $"Error: {ex.Message}";

@@ -388,7 +388,7 @@ namespace KNTCommon.BusinessIO
 
                         string errStr = string.Empty;
 
-                        List<string> altData = new List<string>();
+                        List<string> altData = new();
                         string altCols = taskDetailsE[stepExport].Par4 ?? string.Empty;
                         if(altCols.Length > 0)
                             altData = altCols.Split(';').ToList();
@@ -468,7 +468,7 @@ namespace KNTCommon.BusinessIO
 
                             if (!tableDbDefined)
                             {
-                                IoTaskDetailsDTO element = new IoTaskDetailsDTO();
+                                IoTaskDetailsDTO element = new();
                                 element.IoTaskDetailId = 0;
                                 element.IoTaskId = task.IoTaskId;
                                 element.Par1 = table;
@@ -480,7 +480,7 @@ namespace KNTCommon.BusinessIO
 
                     noToDump = taskDetailsD.Count;
                     string par1 = task.Par1 ?? string.Empty;
-                    string[] pars1 = par1.Split(' ');
+                    string[] pars1 = par1.Split(';');
 
                     if (pars1.Length > 1) // check for zip
                     {

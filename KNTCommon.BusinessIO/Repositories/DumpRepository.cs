@@ -136,11 +136,11 @@ namespace KNTCommon.BusinessIO.Repositories
                 File.Create(filePath).Close();
             }
 
-            using (StreamWriter writer = new StreamWriter(filePath, true)) // 🔹 Append mode
+            using (StreamWriter writer = new(filePath, true)) // 🔹 Append mode
             {
                 writer.WriteLine($"\n-- Exporting table: {tableName} --\n");
 
-                ProcessStartInfo psi = new ProcessStartInfo
+                ProcessStartInfo psi = new()
                 {
                     FileName = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump",
                     Arguments = arguments,
@@ -182,7 +182,7 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var dbContext = new EdnKntControllerMysqlContext())
             {
                 var connectionString = dbContext.Database.GetConnectionString();
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
                     return connection.Query<string>("SHOW TABLES;").AsList();
@@ -195,7 +195,7 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var dbContext = new EdnKntControllerMysqlContext())
             {
                 var connectionString = dbContext.Database.GetConnectionString();
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
                     return connection.Query<string>(query).AsList();
