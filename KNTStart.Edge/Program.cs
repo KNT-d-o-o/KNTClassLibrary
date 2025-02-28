@@ -2,9 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using OpenQA.Selenium;
-using OpenQA.Selenium.BiDi.Modules.Network;
-using OpenQA.Selenium.Edge;
 
 namespace KNTLeakTester.Edge
 {
@@ -24,187 +21,134 @@ namespace KNTLeakTester.Edge
                 Console.WriteLine(DateTime.Now + $" start web server, Port {port}.");
             }
 
-            string logFolderPath = string.Empty;
-
-            if (port == "5005")
-                logFolderPath = "C:/KntLeakTester/Log";
-            else if(port == "5015")
-                logFolderPath = "C:/Programs/PUBLISH-SMM/Log";
+            string logFolderPath = port == "5005" ? "C:/KntLeakTester/Log" : "C:/Programs/PUBLISH-SMM/Log";
 
             if (!Directory.Exists(logFolderPath))
-            {
                 Directory.CreateDirectory(logFolderPath);
-            }
-            string shutdownFilePath = logFolderPath + "/shutdown.txt";
-            string logFilePath = logFolderPath + "/log.txt";
+
+            string shutdownFilePath = Path.Combine(logFolderPath, "shutdown.txt");
+            string logFilePath = Path.Combine(logFolderPath, "log.txt");
             if (!File.Exists(logFilePath))
-            {
-                using (FileStream fs = File.Create(logFilePath)) { }
-            }
+                File.Create(logFilePath).Dispose();
 
             if (File.Exists(shutdownFilePath))
             {
                 File.Delete(shutdownFilePath);
-#if DEBUG
                 Console.WriteLine("Previous shutdown file found and deleted.");
-#endif
             }
 
             using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
-            {
                 writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI started.");
-            }
 
-            int checkInterval = 10000;
-            if (args.Length > 1)
-                checkInterval = int.Parse(args[1]);
+            int checkInterval = args.Length > 1 ? int.Parse(args[1]) : 10000;
+            string edgePath = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
+            string url = $"http://localhost:{port}";
 
-            var edgeOptions = new EdgeOptions();
-            edgeOptions.AddArgument("disable-gpu");
-            edgeOptions.AddArgument("disable-infobars");
-            edgeOptions.AddExcludedArgument("enable-automation");
-            edgeOptions.AddArgument("-start-maximized");
-            edgeOptions.AddArgument("-start-fullscreen");
-            edgeOptions.AddArgument("--disable-popup-blocking");
-            edgeOptions.AddArguments("--disable-extensions");
-            edgeOptions.AddArgument("--disable-notifications");
-            edgeOptions.AddArguments("--disable-application-cache");
-            edgeOptions.AddArguments("--guest");
-            edgeOptions.AddArgument("--no-sandbox");
-            edgeOptions.AddArgument("--disable-dev-shm-usage");
-
-            edgeOptions.AddArgument("--disable-accelerated-2d-canvas");
-            edgeOptions.AddArgument("--disable-accelerated-video-decode");
-            edgeOptions.AddArgument("--disable-renderer-backgrounding");
-            edgeOptions.AddArgument("--blink-settings=animationPolicy=none");
-
-            edgeOptions.AddArgument("--force-device-scale-factor=1");
-            edgeOptions.AddArgument("--disable-pinch");
-            edgeOptions.AddArgument("--disable-gesture-requirement-for-media-controls");
-
-
-            var edgeDriverPath = @"Driver";
-
-            using (IWebDriver driver = new EdgeDriver(edgeDriverPath, edgeOptions))
+            Process edgeProcess = null;
+            while (true)
             {
-                string url = $"http://localhost:{port}";
-                driver.Navigate().GoToUrl(url);
+                
+                Process[] edgeProcesses = Process.GetProcessesByName("msedge");
 
-                while (true)
+                // Preveri, ali je prejet ukaz za zaustavitev
+                if (File.Exists(shutdownFilePath))
                 {
-                    // remove shutdown file
-                    if (File.Exists(shutdownFilePath))
+                    using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
+                        writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI stopped.");
+
+                    Console.WriteLine(DateTime.Now + " Shutdown signal received. Exiting...");
+
+                    try
                     {
-                        using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
-                        {
-                            writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI stopped.");
-                        }
-                        Console.WriteLine(DateTime.Now + " #1 Shutdown signal received. Exiting...");
-                        break;
+                        edgeProcess.Kill();
+                        edgeProcess.WaitForExit(); // Počakaj, da se proces v celoti zapre
                     }
+                    catch { }
 
-                    if (checkInterval > 0)
+                    break;
+                }
+
+                // Če Edge ne teče, ga zaženi
+                if (edgeProcesses.Length == 0 && !File.Exists(shutdownFilePath))
+                {
+                    Console.WriteLine(DateTime.Now + " Edge is not running. Restarting...");
+                    edgeProcess = Process.Start(new ProcessStartInfo
                     {
-                        try
-                        {
-                            Thread.Sleep(checkInterval);
+                        FileName = edgePath,
+                        Arguments = "--kiosk --edge-kiosk-type=fullscreen http://localhost:" + port,
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    });
 
-                            if (IsRefreshNeeded(driver))
-                            {
-                                driver.Navigate().Refresh();
-#if DEBUG
-                                Console.WriteLine("The page has been refreshed.");
-#endif
-                            }
-                            else
-                            {
-#if DEBUG
-                                Console.WriteLine("The page does not need to be refreshed.");
-#endif
-                            }
-                        }
-                        catch (Exception ex)
+                    Thread.Sleep(5000); // Počakaj, da se Edge zažene
+                }
+
+                // Preveri, ali je potrebna osvežitev strani
+                if (checkInterval > 0 && !File.Exists(shutdownFilePath))
+                {
+                    Thread.Sleep(checkInterval);
+                    if (IsRefreshNeeded(url))
+                    {
+                        RestartEdge(edgeProcess, new ProcessStartInfo
                         {
-                            Console.WriteLine(DateTime.Now + $" #2 An error has occurred: {ex.Message}");
-                            return;
-                        }
+                            FileName = edgePath,
+                            Arguments = "--kiosk --edge-kiosk-type=fullscreen http://localhost:" + port,
+                            UseShellExecute = true,
+                            CreateNoWindow = false
+                        });
+                        Console.WriteLine(DateTime.Now + " The page has been refreshed.");
                     }
                 }
             }
         }
 
-        static bool IsRefreshNeeded(IWebDriver driver)
+        static bool IsRefreshNeeded(string url)
         {
             try
             {
-                // Attempt to locate specific elements that indicate a timeout or connection issue
-                var errorMessages = new[]
+                // PowerShell ukaz za preverjanje statusa spletne strani
+                ProcessStartInfo powerShellInfo = new ProcessStartInfo
                 {
-                    "Timeout",          // General timeout message
-                    "Connection lost",  // Connection lost message
-                    "Reload",           // Reload prompt message
-                    "Page unresponsive" // Page unresponsive message
-                };
-
-                foreach (string message in errorMessages)
-                {
-                    if (driver.FindElements(By.XPath($"//*[contains(text(), '{message}')]")).Count > 0)
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (NoSuchElementException)
-            {
-                // If no error elements are found, assume the page is still loaded properly
-                return false;
-            }
-        }
-
-        static void RestartIIS()
-        {
-            try
-            {
-                ProcessStartInfo iisResetProcessInfo = new ProcessStartInfo
-                {
-                    FileName = "iisreset",
+                    FileName = "powershell",
+                    Arguments = $"-Command \"try {{ Invoke-WebRequest -Uri '{url}' -UseBasicParsing -TimeoutSec 5 }} catch {{ Write-Host 'Error' ; exit 1 }}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
-                    CreateNoWindow = true,
-                    Verb = "runas" // Request elevated privileges
+                    CreateNoWindow = true
                 };
 
-                using (Process iisResetProcess = new Process())
+                using (Process process = Process.Start(powerShellInfo))
                 {
-                    iisResetProcess.StartInfo = iisResetProcessInfo;
-                    iisResetProcess.Start();
+                    process.WaitForExit();
 
-                    // Read the output (optional)
-                    string output = iisResetProcess.StandardOutput.ReadToEnd();
-                    string error = iisResetProcess.StandardError.ReadToEnd();
-
-                    iisResetProcess.WaitForExit();
-
-                    if (iisResetProcess.ExitCode == 0)
+                    // Če se zgodi napaka, bo vrnjen exit code 1
+                    if (process.ExitCode != 0)
                     {
-                        Console.WriteLine(DateTime.Now + " #3 IIS has been reset successfully.");
-                    }
-                    else
-                    {
-                        Console.WriteLine(DateTime.Now + $" #4 Error resetting IIS: {error}");
+                        return true;  // Napaka, potrebna osvežitev
                     }
 
-                    Console.WriteLine(DateTime.Now + " #5 " + output);
+                    // Preveri izhodne podatke, če je napaka izpisana (če potrebujemo dodatno preverjanje)
+                    string output = process.StandardOutput.ReadToEnd();
+                    if (output.Contains("Error"))
+                    {
+                        return true;  // Če je izpisana napaka, potrebna osvežitev
+                    }
+
+                    return false; // Če ni napake, ni potrebna osvežitev
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(DateTime.Now + $" #6 An error occurred: {ex.Message}");
+                Console.WriteLine(DateTime.Now + $" Error checking page status: {ex.Message}");
+                return true;  // Če pride do napake pri izvajanju funkcije, domnevamo, da je potrebna osvežitev
             }
         }
 
+        static void RestartEdge(Process edgeProcess, ProcessStartInfo psi)
+        {
+            edgeProcess.Kill();
+            Thread.Sleep(2000);
+            Process.Start(psi);
+        }
     }
 }

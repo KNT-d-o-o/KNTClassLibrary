@@ -1,9 +1,12 @@
 ﻿using System.Diagnostics;
+using KNTToolsAndAccessories;
 
 namespace KNTCommon.Business.Scripts
 {
     public class PowerShellHelper
     {
+        private readonly Tools t = new();
+
         public void ExecuteRestartScript(bool startAgain)
         {
             try
@@ -47,8 +50,7 @@ namespace KNTCommon.Business.Scripts
             }
             catch (Exception ex)
             {
-                // Log or handle the exception
-                Console.WriteLine($"Exception: {ex.Message}");
+                t.LogEvent("KNTCommon.Business.Scripts #1 " + ex.Message);
             }
         }
 
@@ -94,8 +96,7 @@ namespace KNTCommon.Business.Scripts
             }
             catch (Exception ex)
             {
-                // Log or handle the exception
-                Console.WriteLine($"Exception: {ex.Message}");
+                t.LogEvent("KNTCommon.Business.Scripts #2 " + ex.Message);
             }
         }
 
@@ -104,13 +105,14 @@ namespace KNTCommon.Business.Scripts
         /// </summary>
         /// <param name="serviceName"></param>
         /// <param name="action"></param>
+        /// 
         public bool StartStopService(string serviceName, string action)
         {
             ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
                 Arguments = $"/c sc {action} \"{serviceName}\"",
-                Verb = "runas",  // Povzdigne pravice (zahteva UAC)
+                Verb = "runas",
                 UseShellExecute = true
             };
 
@@ -120,7 +122,7 @@ namespace KNTCommon.Business.Scripts
              }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Scripts #3 " + ex.Message);
                 return false;
             }
             return true;
