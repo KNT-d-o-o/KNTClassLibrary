@@ -377,18 +377,33 @@ namespace KNTToolsAndAccessories
         /// <param name="format"></param>
         /// <param name="val"></param>
         /// <returns></returns>
-        public static string FormatToDecimalValues(int format, double val)
+        public static string FormatToDecimalValues(int format, double val, bool shortExp)
         {
             if (format == 0) // 15 decimal
                 return string.Format("{0,1:0.###############}", val);
             string strVal = "0";
 
             if ((format == 3 && Math.Abs(val) < 0.01) && val != 0)
-                strVal = string.Format("{0:0.###E+00}", val); // Exp, 3 decimal
+            {
+                if (!shortExp)
+                    strVal = string.Format("{0:0.###E+00}", val); // Exp E+00, 3 decimal
+                else
+                    strVal = string.Format("{0:0.###E+0}", val); // Exp E+0, 3 decimal
+            }
             else if ((format == 2 && Math.Abs(val) < 0.001) && val != 0)
-                strVal = string.Format("{0:0.##E+00}", val); // Exp, 2 decimal
+            {
+                if (!shortExp)
+                    strVal = string.Format("{0:0.##E+00}", val); // Exp E+00, Exp, 2 decimal
+                else
+                    strVal = string.Format("{0:0.##E+0}", val); // Exp E+0, Exp, 2 decimal
+            }
             else if ((format == 1 && Math.Abs(val) < 0.0001) && val != 0)
-                strVal = string.Format("{0:0.#E+00}", val); // Exp, 1 decimal
+            {
+                if (!shortExp)
+                    strVal = string.Format("{0:0.#E+00}", val); // Exp E+00, 1 decimal
+                else
+                    strVal = string.Format("{0:0.#E+0}", val); // Exp E+0, 1 decimal
+            }
             else if (((format == 3 && Math.Abs(val) < 0.1) || (format == 2 && Math.Abs(val) < 0.01) || (format == 1 && Math.Abs(val) < 0.001)) && val != 0)
                 strVal = string.Format("{0:0.#####}", val); // 5 decimal
             else if (((format == 3 && Math.Abs(val) < 1) || (format == 2 && Math.Abs(val) < 0.1) || (format == 1 && Math.Abs(val) < 0.01)) && val != 0)

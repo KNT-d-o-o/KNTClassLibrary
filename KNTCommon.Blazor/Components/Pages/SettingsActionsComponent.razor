@@ -14,6 +14,7 @@
         <RadzenButton Text="Refresh" Click="RefreshStatus" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large"/>
         <RadzenButton Text="Start" Click="StartService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@IsRunning" />
         <RadzenButton Text="Stop" Click="StopService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@(IsRunning == false)" />
+        <RadzenButton Text="Restart" Click="RestartService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@(IsRunning == false)" />
     </RadzenCard>
 
 </div>
@@ -22,9 +23,9 @@
 
     const string NONE = "None";
     private string ServiceStatus = NONE;
-    private const string ServiceName = "KNTLeakTester.BusinessPLC_1"; // fstaaaaa premakni v app
+    private const string ServiceName = "KNTLeakTester.BusinessPLC_1"; // fstaa premakni v app
 
-    private bool IsRunning => ServiceStatus == "Running";
+    private bool IsRunning => ServiceStatus == "Running" || ServiceStatus == "Paused";
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,6 +51,15 @@
         ServiceStatus = NONE;
         if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "stop")))
         { 
+            await RefreshStatus();
+        }
+    }
+    
+    private async Task RestartService()
+    {
+        ServiceStatus = NONE;
+        if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "restart")))
+        {
             await RefreshStatus();
         }
     }

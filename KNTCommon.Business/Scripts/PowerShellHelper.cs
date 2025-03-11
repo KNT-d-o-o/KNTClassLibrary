@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.ServiceProcess;
 using KNTToolsAndAccessories;
 
 namespace KNTCommon.Business.Scripts
@@ -108,6 +109,22 @@ namespace KNTCommon.Business.Scripts
         /// 
         public bool StartStopService(string serviceName, string action)
         {
+            // restart case
+            if (action.Equals("restart", StringComparison.OrdinalIgnoreCase))
+            {
+                // stop
+                if (!StartStopService(serviceName, "stop"))
+                {
+                    return false; // Če ustavitev ne uspe, ne nadaljujemo
+                }
+
+                // sleep
+                Thread.Sleep(3000);
+
+                // start
+                return StartStopService(serviceName, "start");
+            }
+
             ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
@@ -119,7 +136,7 @@ namespace KNTCommon.Business.Scripts
             try
             {
                 Process.Start(psi);
-             }
+            }
             catch (Exception ex)
             {
                 t.LogEvent("KNTCommon.Business.Scripts #3 " + ex.Message);
