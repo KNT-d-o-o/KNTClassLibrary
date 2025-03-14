@@ -26,4 +26,19 @@
     <ProjectReference Include="..\KNTToolsAndAccessories\KNTToolsAndAccessories.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_iotaskdetails.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_iotasklogs.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_iotasks.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_parameters.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

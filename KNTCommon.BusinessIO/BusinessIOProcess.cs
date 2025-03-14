@@ -38,7 +38,7 @@ namespace KNTCommon.BusinessIO
             parametersRepository = _parametersRepository;
         }
 
-        public async Task<bool> OnStartAsync(CancellationToken cancellationToken)
+        public async Task<bool> OnStartAsync(CancellationToken cancellationToken, string serviceVersion)
         {
             if (BusinessIoInit())
             {
@@ -46,7 +46,7 @@ namespace KNTCommon.BusinessIO
                 Console.WriteLine("BusinessIOProcess OnStart.");
 #endif
                 if(ioTasksRepository != null)
-                    ioTasksRepository.IoTaskSetInfo(0, "BusinessIOProcess OnStart.", Const.INFO);
+                    ioTasksRepository.IoTaskSetInfo(0, $"BusinessIOProcess OnStart version: {serviceVersion}.", Const.INFO);
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -76,16 +76,7 @@ namespace KNTCommon.BusinessIO
             string? error;
             if (archiveRepository.CheckOrCreateArchiveDb(out error))
             {
-                List<string> arcTables = new();
-                IEnumerable<IoTaskDetailsDTO> archiveDetails = ioTasksRepository.GetIoTaskDetails(TASKID_ARCHIVE);
-                foreach (var entry in archiveDetails)
-                {
-                    if(entry.Par1 != null && entry.Par5 != "none")
-                        arcTables.Add(entry.Par1);
-                }
-                ioTasksRepository.GetIoTaskDetails(TASKID_RESTORE); // only for disable not existed tables
-
-                ret = archiveRepository.CheckOrCreateArchiveTables(arcTables, out error);
+                ret = archiveRepository.CheckOrCreateArchiveTables(null, out error);
             }
             if (!ret)
             {
@@ -206,6 +197,9 @@ namespace KNTCommon.BusinessIO
         List<IoTaskDetailsDTO>? taskDetailsA;
         private void ArchiveStep(IoTasksDTO task)
         {
+#if DEBUG
+            Console.WriteLine($"ArchiveStep noToArchive: {noToArchive}, noArchived: {noArchived}");
+#endif
             try
             {
                 if (parametersRepository is null || archiveRepository is null || ioTasksRepository is null)
@@ -228,6 +222,14 @@ namespace KNTCommon.BusinessIO
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);
                             ioTasksRepository.IoTaskSetInfo(task.IoTaskId, "Archiving...", Const.INFO);
+
+                            if (taskDetailsA[0].Par5 == "copyIfNever" || taskDetailsA[0].Par5 == "copyAlways")
+                            {
+                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Copy settings..., {DateTime.Now.ToString()}", Const.INFO);
+                                archiveRepository.CopyOtherTables(taskDetailsA.Select(td => td.Par1 ?? string.Empty).ToList());
+                                if (taskDetailsA[0].Par5 == "copyIfNever")
+                                    ioTasksRepository.IoTaskSetPar5(task.IoTaskId, 1, "copy");
+                            }
                         }
                     }
 
@@ -241,9 +243,12 @@ namespace KNTCommon.BusinessIO
                         if (stepArchived > 0)
                         {
                             noArchived += stepArchived;
+
                             int percentDone = noArchived * 100 / noToArchive;
+                            if (percentDone == 100) // not to complete
+                                percentDone = 99;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Archiving: {percentDone}%", Const.NONE);
                         }
                         else
                         {
@@ -251,6 +256,8 @@ namespace KNTCommon.BusinessIO
                             {
                                 archiveRepository.OptimizeTable(AllTables[tableOptimizedIdx]);
                                 int percentDone = (tableOptimizedIdx + 1) * 100 / AllTables.Count;
+                                if(percentDone == 100) // not to complete
+                                    percentDone = 99;
                                 ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
                                 ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Optimized: {percentDone}%", Const.NONE);
                                 tableOptimizedIdx++;
@@ -263,7 +270,7 @@ namespace KNTCommon.BusinessIO
                             else // end archiving
                             {
                                 ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
+                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Archiving, {DateTime.Now.ToString()}", Const.INFO);
                                 if (task.IoTaskMode == 1) // periodic
                                 {
                                     ioTasksRepository.IoTaskSetExecuteDateAndTime(task.IoTaskId, DateTime.Now);
@@ -325,18 +332,24 @@ namespace KNTCommon.BusinessIO
 
                         int stepRestored = archiveRepository.RestoreTables(AllTables, taskDetailsR, dayWhereR ?? string.Empty, orderByR ?? string.Empty, restoreStep, taskDetailsR[0].Par4 ?? string.Empty);
 
+                        bool complete = false;
                         if (stepRestored > 0)
                         {
                             noRestored += stepRestored;
                             int percentDone = noRestored * 100 / noToRestore;
+                            if (percentDone == 100) // not to complete all
+                            {
+                                percentDone = 99;
+                                complete = true;
+                            }
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Restoring: {percentDone}%", Const.NONE);
                         }
-                        else // end restoring
+                        if(complete) // end restoring
                         {
                             noToRestore = 0;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Restoring, {DateTime.Now.ToString()}", Const.INFO);
                         }
                     }
                 }
@@ -398,17 +411,24 @@ namespace KNTCommon.BusinessIO
                             ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
                         }
 
+                        //fstaa to do test
+                        bool complete = false;
                         if (stepExport + 1 < noToExport)
                         {
                             stepExport++;
                             int percentDone = stepExport * 100 / noToExport;
+                            if (percentDone == 100) // not to complete all
+                            {
+                                percentDone = 99;
+                                complete = true;
+                            }
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Exporting: {percentDone}%", Const.NONE);
                         }
-                        else // end exporting
+                        if(complete) // end exporting
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Exporting, {DateTime.Now.ToString()}", Const.INFO);
                             if (task.IoTaskMode == 1) // periodic
                             {
                                 // set next datetime condition
@@ -519,8 +539,10 @@ namespace KNTCommon.BusinessIO
                         {
                             stepDump++;
                             int percentDone = stepDump * 100 / noToDump;
+                        //fstaa test    if (percentDone == 100) // not to complete all
+                          //      percentDone = 99;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed: {percentDone}%", Const.NONE);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Dumping: {percentDone}%", Const.NONE);
                         }
                         else // end exporting
                         {
@@ -529,7 +551,7 @@ namespace KNTCommon.BusinessIO
 
                             noToDump = 0;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed, {DateTime.Now.ToString()}", Const.INFO);
+                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Dumping, {DateTime.Now.ToString()}", Const.INFO);
                         }
                     }
                 }

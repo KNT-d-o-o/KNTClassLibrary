@@ -20,6 +20,7 @@ using System.Transactions;
 using MySqlX.XDevAPI.Relational;
 using Google.Protobuf.WellKnownTypes;
 using Org.BouncyCastle.Crypto.Utilities;
+using DocumentFormat.OpenXml.Drawing;
 
 namespace KNTCommon.BusinessIO.Repositories
 {
@@ -76,6 +77,81 @@ namespace KNTCommon.BusinessIO.Repositories
             }
 
             return ret;
+        }
+
+        // copy other tables if never
+        public string? CopyOtherTables(List<string> tables)
+        {
+            string? err = null;
+
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var sourceConnectionString = context.Database.GetConnectionString();
+                    var builder = new MySqlConnectionStringBuilder(sourceConnectionString);
+                    string connStr = builder.Database;
+                    string[] connStrArchive = EdnKntControllerMysqlContext.GetConnectionData(true);
+                    builder.Database = connStrArchive[0];
+                    var targetConnectionString = builder.ConnectionString;
+
+                    using (var sourceConnection = new MySqlConnection(sourceConnectionString))
+                    using (var targetConnection = new MySqlConnection(targetConnectionString))
+                    {
+                        sourceConnection.Open();
+                        targetConnection.Open();
+                        var getTablesQuery = @"
+                            SELECT table_name 
+                            FROM information_schema.tables 
+                            WHERE table_schema = DATABASE() 
+                            AND table_type = 'BASE TABLE';";
+
+                        var command = new MySqlCommand(getTablesQuery, sourceConnection);
+                        var reader = command.ExecuteReader();
+
+                        while (reader.Read())
+                        {
+                            string tableName = reader.GetString(0);
+
+                            if (!tables.Contains(tableName))
+                            {
+                                try
+                                {
+                                    // delete
+                                    string deleteQuery = $"DELETE FROM {connStrArchive[0]}.{tableName};";
+                                    using (var deleteCommand = new MySqlCommand(deleteQuery, targetConnection))
+                                    {
+                                        deleteCommand.ExecuteNonQuery();
+                                    }
+
+                                    // insert
+                                    string copyDataQuery = $@"
+                                    INSERT INTO {connStrArchive[0]}.{tableName}
+                                    SELECT * FROM {connStr}.{tableName};";
+
+                                    using (var copyCommand = new MySqlCommand(copyDataQuery, targetConnection))
+                                    {
+                                        copyCommand.ExecuteNonQuery();
+                                    }
+                                }
+                                catch (Exception tableEx)
+                                {
+                                    err = $"KNTCommon.BusinessIO.Repositories.ArchiveRepository #7 Error while transferring table {tableName}: {tableEx.Message}\n";
+                                    t.LogEvent(err);
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                err = "KNTCommon.BusinessIO.Repositories.ArchiveRepository #8 " + ex.Message;
+                t.LogEvent(err);
+            }
+
+            return err;
         }
 
         // archive tables procedure
@@ -409,7 +485,7 @@ namespace KNTCommon.BusinessIO.Repositories
         }
 
         // create archive tables if not exists
-        public bool CheckOrCreateArchiveTables(List<string> arcTables, out string? err)
+        public bool CheckOrCreateArchiveTables(List<string>? arcTables, out string? err)
         {
             err = string.Empty;
             var ret = true;
@@ -429,7 +505,12 @@ namespace KNTCommon.BusinessIO.Repositories
                     {
                         sourceConnection.Open();
                         targetConnection.Open();
-                        var getTablesQuery = "SHOW TABLES;";
+                        var getTablesQuery = @"
+                            SELECT table_name 
+                            FROM information_schema.tables 
+                            WHERE table_schema = DATABASE() 
+                            AND table_type = 'BASE TABLE';";
+
                         var command = new MySqlCommand(getTablesQuery, sourceConnection);
                         var reader = command.ExecuteReader();
 
@@ -437,7 +518,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         {
                             string tableName = reader.GetString(0);
 
-                            if (arcTables.Contains(tableName))
+                            if (arcTables is null || arcTables.Contains(tableName))
                             {
                                 string copyTableQuery = $"CREATE TABLE IF NOT EXISTS {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};";
                                 using (var copyCommand = new MySqlCommand(copyTableQuery, targetConnection))
@@ -451,7 +532,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                err = "KNTLeakTester.BusinessIO.Repositories.ArchiveRepository #4 " + ex.Message;
+                err = "KNTCommon.BusinessIO.Repositories.ArchiveRepository #4 " + ex.Message;
                 t.LogEvent(err);
                 ret = false;
             }

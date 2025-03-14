@@ -28,6 +28,12 @@
     <ProjectReference Include="..\KNTCommon.BusinessIO\KNTCommon.BusinessIO.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="readme.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="CopyConfig" AfterTargets="Build">
     <Copy SourceFiles="$(SolutionDir)config.xml" DestinationFolder="$(OutDir)" OverwriteReadOnlyFiles="true" />
   </Target>

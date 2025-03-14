@@ -268,6 +268,28 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #8 " + ex.Message);
+            }
+            return ret;
+        }
+
+        public bool IoTaskSetPar5(int taskId, int order, string val)
+        {
+            var ret = true;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var taskD = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.TaskDetailOrder == order).FirstOrDefault();
+                    if (taskD != null)
+                    {
+                        taskD.Par5 = val;
+                        context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
                 t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #7 " + ex.Message);
             }
             return ret;
