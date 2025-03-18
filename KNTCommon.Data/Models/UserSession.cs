@@ -7,7 +7,7 @@ public partial class UserSession
 {
     public int UserSessionId { get; set; }
 
-    public int? UserId { get; set; }
+    public int? UsersId { get; set; }
 
     public bool? IsLogin { get; set; }
 

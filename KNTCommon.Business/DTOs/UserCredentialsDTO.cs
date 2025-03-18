@@ -8,7 +8,7 @@ namespace KNTCommon.Business.DTOs
 {
     public class UserCredentialsDTO
     {
-        public int UserId;
+        public int UsersId;
 
         public string UserName = string.Empty;
 

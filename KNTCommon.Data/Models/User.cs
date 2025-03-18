@@ -5,7 +5,7 @@ namespace KNTCommon.Data.Models;
 
 public partial class User
 {
-    public int UserId { get; set; }
+    public int UsersId { get; set; }
 
     public string? UserName { get; set; }
 

@@ -49,20 +49,20 @@ namespace KNTCommon.Business.Repositories
         /// </summary>
         /// <param name="insertedUsername"></param>
         /// <param name="insertedPassword"></param>
-        public bool Register(int userId, string insertedUsername, string insertedPassword, int? groupId, int? logout, bool insert)
+        public bool Register(int usersId, string insertedUsername, string insertedPassword, int? groupId, int? logout, bool insert)
         {
             try
             {
                 int uid = 0;
                 if (!insert)
-                    uid = userId;
+                    uid = usersId;
                 var iv = Encryption.GenerateRandomIV();
                 // getawaiter getresult blocks the current thread until the task is not completed
                 var encryptedPassword = Encryption.Encrypt(insertedPassword, iv).GetAwaiter().GetResult();
 
                 var user = new User
                 {
-                    UserId = uid,
+                    UsersId = uid,
                     UserName = insertedUsername,
                     PasswordHash = encryptedPassword,
                     InitializationVector = iv,

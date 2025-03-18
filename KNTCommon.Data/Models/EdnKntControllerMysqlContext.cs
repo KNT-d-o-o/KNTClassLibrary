@@ -101,7 +101,7 @@ namespace KNTCommon.Data.Models
 
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.UserId);
+                entity.HasKey(e => e.UsersId);
 
                 entity.Property(e => e.InitializationVector).HasMaxLength(32);
                 entity.Property(e => e.PasswordHash).HasMaxLength(32);
@@ -114,7 +114,7 @@ namespace KNTCommon.Data.Models
                 entity.ToTable("UserSession");
 
                 entity.HasOne(d => d.User).WithMany(p => p.UserSessions)
-                    .HasForeignKey(d => d.UserId)
+                    .HasForeignKey(d => d.UsersId)
                     .HasConstraintName("FK_UserSession_Users");
             });
 
@@ -196,7 +196,7 @@ namespace KNTCommon.Data.Models
 
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.UserId);
+                entity.HasKey(e => e.UsersId);
 
                 entity.Property(e => e.InitializationVector).HasMaxLength(32);
                 entity.Property(e => e.PasswordHash).HasMaxLength(32);

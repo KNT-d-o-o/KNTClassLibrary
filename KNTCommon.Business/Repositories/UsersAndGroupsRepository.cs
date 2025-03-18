@@ -34,8 +34,8 @@ namespace KNTCommon.Business.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     // pwr = 0; //fsta TO INIT PASSWD
-                    if(pwr > 0)
-                        ret = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UserId != 0 && x.UserId != 1 && x.UserId != 2).ToList());
+                    if(pwr > 1)
+                        ret = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UsersId != 1 && x.UsersId != 2 && x.UsersId != 3).ToList());
                     else
                         ret = AutoMapper.Map<List<UserDTO>>(context.Users.ToList());
                 }
@@ -54,7 +54,7 @@ namespace KNTCommon.Business.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    List<UserDTO> users = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UserId != 0 && x.UserId != 1 && x.UserId != 2).ToList());
+                    List<UserDTO> users = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UsersId != 1 && x.UsersId != 2 && x.UsersId != 3).ToList());
 
                     foreach (UserDTO u in users)
                     {
@@ -111,7 +111,7 @@ namespace KNTCommon.Business.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var prevUser = context.Users.Find(chengedUser.UserId);
+                    var prevUser = context.Users.Find(chengedUser.UsersId);
                     if (prevUser != null)
                     {
                         prevUser.UserName = chengedUser.UserName;
@@ -137,7 +137,7 @@ namespace KNTCommon.Business.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var u = context.Users.First(x => x.UserId == user.UserId);
+                    var u = context.Users.First(x => x.UsersId == user.UsersId);
                     context.Remove(u);
                     context.SaveChanges();
                 }
@@ -150,14 +150,14 @@ namespace KNTCommon.Business.Repositories
             return true;
         }
 
-        public UserDTO GetUserById(int userId)
+        public UserDTO GetUserById(int usersId)
         {
             UserDTO user = new();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    user = AutoMapper.Map<UserDTO>(context.Users.Where(x => x.UserId == userId).First());
+                    user = AutoMapper.Map<UserDTO>(context.Users.Where(x => x.UsersId == usersId).First());
                 }
             }
             catch (Exception ex)

@@ -42,9 +42,9 @@ namespace KNTCommon.Blazor
 
         public void LoginIfThereIsSomethingInLocalStorage(string ls)
         {
-            //var userId = 2;
+            //var usersId = 2;
             //var date = DateTime.Now.AddHours(Convert.ToDouble(2, CultureInfo.InvariantCulture)).ToString("yyyy-MM-dd HH:mm");
-            //var data = $"{userId};{date}";
+            //var data = $"{usersId};{date}";
             //localStorage.Set(data);
 
             var userIdentity = new ClaimsIdentity();

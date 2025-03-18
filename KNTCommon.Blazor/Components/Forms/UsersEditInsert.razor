@@ -67,7 +67,7 @@
 
 @code {
     [Parameter]
-    public int? UserId { get; set; }
+    public int? UsersId { get; set; }
 
     [Parameter]
     public string? ButtonText { get; set; }
@@ -89,9 +89,9 @@
 
     private void LoadUserData()
     {
-        if (UserId != null)
+        if (UsersId != null)
         {
-            User = UsersRepository.GetUserById(UserId.Value);
+            User = UsersRepository.GetUserById(UsersId.Value);
 
             if (User != null && User.UserName != null && User.PasswordHash != null && User.InitializationVector != null)
             {
@@ -156,7 +156,7 @@
         if (username != null)
         {
             UserDTO? userExist = UsersRepository.GetUserByUsername(username);
-            if (userExist != null && userExist.UserName != null && username == userExist.UserName && userExist.UserId != UserCreds.UserId)
+            if (userExist != null && userExist.UserName != null && username == userExist.UserName && userExist.UsersId != UserCreds.UsersId)
             {
                 Helper.NotifyError("Username already exists!");
                 username = UserCreds.UserName;

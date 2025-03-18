@@ -9,7 +9,7 @@ namespace KNTCommon.Business.DTOs
 {
     public class UserDTO
     {
-        public int UserId { get; set; }
+        public int UsersId { get; set; }
 
         public string? UserName { get; set; }
 

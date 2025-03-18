@@ -11,7 +11,7 @@ namespace KNTCommon.Business.Repositories
         User CreateUserReturnUser(User newUser, int? groupId);
         User UpdateUserReturnUser(User newUser, int? groupId);
         bool DeleteUser(UserDTO user);
-        UserDTO GetUserById(int userId);
+        UserDTO GetUserById(int usersId);
         UserDTO GetUserByUsername(string username);
         IEnumerable<UserGroupDTO> GetAllGroups(int pwr);
         UserGroupDTO GetGroupById(int groupId);

@@ -36,19 +36,19 @@ namespace KNTCommon.Blazor.Services
 
         public string GetUserIdFromCookie(string fakeCookie)
         {
-            var userId = fakeCookie.Split(';')[0];
-            return userId;
+            var usersId = fakeCookie.Split(';')[0];
+            return usersId;
         }
 
         public string GetDateExpired(string fakeCookie)
         {
-            var userId = fakeCookie.Split(';')[1];
-            return userId;
+            var usersId = fakeCookie.Split(';')[1];
+            return usersId;
         }
 
-        public string GenerateLocalStorageData(int userId, string date)
+        public string GenerateLocalStorageData(int usersId, string date)
         {
-            return $"{userId};{date}";
+            return $"{usersId};{date}";
         }
 
         public string GetMaxSessionTime()

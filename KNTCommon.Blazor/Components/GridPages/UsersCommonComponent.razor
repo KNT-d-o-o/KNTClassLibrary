@@ -152,7 +152,7 @@
     public async Task OpenEditInsertDialog(bool isInsert, UserDTO? userForEdit)
     {
         string labelName = isInsert ? "Add a new user" : "Edit a user";
-        var param = !isInsert && userForEdit != null ? Helper.CreateDialogBlazorComponentParameters("UserId", userForEdit.UserId) : Helper.CreateDialogBlazorComponentParameters();
+        var param = !isInsert && userForEdit != null ? Helper.CreateDialogBlazorComponentParameters("UsersId", userForEdit.UsersId) : Helper.CreateDialogBlazorComponentParameters();
         var result = await DialogService.OpenAsync<UsersEditInsert>(labelName, param, Helper.GetDialogOptions("DialogLarge"));
         if (result != null)
         {
@@ -167,7 +167,7 @@
 
             int userIdChanged = 0;
             if (!isInsert && userForEdit != null)
-                userIdChanged = userForEdit.UserId;
+                userIdChanged = userForEdit.UsersId;
             var insertResult = AuthRepo.Register(userIdChanged, user.UserName, user.Password, user.GroupId, user.logout, isInsert);
             if (insertResult)
             {

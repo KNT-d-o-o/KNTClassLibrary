@@ -48,7 +48,7 @@
     public async Task OpenEditInsertDialog(bool isInsert, UserDTO userForEdit)
     {
         string labelName = isInsert ? "Add a new user" : "Edit a user";
-        var param = !isInsert ? Helper.CreateDialogBlazorComponentParameters("UserId", userForEdit.UserId) : Helper.CreateDialogBlazorComponentParameters();
+        var param = !isInsert ? Helper.CreateDialogBlazorComponentParameters("UsersId", userForEdit.UsersId) : Helper.CreateDialogBlazorComponentParameters();
         var result = await DialogService.OpenAsync<UsersEditInsert>(labelName, param, Helper.GetDialogOptions("DialogLarge"));
 
         if (result != null)
@@ -75,8 +75,8 @@
 
     public async Task OpenDeleteDialog(UserDTO user)
     {
-        var result = await DialogService.OpenAsync<ConfirmationDialog>
-            ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", $"{user.UserName}, id: {user.UserId}", "weight", 2),
+        var result = await DialogService.OpenAsync <ConfirmationDialog>
+            ("", Helper.CreateDialogBlazorComponentParameters("action", "Delete", "details", $"{user.UserName}, id: {user.UsersId}", "weight", 2),
             Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {
