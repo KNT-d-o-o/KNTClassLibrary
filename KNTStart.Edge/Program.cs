@@ -51,7 +51,7 @@ namespace KNTLeakTester.Edge
             using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
                 writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI started.");
 
-            int checkInterval = args.Length > 1 ? int.Parse(args[1]) : 10000;
+            int checkInterval = args.Length > 1 ? int.Parse(args[1]) : 20000;
             string edgePath = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
             string urlServer = "http://localhost:";
             string url = $"{urlServer}{port}";
@@ -103,7 +103,7 @@ namespace KNTLeakTester.Edge
                     Thread.Sleep(checkInterval);
                     if (IsRefreshNeeded(urlServer, port))
                     {
-                        RestartEdge(edgeProcess, new ProcessStartInfo
+                        edgeProcess = RestartEdge(edgeProcess, new ProcessStartInfo
                         {
                             FileName = edgePath,
                             Arguments = $"--kiosk --edge-kiosk-type=fullscreen --remote-debugging-port=9222 {urlServer}{port}",
@@ -246,7 +246,7 @@ namespace KNTLeakTester.Edge
             return ret;
         }
 
-        static void RestartEdge(Process edgeProcess, ProcessStartInfo psi)
+        static Process RestartEdge(Process edgeProcess, ProcessStartInfo psi)
         {
             try
             {
@@ -276,6 +276,7 @@ namespace KNTLeakTester.Edge
                 Console.WriteLine(DateTime.Now + $" Error restarting Edge: {ex.Message}");
 #endif
             }
+            return edgeProcess;
         }
 
     }
