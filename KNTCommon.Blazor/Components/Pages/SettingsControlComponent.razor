@@ -3,7 +3,7 @@
 @inject DialogService DialogService
 @inject KNTCommon.Business.Scripts.PowerShellHelper PSHelper
 
-@* SettingsActionsComponent *@
+@* SettingsControlComponent *@
 
 <div class="ScrollableOuterDiv Animation">
 
@@ -23,7 +23,7 @@
 
     const string NONE = "None";
     private string ServiceStatus = NONE;
-    private const string ServiceName = "KNTLeakTester.BusinessPLC_1"; // fstaa premakni v app
+    private const string ServiceName = "KNTLeakTester.BusinessPLC";
 
     private bool IsRunning => ServiceStatus == "Running" || ServiceStatus == "Paused";
 

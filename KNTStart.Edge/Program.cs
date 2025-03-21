@@ -61,7 +61,7 @@ namespace KNTLeakTester.Edge
             {
                 Process[] edgeProcesses = Process.GetProcessesByName("msedge");
 
-                // Preveri, ali je prejet ukaz za zaustavitev
+                // Check if a stop command has been received
                 if (File.Exists(shutdownFilePath))
                 {
                     using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
@@ -210,9 +210,7 @@ namespace KNTLeakTester.Edge
                     }
                     catch (Exception ex)
                     {
-#if DEBUG
-                        Console.WriteLine($"Napaka pri obdelavi podatkov: {ex.Message}");
-#endif
+                        Console.WriteLine($"Data processing error: {ex.Message}");
                         ret = true;
                     }
                 };
@@ -238,9 +236,7 @@ namespace KNTLeakTester.Edge
             }
             catch (Exception ex)
             {
-#if DEBUG
                 Console.WriteLine($"Error checking page status: {ex.Message}");
-#endif
                 return true; // error, need to refresh
             }
             return ret;
@@ -272,9 +268,7 @@ namespace KNTLeakTester.Edge
             }
             catch (Exception ex)
             {
-#if DEBUG
                 Console.WriteLine(DateTime.Now + $" Error restarting Edge: {ex.Message}");
-#endif
             }
             return edgeProcess;
         }

@@ -145,7 +145,7 @@ namespace KNTCommon.BusinessIO
                                             if (minutesTo != statusPrev)
                                             {
                                                 ioTasksRepository.IoTaskSetStatus(ioTask.IoTaskId, minutesTo);
-                                                ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Remaining minutes: " + minutesTo.ToString(), Const.NONE);
+                                                ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Remaining minutes: " + Math.Abs(minutesTo).ToString(), Const.NONE);
                                                 statusPrev = minutesTo;
                                             }
                                         }
