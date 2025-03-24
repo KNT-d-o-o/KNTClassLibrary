@@ -42,6 +42,8 @@ namespace KNTCommon.Data.Models
 
         public virtual DbSet<Transactions> Transactions { get; set; }
 
+        public virtual DbSet<ServiceControl> ServiceControls { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string[] connStr = GetConnectionData(false);
@@ -221,6 +223,13 @@ namespace KNTCommon.Data.Models
                 entity.HasKey(e => e.TransactionId);
 
                 entity.ToTable("Transactions");
+            });
+
+            modelBuilder.Entity<ServiceControl>(entity =>
+            {
+                entity.HasKey(e => e.ServiceId);
+
+                entity.ToTable("ServiceControl");
             });
 
         }

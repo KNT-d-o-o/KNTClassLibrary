@@ -10,5 +10,6 @@ namespace KNTCommon.Blazor.Services
         static public string actionTitle = string.Empty;
         public int LoggedPower = 99;
         public int pageSize = 5;
+        public string[] plcService = { };
     }
 }

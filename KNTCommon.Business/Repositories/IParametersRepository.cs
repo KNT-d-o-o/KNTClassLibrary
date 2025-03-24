@@ -8,5 +8,9 @@ namespace KNTCommon.Business.Repositories
         IEnumerable<ParameterDTO> GetParameters(string key);
         string GetParametersStr(string key);
         bool UpdateParameters(string name, string value);
+        IEnumerable<ServiceControlDTO> GetServices();
+        bool UpdateServiceStatus(string name, int status);
+        int GetServiceStatus(string name);
+
     }
 }

@@ -24,6 +24,10 @@ namespace KNTCommon.Business.AutoMapper
 
             CreateMap<UserGroup, UserGroupDTO>().ReverseMap();
             CreateMap<UserGroupDTO, UserGroup>().ReverseMap();
+
+            CreateMap<ServiceControl, ServiceControlDTO>().ReverseMap();
+            CreateMap<ServiceControlDTO, ServiceControl>().ReverseMap();
+
         }
     }
 }

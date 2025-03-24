@@ -1,67 +1,119 @@
-﻿@inject HelperService Helper
+﻿@implements IDisposable
+@using KNTCommon.Business.EventHandlers
+@inject HelperService Helper
 @inject WindowsServiceHelper WHelper
 @inject DialogService DialogService
 @inject KNTCommon.Business.Scripts.PowerShellHelper PSHelper
+@inject KNTCommon.Blazor.Services.TimerService TimerService
+@inject KNTCommon.Blazor.Services.SharedContainerCommon SharedContainerCommon
+@inject IParametersRepository Parameters
 
 @* SettingsControlComponent *@
 
 <div class="ScrollableOuterDiv Animation">
 
-    <RadzenCard>
-        <RadzenLabel Text="PLC service status: " />
-        <b>@ServiceStatus</b>
-
-        <RadzenButton Text="Refresh" Click="RefreshStatus" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large"/>
-        <RadzenButton Text="Start" Click="StartService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@IsRunning" />
-        <RadzenButton Text="Stop" Click="StopService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@(IsRunning == false)" />
-        <RadzenButton Text="Restart" Click="RestartService" class="MenuIcons rz-ripple action-button" Style="margin-left: 10px;" Size="ButtonSize.Large" Disabled="@(IsRunning == false)" />
-    </RadzenCard>
+    @foreach (var service in SharedContainerCommon.plcService)
+    {
+        <RadzenRow>
+            <RadzenColumn Size="3">
+                <RadzenLabel class="labelEdit" Text="@GetServiceName(service)"/>
+            </RadzenColumn>
+            <RadzenColumn Size="3">
+                <RadzenLabel class="labelEdit">@GetServiceStatus(service)</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Start" Click="@(async () => await StartService(service))" 
+                class="rz-ripple action-button" Size="ButtonSize.Medium" 
+                Disabled="@IsRunning(service)" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Stop" Click="@(async () => await StopService(service))" 
+                class="rz-ripple action-button" Size="ButtonSize.Medium" 
+                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Restart" Click="@(async () => await RestartService(service))" 
+                class="rz-ripple action-button" Size="ButtonSize.Medium" 
+                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+        </RadzenRow>
+    }
 
 </div>
 
 @code {
 
     const string NONE = "None";
-    private string ServiceStatus = NONE;
-    private const string ServiceName = "KNTLeakTester.BusinessPLC";
-
-    private bool IsRunning => ServiceStatus == "Running" || ServiceStatus == "Paused";
+    private Dictionary<string, string> ServiceStatuses = new();
+    IEnumerable<ServiceControlDTO> services = new List<ServiceControlDTO>();
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshStatus();
-    }
-
-    private async Task RefreshStatus()
-    {
-        ServiceStatus = await Task.Run(() => WHelper.GetServiceStatus(ServiceName));
-    }
-
-    private async Task StartService()
-    {
-        ServiceStatus = NONE;
-        if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "start")))
-        { 
-            await RefreshStatus();
-        }
-    }
-
-    private async Task StopService()
-    {
-        ServiceStatus = NONE;
-        if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "stop")))
-        { 
-            await RefreshStatus();
-        }
-    }
-    
-    private async Task RestartService()
-    {
-        ServiceStatus = NONE;
-        if (await Task.Run(() => PSHelper.StartStopService(ServiceName, "restart")))
+        foreach (var service in SharedContainerCommon.plcService)
         {
-            await RefreshStatus();
+            ServiceStatuses[service] = NONE;
+        }
+
+        TimerService.DataUpdated += HandleDataUpdatedControl;
+        TimerService.StartTimer(TimeSpan.FromSeconds(1));
+
+        services = Parameters.GetServices();
+        await RefreshStatuses();
+    }
+
+    private async void HandleDataUpdatedControl(object sender, DataUpdatedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            await RefreshStatuses();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        TimerService.StopTimer();
+        TimerService.DataUpdated -= HandleDataUpdatedControl;
+    }
+
+    private async Task RefreshStatuses()
+    {
+        foreach (var service in SharedContainerCommon.plcService)
+        {
+            ServiceStatuses[service] = await Task.Run(() => WHelper.GetServiceStatus(service));
         }
     }
-    
+
+    private async Task StartService(string service)
+    {
+        ServiceStatuses[service] = NONE;
+        if (Parameters.GetServiceStatus(service) == 0)
+            if (Parameters.UpdateServiceStatus(service, 1))
+                await Task.Run(() => PSHelper.StartStopService(service, "start"));
+    }
+
+    private async Task StopService(string service)
+    {
+        ServiceStatuses[service] = NONE;
+        if (Parameters.GetServiceStatus(service) == 1)
+            if (Parameters.UpdateServiceStatus(service, 0))
+                await Task.Run(() => PSHelper.StartStopService(service, "stop"));
+    }
+
+    private async Task RestartService(string service)
+    {
+        ServiceStatuses[service] = NONE;
+        if (Parameters.GetServiceStatus(service) == 1)
+            await Task.Run(() => PSHelper.StartStopService(service, "restart"));
+    }
+
+    private string GetServiceName(string service)
+    {
+        return services.FirstOrDefault(c => c.ServiceName == service)?.ServiceTitle ?? "Unknown";
+    }
+
+    private string GetServiceStatus(string service) => ServiceStatuses.TryGetValue(service, out var status) ? status : NONE;
+
+    private bool IsRunning(string service) => GetServiceStatus(service) == "Running" || GetServiceStatus(service) == "Paused";
+
 }

@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MySql.EntityFrameworkCore.Extensions;
 using KNTToolsAndAccessories;
+using System.ServiceProcess;
 
 namespace KNTCommon.Business.Repositories
 {
@@ -101,6 +102,75 @@ namespace KNTCommon.Business.Repositories
             }
             return true;
         }
+
+        /// <summary>
+        /// Get all services
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<ServiceControlDTO> GetServices()
+        {
+            var ret = new List<ServiceControlDTO>();
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    ret = AutoMapper.Map<List<ServiceControlDTO>>(context.ServiceControls).OrderBy(x => x.ServiceId).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.ParametersRepository #4 " + ex.Message);
+            }
+
+            return ret;
+        }
+
+        public bool UpdateServiceStatus(string name, int status)
+        {
+            ServiceControl Service = new()
+            {
+                ServiceName = name,
+                Status = status
+            };
+
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var par = context.ServiceControls.Where(x => x.ServiceName == Service.ServiceName).First();
+                    if (par == null)
+                        return false;
+                    par.Status = Service.Status;
+                    context.SaveChanges();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.ParametersRepository #5 " + ex.Message);
+                return false;
+            }
+            return true;
+        }
+
+        public int GetServiceStatus(string name)
+        {
+            int ret = -1;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    ret = context.ServiceControls.Where(x => x.ServiceName == name).First().Status ?? -1;
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.ParametersRepository #6 " + ex.Message);
+            }
+
+            return ret;
+        }
+
 
     }
 }
