@@ -21,21 +21,34 @@
             <RadzenColumn Size="3">
                 <RadzenLabel class="labelEdit">@GetServiceStatus(service)</RadzenLabel>
             </RadzenColumn>
-            <RadzenColumn Size="2">
+            <RadzenColumn Size="1">
                 <RadzenButton Text="Start" Click="@(async () => await StartService(service))" 
                 class="rz-ripple action-button" Size="ButtonSize.Medium" 
                 Disabled="@IsRunning(service)" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-            <RadzenColumn Size="2">
+            <RadzenColumn Size="1">
                 <RadzenButton Text="Stop" Click="@(async () => await StopService(service))" 
                 class="rz-ripple action-button" Size="ButtonSize.Medium" 
                 Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-            <RadzenColumn Size="2">
+            <RadzenColumn Size="1">
                 <RadzenButton Text="Restart" Click="@(async () => await RestartService(service))" 
                 class="rz-ripple action-button" Size="ButtonSize.Medium" 
                 Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
+
+            <RadzenColumn Size="1">
+                <RadzenButton Text="Pause" Click="@(async () => await PauseService(service))" 
+                class="rz-ripple action-button" Size="ButtonSize.Medium" 
+                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="1">
+                <RadzenButton Text="Continue" Click="@(async () => await ContinueService(service))" 
+                class="rz-ripple action-button" Size="ButtonSize.Medium" 
+                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+
         </RadzenRow>
     }
 
@@ -105,6 +118,20 @@
         ServiceStatuses[service] = NONE;
         if (Parameters.GetServiceStatus(service) == 1)
             await Task.Run(() => PSHelper.StartStopService(service, "restart"));
+    }
+
+    private async Task PauseService(string service)
+    {
+        ServiceStatuses[service] = NONE;
+        if (Parameters.GetServiceStatus(service) == 1)
+            await Task.Run(() => PSHelper.StartStopService(service, "pause"));
+    }
+
+    private async Task ContinueService(string service)
+    {
+        ServiceStatuses[service] = NONE;
+        if (Parameters.GetServiceStatus(service) == 1)
+            await Task.Run(() => PSHelper.StartStopService(service, "continue"));
     }
 
     private string GetServiceName(string service)
