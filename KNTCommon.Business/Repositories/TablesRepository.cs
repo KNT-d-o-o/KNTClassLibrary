@@ -17,6 +17,7 @@ using MySql.Data.MySqlClient.X.XDevAPI.Common;
 using static Mysqlx.Expect.Open.Types.Condition.Types;
 using System.ComponentModel.DataAnnotations;
 using Google.Protobuf.WellKnownTypes;
+using MySql.Data.MySqlClient;
 
 namespace KNTCommon.Business.Repositories
 {
@@ -323,8 +324,8 @@ namespace KNTCommon.Business.Repositories
                             {
                                 ret = Convert.ToDecimal(value).ToString(CultureInfo.InvariantCulture) ?? string.Empty;
                             }
-                            catch 
-                            { 
+                            catch
+                            {
                                 ret = "NULL";
                             }
                             break;
@@ -443,6 +444,112 @@ namespace KNTCommon.Business.Repositories
 
             return columnTypes;
         }
+
+        public async Task<string?> GetCreateTableStatement(string tableName)
+        {
+            string? createTableResult = null;
+
+            using (var context = new EdnKntControllerMysqlContext())
+            {
+                var connectionString = context.Database.GetConnectionString();
+                using (MySqlConnection connection = new(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string createTableQuery = $"SHOW CREATE TABLE `{tableName}`";
+                    var createTableCommand = new MySqlCommand(createTableQuery, connection);
+                    using (var reader = await createTableCommand.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            // DROP and CREATE TABLE statement is in the second column
+                            createTableResult = $"DROP TABLE IF EXISTS `{tableName}`;\n\n" + reader.GetString(1) + ";";
+                        }
+                    }
+                }
+            }
+
+            return createTableResult;
+        }
+
+        public async Task<List<string>> GetInsertRecordsStatement(string tableName)
+        {
+            List<string> insertQueries = new List<string>();
+
+            using (var context = new EdnKntControllerMysqlContext())
+            {
+                var connectionString = context.Database.GetConnectionString();
+                using (MySqlConnection connection = new(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string selectQuery = $"SELECT * FROM {tableName}";
+                    var selectCommand = new MySqlCommand(selectQuery, connection);
+                    var reader = await selectCommand.ExecuteReaderAsync();
+
+                    var columnNames = new List<string>();
+                    while (await reader.ReadAsync())
+                    {
+                        if (columnNames.Count == 0)
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                columnNames.Add(reader.GetName(i));
+                            }
+                        }
+
+                        var values = new List<string>();
+                        foreach (var columnName in columnNames)
+                        {
+                            var value = reader[columnName];
+                            if (value == DBNull.Value)
+                                values.Add("NULL");
+                            else
+                            {
+                                string valueStr = value?.ToString() ?? "NULL";
+                                values.Add($"'{valueStr.Replace("'", "''")}'");
+                            }
+                        }
+
+                        insertQueries.Add($"INSERT INTO {tableName} ({string.Join(",", columnNames)}) VALUES ({string.Join(",", values)});");
+                    }
+                }
+            }
+
+            return insertQueries;
+        }
+
+        public async Task<bool> ExecuteSqlFromFile(string file)
+        {
+            try
+            {
+                string filePath = $"{Directory.GetCurrentDirectory()}\\DbExport\\{file}.sql";
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var connectionString = context.Database.GetConnectionString();
+                    using (var connection = new MySqlConnection(connectionString))
+                    {
+                        await connection.OpenAsync();
+
+                        // read all SQL statements
+                        string sqlScript = File.ReadAllText(filePath);
+
+                        using (var command = new MySqlCommand(sqlScript, connection))
+                        {
+                            await command.ExecuteNonQueryAsync();
+                            Console.WriteLine("The SQL script was successfully executed.");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing SQL script: {ex.Message}");
+                return false;
+            }
+            return true;
+        }
+
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf.Reflection;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace KNTCommon.Business.Repositories
 {
@@ -10,5 +11,8 @@ namespace KNTCommon.Business.Repositories
         bool UpdateTableRow(string table, Dictionary<string, object> row, List<string>? pk);
         bool InsertTableRow(string table, Dictionary<string, object> row);
         bool DeleteTableRow(string table, Dictionary<string, object> row, List<string>? pk);
+        Task<string?> GetCreateTableStatement(string tableName);
+        Task<List<string>> GetInsertRecordsStatement(string tableName);
+        Task<bool> ExecuteSqlFromFile(string filePath);
     }
 }

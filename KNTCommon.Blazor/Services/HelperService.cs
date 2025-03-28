@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 
 namespace KNTCommon.Blazor.Services
@@ -80,5 +81,6 @@ namespace KNTCommon.Blazor.Services
 
             return result;
         }
+
     }
 }

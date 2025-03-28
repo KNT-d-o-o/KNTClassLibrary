@@ -1,15 +1,26 @@
 ﻿@inject DialogService DialogService
 @inject ITablesRepository TablesRepository
 @inject KNTCommon.Blazor.Services.HelperService Helper
+@inject KNTCommon.Blazor.Services.WindowsServiceHelper WindowsServiceHelper
 
 @* DatabaseTablesComponent *@
 
-<div class="Animation">
-    <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText="No tables found">
+<div class="Animation FixContainer">
+    <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText="No tables found"
+    TItem="Dictionary<string, object>"
+    AllowAlternatingRows="false"
+    AllowSorting="true" AllowColumnResize="true" PagerHorizontalAlign="HorizontalAlign.Left"
+    EditMode="DataGridEditMode.Single" style="height: 75vh"
+    >
         <Columns>
             <RadzenDataGridColumn TItem="string" Property="." Title="Table Name">
                 <Template Context="table">
                     <span @onclick="(() => OnCellClick(table))" style="cursor: pointer;">@table</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="string" Property="." Title="SQL" Width="10%">
+                <Template Context="table">
+                    <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Import" Icon="database" Click="() => OnSql(table)" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -44,6 +55,18 @@
         var param = Helper.CreateDialogBlazorComponentParameters("TableName", tableName);
         var result = await DialogService.OpenAsync<TableDetailsDialog>($"Edit table: {tableName}", param, Helper.GetDialogOptions("MaxSizeWindow"));
 
+    }
+
+    private async Task OnSql(string tableName)
+    {
+        var result = await DialogService.OpenAsync<ConfirmationDialog>
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Import SQL", "details", tableName, "weight", 1),
+                Helper.GetDialogOptions("ConfirmationWrapper"));
+        if (result == true)
+        {
+            if (await WindowsServiceHelper.GenerateSQLDump(tableName, DateTime.Now.ToString("yyyyMMddHHmmss")))
+                Helper.Notify(await TablesRepository.ExecuteSqlFromFile(tableName));
+        }
     }
 
 }

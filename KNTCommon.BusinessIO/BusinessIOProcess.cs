@@ -411,7 +411,6 @@ namespace KNTCommon.BusinessIO
                             ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
                         }
 
-                        //fstaa to do test
                         bool complete = false;
                         if (stepExport + 1 < noToExport)
                         {
