@@ -46,7 +46,6 @@ namespace KNTCommon.BusinessIO.Service
                     services.AddScoped<ParametersRepository>();
                     services.AddSingleton<BusinessIOProcess>();
                     services.AddHostedService<BusinessIOService>();
-                    //fstaa    services.AddSingleton(() => ServiceVersion);
                     services.AddSingleton(ServiceVersion);
                 })
                 .Build();
