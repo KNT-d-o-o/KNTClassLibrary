@@ -8,8 +8,9 @@
 @* TableDetailsDialog*@
 
 <div class="Animation FlexContainer">
+
     <RadzenDataGrid TItem="Dictionary<string, object>" Data=@Data @ref="ordersGrid"
-    AllowFiltering="true" FilterMode="FilterMode.Simple" AllowAlternatingRows="false"
+    AllowFiltering="true" FilterMode="FilterMode.Simple" AllowAlternatingRows="false" EnableVirtualization="true"
     AllowSorting="true" AllowColumnResize="true" PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
     ColumnWidth="300px" EditMode="DataGridEditMode.Single" LogicalFilterOperator="LogicalFilterOperator.And" PageNumbersCount="10" style="height: 75vh"
     LoadData="@OnLoadData">
@@ -66,6 +67,12 @@
 
         </Columns>
     </RadzenDataGrid>
+    @if (isLoading)
+    {
+        <div class="spinner-overlay">
+            <div class="spinner"></div>
+        </div>
+    }
 </div>
 
 @code {
@@ -76,6 +83,8 @@
     private List<string>? ColumnNames;
     private List<string>? ColumnPkNames;
 
+    bool isLoading = false;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -84,13 +93,19 @@
 
     private async Task LoadData()
     {
+        isLoading = true;
+
         if (TableName != null)
-            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, new Dictionary<string, object>(), string.Empty);
+            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, new Dictionary<string, object>(), string.Empty, 100);
+        
+        isLoading = false;
     }
 
     private LoadDataArgs? lastLoadDataArgs;
     private async Task OnLoadData(LoadDataArgs args)
     {
+        isLoading = true;
+
         lastLoadDataArgs = args;
 
         Dictionary<string, object> filterArray = new();
@@ -100,7 +115,9 @@
         }
 
         if (TableName != null)
-            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, filterArray, args.OrderBy);
+            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, filterArray, args.OrderBy, 100);
+
+        isLoading = false;
     }
 
     private async Task OnRefreshClick()
