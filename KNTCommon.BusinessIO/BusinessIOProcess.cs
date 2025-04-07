@@ -412,18 +412,15 @@ namespace KNTCommon.BusinessIO
                         }
 
                         bool complete = false;
-                        if (stepExport + 1 < noToExport)
+                        stepExport++;
+                        int percentDone = stepExport * 100 / noToExport;
+                        if (percentDone == 100) // not to complete all
                         {
-                            stepExport++;
-                            int percentDone = stepExport * 100 / noToExport;
-                            if (percentDone == 100) // not to complete all
-                            {
-                                percentDone = 99;
-                                complete = true;
-                            }
-                            ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Exporting: {percentDone}%", Const.NONE);
+                            complete = true;
                         }
+                        ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
+                        ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Exporting: {percentDone}%", Const.NONE);
+
                         if(complete) // end exporting
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
