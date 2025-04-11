@@ -21,6 +21,8 @@ using MySqlX.XDevAPI.Relational;
 using Google.Protobuf.WellKnownTypes;
 using Org.BouncyCastle.Crypto.Utilities;
 using DocumentFormat.OpenXml.Drawing;
+using MySqlConnector;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace KNTCommon.BusinessIO.Repositories
 {
@@ -41,42 +43,53 @@ namespace KNTCommon.BusinessIO.Repositories
         private readonly IDbContextFactory<EdnKntControllerMysqlContext> Factory;
         private readonly IMapper AutoMapper;
         private readonly Tools t = new();
+        private readonly IoTasksRepository ioTasksRepository;
 
-        public ArchiveRepository(IDbContextFactory<EdnKntControllerMysqlContext> factory, IMapper automapper)
+        public ArchiveRepository(IDbContextFactory<EdnKntControllerMysqlContext> factory, IMapper automapper, IoTasksRepository _ioTasksRepository)
         {
             Factory = factory;
             AutoMapper = automapper;
+            ioTasksRepository = _ioTasksRepository;
         }
 
         // optimize table
-        public bool OptimizeTable(string tableName)
+        public async Task<bool> OptimizeTable(string tableName)
         {
-            bool ret = true;
-
             try
             {
-                using (var dbContext = new EdnKntControllerMysqlContext())
+                uint timeout = 1500; // 25 minutes
+                using var dbContext = new EdnKntControllerMysqlContext();
+                var builder = new MySqlConnector.MySqlConnectionStringBuilder(dbContext.Database.GetConnectionString() ?? string.Empty)
                 {
-                    var connectionString = dbContext.Database.GetConnectionString();
-                    using (MySqlConnection conn = new(connectionString))
-                    {
-                        conn.Open();
-                        string query = $"OPTIMIZE TABLE `{tableName}`;";
-                        using (MySqlCommand cmd = new(query, conn))
-                        {
-                            cmd.ExecuteNonQuery();
-                        }
-                        ret = true;
-                    }
-                }
+                    DefaultCommandTimeout = timeout,
+                    ConnectionTimeout = timeout
+                };
+
+                using var conn = new MySqlConnector.MySqlConnection(builder.ConnectionString);
+                await conn.OpenAsync();
+
+                string query = $"OPTIMIZE TABLE `{tableName}`;";
+                using var cmd = new MySqlConnector.MySqlCommand(query, conn)
+                {
+                    CommandTimeout = (int)timeout
+                };
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
+
+                await cmd.ExecuteNonQueryAsync(cts.Token); // z MySqlConnector to DELUJE
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                t.LogEvent($"KNTCommon.BusinessIO.Repositories.ArchiveRepository #9: ⚠️ OptimizeTable timeout for {tableName}");
+                return false;
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.ArchiveRepository #6 " + ex.Message);
-                ret = false;
+                t.LogEvent($"KNTCommon.BusinessIO.Repositories.ArchiveRepository #6: ❌ OptimizeTable error ({tableName}): {ex.Message}");
+                return false;
             }
-
-            return ret;
         }
 
         // copy other tables if never
@@ -89,14 +102,14 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     var sourceConnectionString = context.Database.GetConnectionString();
-                    var builder = new MySqlConnectionStringBuilder(sourceConnectionString);
+                    var builder = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(sourceConnectionString);
                     string connStr = builder.Database;
                     string[] connStrArchive = EdnKntControllerMysqlContext.GetConnectionData(true);
                     builder.Database = connStrArchive[0];
                     var targetConnectionString = builder.ConnectionString;
 
-                    using (var sourceConnection = new MySqlConnection(sourceConnectionString))
-                    using (var targetConnection = new MySqlConnection(targetConnectionString))
+                    using (var sourceConnection = new MySql.Data.MySqlClient.MySqlConnection(sourceConnectionString))
+                    using (var targetConnection = new MySql.Data.MySqlClient.MySqlConnection(targetConnectionString))
                     {
                         sourceConnection.Open();
                         targetConnection.Open();
@@ -106,7 +119,7 @@ namespace KNTCommon.BusinessIO.Repositories
                             WHERE table_schema = DATABASE() 
                             AND table_type = 'BASE TABLE';";
 
-                        var command = new MySqlCommand(getTablesQuery, sourceConnection);
+                        var command = new MySql.Data.MySqlClient.MySqlCommand(getTablesQuery, sourceConnection);
                         var reader = command.ExecuteReader();
 
                         while (reader.Read())
@@ -119,7 +132,7 @@ namespace KNTCommon.BusinessIO.Repositories
                                 {
                                     // delete
                                     string deleteQuery = $"DELETE FROM {connStrArchive[0]}.{tableName};";
-                                    using (var deleteCommand = new MySqlCommand(deleteQuery, targetConnection))
+                                    using (var deleteCommand = new MySql.Data.MySqlClient.MySqlCommand(deleteQuery, targetConnection))
                                     {
                                         deleteCommand.ExecuteNonQuery();
                                     }
@@ -129,7 +142,7 @@ namespace KNTCommon.BusinessIO.Repositories
                                     INSERT INTO {connStrArchive[0]}.{tableName}
                                     SELECT * FROM {connStr}.{tableName};";
 
-                                    using (var copyCommand = new MySqlCommand(copyDataQuery, targetConnection))
+                                    using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyDataQuery, targetConnection))
                                     {
                                         copyCommand.ExecuteNonQuery();
                                     }
@@ -177,10 +190,20 @@ namespace KNTCommon.BusinessIO.Repositories
                     {
                         string whereConditionOther = (ioTaskDetails[i].Par2 ?? string.Empty).Replace("{transactionIdArrayStr}", string.Join(", ", items));
                         DataTable dataTableOther = GetDataTable(tables[i], whereConditionOther, string.Empty, 0, string.Empty, false, 0, new EdnKntControllerMysqlContext());
-                        
+
+#if DEBUG
+                        //    Console.WriteLine($"table: {tables[i]}, whereConditionOther: {whereConditionOther}, dataTableOther: {dataTableOther}");
+#endif
+
                         // insert and then delete
                         if (InsertFromDataTable(tables[i], dataTableOther, new EdnKntControllerMysqlContextArchive()))
+                        {
                             DeleteWhereInItems(tables[i], retColumn, items, new EdnKntControllerMysqlContext());
+
+#if DEBUG
+                            Console.WriteLine($"InsertFromDataTable->DeleteWhereInItems: {tables[i]}");
+#endif
+                        }
                     }
 
                     // sign as archive - common table
@@ -245,7 +268,7 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new(connectionString))
+                using (MySql.Data.MySqlClient.MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
                     string selectQuery = $"SELECT * FROM {table}";
@@ -271,8 +294,8 @@ namespace KNTCommon.BusinessIO.Repositories
                         selectQuery += $" LIMIT {noRows}";
                     selectQuery += ";";
 
-                    using (MySqlCommand selectCommand = new(selectQuery, connection))
-                    using (MySqlDataAdapter adapter = new(selectCommand))
+                    using (MySql.Data.MySqlClient.MySqlCommand selectCommand = new(selectQuery, connection))
+                    using (MySql.Data.MySqlClient.MySqlDataAdapter adapter = new(selectCommand))
                     {
                         adapter.Fill(dataTable);
                     }
@@ -300,18 +323,18 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new(connectionString))
+                using (MySql.Data.MySqlClient.MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
 
-                    using (MySqlTransaction transaction = connection.BeginTransaction())
+                    using (MySql.Data.MySqlClient.MySqlTransaction transaction = connection.BeginTransaction())
                     {
                         try
                         {
                             foreach (DataRow row in dataTable.Rows)
                             {
                                 string insertQuery = $"INSERT INTO {table} ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}) VALUES ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => "@" + c.ColumnName))});";
-                                using (MySqlCommand insertCommand = new(insertQuery, connection))
+                                using (MySql.Data.MySqlClient.MySqlCommand insertCommand = new(insertQuery, connection))
                                 {
                                     foreach (DataColumn column in dataTable.Columns)
                                     {
@@ -320,10 +343,16 @@ namespace KNTCommon.BusinessIO.Repositories
                                     insertCommand.ExecuteNonQuery();
                                 }
                             }
+
+                     //       Console.WriteLine($"commit: {table}");
+
                             transaction.Commit();
                         }
-                        catch
+                        catch (Exception ex)
                         {
+
+                            Console.WriteLine($"reject: {table} {ex.Message}");
+
                             transaction.Rollback();
                             return false;
                         }
@@ -339,16 +368,16 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new(connectionString))
+                using (MySql.Data.MySqlClient.MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
 
-                    using (MySqlTransaction transaction = connection.BeginTransaction())
+                    using (MySql.Data.MySqlClient.MySqlTransaction transaction = connection.BeginTransaction())
                     {
                         try
                         {
                             string updateQuery = $"UPDATE {table} SET {column} = {value} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
-                            using (MySqlCommand updateCommand = new(updateQuery, connection))
+                            using (MySql.Data.MySqlClient.MySqlCommand updateCommand = new(updateQuery, connection))
                             {
                                 updateCommand.ExecuteNonQuery();
                             }
@@ -371,16 +400,16 @@ namespace KNTCommon.BusinessIO.Repositories
             using (var context = contextIn)
             {
                 var connectionString = context.Database.GetConnectionString();
-                using (MySqlConnection connection = new(connectionString))
+                using (MySql.Data.MySqlClient.MySqlConnection connection = new(connectionString))
                 {
                     connection.Open();
 
-                    using (MySqlTransaction transaction = connection.BeginTransaction())
+                    using (MySql.Data.MySqlClient.MySqlTransaction transaction = connection.BeginTransaction())
                     {
                         try
                         {
                             string deleteQuery = $"DELETE FROM {table} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
-                            using (MySqlCommand deleteCommand = new(deleteQuery, connection))
+                            using (MySql.Data.MySqlClient.MySqlCommand deleteCommand = new(deleteQuery, connection))
                             {
                                 deleteCommand.ExecuteNonQuery();
                             }
@@ -407,7 +436,7 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     var connectionString = context.Database.GetConnectionString();
-                    using (MySqlConnection connection = new(connectionString))
+                    using (MySql.Data.MySqlClient.MySqlConnection connection = new(connectionString))
                     {
                         connection.Open();
                         int flag = 0;
@@ -428,7 +457,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         }
                         selectQuery += ";";
 
-                        using (MySqlCommand selectCommand = new(selectQuery, connection))
+                        using (MySql.Data.MySqlClient.MySqlCommand selectCommand = new(selectQuery, connection))
                         {
                             object result = selectCommand.ExecuteScalar();
                             if (result != null && int.TryParse(result.ToString(), out int parsedCount))
@@ -458,7 +487,7 @@ namespace KNTCommon.BusinessIO.Repositories
                 {
                     var connectionString = context.Database.GetConnectionString(); // get from current - not archive
 
-                    using (var connection = new MySqlConnection(connectionString))
+                    using (var connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString))
                     {
                         connection.Open();
 
@@ -467,7 +496,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         string[] connStr = EdnKntControllerMysqlContext.GetConnectionData(true);
 
                         string createDatabaseQuery = $"CREATE DATABASE IF NOT EXISTS `{connStr[0]}`;";
-                        using (var command = new MySqlCommand(createDatabaseQuery, connection))
+                        using (var command = new MySql.Data.MySqlClient.MySqlCommand(createDatabaseQuery, connection))
                         {
                             command.ExecuteNonQuery();
                         }
@@ -494,14 +523,14 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     var sourceConnectionString = context.Database.GetConnectionString();
-                    var builder = new MySqlConnectionStringBuilder(sourceConnectionString);
+                    var builder = new MySql.Data.MySqlClient.MySqlConnectionStringBuilder(sourceConnectionString);
                     string connStr = builder.Database;
                     string[] connStrArchive = EdnKntControllerMysqlContext.GetConnectionData(true);
                     builder.Database = connStrArchive[0];
                     var targetConnectionString = builder.ConnectionString;
 
-                    using (var sourceConnection = new MySqlConnection(sourceConnectionString))
-                    using (var targetConnection = new MySqlConnection(targetConnectionString))
+                    using (var sourceConnection = new MySql.Data.MySqlClient.MySqlConnection(sourceConnectionString))
+                    using (var targetConnection = new MySql.Data.MySqlClient.MySqlConnection(targetConnectionString))
                     {
                         sourceConnection.Open();
                         targetConnection.Open();
@@ -511,8 +540,10 @@ namespace KNTCommon.BusinessIO.Repositories
                             WHERE table_schema = DATABASE() 
                             AND table_type = 'BASE TABLE';";
 
-                        var command = new MySqlCommand(getTablesQuery, sourceConnection);
+                        var command = new MySql.Data.MySqlClient.MySqlCommand(getTablesQuery, sourceConnection);
                         var reader = command.ExecuteReader();
+
+                        List<string> excludedTables = ioTasksRepository.GetIoTaskDetailsPar1(ioTasksRepository.GetIoTaskIdByTypeMode(1, 1));
 
                         while (reader.Read())
                         {
@@ -520,11 +551,26 @@ namespace KNTCommon.BusinessIO.Repositories
 
                             if (arcTables is null || arcTables.Contains(tableName))
                             {
-                                string copyTableQuery = $"CREATE TABLE IF NOT EXISTS {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};";
-                                using (var copyCommand = new MySqlCommand(copyTableQuery, targetConnection))
+                                string copyQuery = $"CREATE TABLE IF NOT EXISTS {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};";
+                                using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyQuery, targetConnection))
                                 {
                                     copyCommand.ExecuteNonQuery();
                                 }
+
+                                // copy non archivable tables
+                                if (!excludedTables.Contains(tableName) && arcTables is null)
+                                {
+#if DEBUG
+                                    Console.WriteLine($"connStrArchive[0].tableName: {connStrArchive[0]}.{tableName}");
+#endif
+                                    copyQuery = $@"TRUNCATE TABLE {connStrArchive[0]}.{tableName};
+                                                   INSERT INTO {connStrArchive[0]}.{tableName} SELECT * FROM {connStr}.{tableName};";
+                                    using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyQuery, targetConnection))
+                                    {
+                                        copyCommand.ExecuteNonQuery();
+                                    }
+                                }
+                                // 
                             }
                         }
                     }

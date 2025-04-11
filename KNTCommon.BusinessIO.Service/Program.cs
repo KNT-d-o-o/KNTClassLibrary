@@ -9,20 +9,11 @@ using KNTCommon.BusinessIO.AutoMapper;
 using KNTCommon.Data.Models;
 using KNTCommon.Business.Repositories;
 
-/* *** Version 1.0.1 *** 13/03/2025
- * Features:
- *  DB changes for SMM.
- * 
- 1.0.1 
-/* *** Version 1.0.0 *** 13/03/2025
- * First version 
- */
-
 namespace KNTCommon.BusinessIO.Service
 {
     public class Program
     {
-        public const string ServiceVersion = "1.0.0";
+        public const string ServiceVersion = AppInfo.Version;
 
         public static void Main(string[] args)
         {

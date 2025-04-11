@@ -50,7 +50,7 @@ namespace KNTCommon.BusinessIO.Test
 
             try
             {
-                await proc.OnStartAsync(cts.Token, "x.x.x");
+                await proc.OnStartAsync(cts.Token, AppInfo.Version);
             }
             catch (OperationCanceledException)
             {
