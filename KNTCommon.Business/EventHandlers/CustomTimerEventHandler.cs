@@ -11,11 +11,19 @@ namespace KNTCommon.Business.EventHandlers
 
     public class DataUpdatedEventArgs : EventArgs
     {
-        public DataItem? YourData { get; }
+     //   public DataItem? YourData { get; }
+        public string Message { get; }
 
         public DataUpdatedEventArgs()
         {
             //fsta  YourData = yourData;
         }
+
+        public DataUpdatedEventArgs(string yourData)
+        {
+            Message = yourData;
+        }
     }
+
+
 }

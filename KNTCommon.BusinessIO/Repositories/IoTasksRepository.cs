@@ -80,6 +80,26 @@ namespace KNTCommon.BusinessIO.Repositories
             return ret;
         }
 
+        // get task id by type and mode
+        public int GetIoTaskIdByTypeMode(int type, int mode)
+        {
+            int id = 0;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var task = AutoMapper.Map<IoTasksDTO>(context.IoTasks.Where(x => x.IoTaskType == type && x.IoTaskMode == mode).First());
+                    id = task.IoTaskId;
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #9 " + ex.Message);
+            }
+
+            return id;
+        }
+
         // get IO tasks details except not existed table => Par5 = "none"
         public IEnumerable<IoTaskDetailsDTO> GetIoTaskDetails(int taskId)
         {
@@ -109,6 +129,32 @@ namespace KNTCommon.BusinessIO.Repositories
             catch (Exception ex)
             {
                 t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #2 " + ex.Message);
+            }
+
+            return ret;
+        }
+
+        // get list of par1
+        public List<string> GetIoTaskDetailsPar1(int taskId)
+        {
+            List<string> ret = new List<string>();
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId).OrderBy(x => x.TaskDetailOrder);
+
+                    // set to none if not exists
+                    foreach (IoTaskDetails d in details)
+                    {
+                        if(d.Par1 != null)
+                            ret.Add(d.Par1);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #10 " + ex.Message);
             }
 
             return ret;

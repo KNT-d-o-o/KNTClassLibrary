@@ -15,7 +15,6 @@ namespace KNTCommon.BusinessIO
     public class BusinessIOProcess
     {
         private readonly Tools t = new(); // Tools je vaš razred, ki mora biti ustrezno implementiran
-        private bool procBusy = false;
         private readonly double TIMER_INTERVAL_NORMAL = 1000;
 
         private readonly IoTasksRepository? ioTasksRepository;
@@ -86,80 +85,77 @@ namespace KNTCommon.BusinessIO
             return ret;
         }
 
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
         int statusPrev = 0;
         public async Task OnElapsedTimeAsync()
         {
-            if (procBusy) return;
-
-            procBusy = true;
+            if (!await _semaphore.WaitAsync(TimeSpan.FromSeconds(1800))) // 30 min timeout
+                return;
 
             try
             {
-                await Task.Run(() =>
+#if DEBUG
+                Console.WriteLine("BusinessIOProcess OnElapsedTime.");
+#endif
+                if (ioTasksRepository != null)
                 {
-#if DEBUG
-                    Console.WriteLine("BusinessIOProcess OnElapsedTime.");
-#endif
-                    if (ioTasksRepository != null)
+                    IEnumerable<IoTasksDTO> ioTasks = ioTasksRepository.GetIoTasks();
+
+                    foreach (IoTasksDTO ioTask in ioTasks)
                     {
-                        IEnumerable<IoTasksDTO> ioTasks = ioTasksRepository.GetIoTasks();
-
-                        foreach (IoTasksDTO ioTask in ioTasks)
+                        if (ioTask.ExecuteDateAndTime < DateTime.Now && ioTask.Status < 100)
                         {
-                            if (ioTask.ExecuteDateAndTime < DateTime.Now && ioTask.Status < 100)
-                            {
 #if DEBUG
-                                Console.WriteLine($"{DateTime.Now} TO DO {ioTask.IoTaskName}");
+                            Console.WriteLine($"{DateTime.Now} TO DO {ioTask.IoTaskName}");
 #endif
-                                switch (ioTask.IoTaskType)
-                                {
-                                    case TASKID_ARCHIVE: // archive
-                                        ArchiveStep(ioTask);
-                                        break;
-                                    case TASKID_RESTORE: // restore
-                                        RestoreStep(ioTask);
-                                        break;
-                                    case TASKID_EXPORT_EXCEL:
-                                        ExportExcelStep(ioTask);
-                                        break;
-                                    case TASKID_EXPORT_DUMP:
-                                        ExportDumpStep(ioTask);
-                                        break;
-                                }
-
-                                break; // execute only first priority task
-                            }
-                        }
-                        foreach (IoTasksDTO ioTask in ioTasks) // set remaining time info
-                        {
-                            if (ioTask.ExecuteDateAndTime > DateTime.Now)
+                            switch (ioTask.IoTaskType)
                             {
-                                if (ioTask.ExecuteDateAndTime != null)
-                                {
-                                    if (ioTask.IoTaskMode == 1) // cycling
-                                    {
-                                        if (ioTask.Status < 0) // minutes to next
-                                        {
-                                            int minutesTo = -(int)Math.Round(((TimeSpan)(ioTask.ExecuteDateAndTime - DateTime.Now)).TotalMinutes);
+                                case TASKID_ARCHIVE: // archive
+                                    await ArchiveStep(ioTask);
+                                    break;
+                                case TASKID_RESTORE: // restore
+                                    RestoreStep(ioTask);
+                                    break;
+                                case TASKID_EXPORT_EXCEL:
+                                    ExportExcelStep(ioTask);
+                                    break;
+                                case TASKID_EXPORT_DUMP:
+                                    ExportDumpStep(ioTask);
+                                    break;
+                            }
 
-                                            if (minutesTo != statusPrev)
-                                            {
-                                                ioTasksRepository.IoTaskSetStatus(ioTask.IoTaskId, minutesTo);
-                                                ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Remaining minutes: " + Math.Abs(minutesTo).ToString(), Const.NONE);
-                                                statusPrev = minutesTo;
-                                            }
-                                        }
-                                        else if (ioTask.Status >= 100 && ioTask.Status != statusPrev) // disable manual
+                            break; // execute only first priority task
+                        }
+                    }
+                    foreach (IoTasksDTO ioTask in ioTasks) // set remaining time info
+                    {
+                        if (ioTask.ExecuteDateAndTime > DateTime.Now)
+                        {
+                            if (ioTask.ExecuteDateAndTime != null)
+                            {
+                                if (ioTask.IoTaskMode == 1) // cycling
+                                {
+                                    if (ioTask.Status < 0) // minutes to next
+                                    {
+                                        int minutesTo = -(int)Math.Round(((TimeSpan)(ioTask.ExecuteDateAndTime - DateTime.Now)).TotalMinutes);
+
+                                        if (minutesTo != statusPrev)
                                         {
-                                            ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Disabled, " + DateTime.Now.ToString(), Const.WARNING);
-                                            statusPrev = ioTask.Status;
+                                            ioTasksRepository.IoTaskSetStatus(ioTask.IoTaskId, minutesTo);
+                                            ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Remaining minutes: " + Math.Abs(minutesTo).ToString(), Const.NONE);
+                                            statusPrev = minutesTo;
                                         }
+                                    }
+                                    else if (ioTask.Status >= 100 && ioTask.Status != statusPrev) // disable manual
+                                    {
+                                        ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Disabled, " + DateTime.Now.ToString(), Const.WARNING);
+                                        statusPrev = ioTask.Status;
                                     }
                                 }
                             }
                         }
                     }
-                });
+                }
             }
             catch (Exception ex)
             {
@@ -167,7 +163,7 @@ namespace KNTCommon.BusinessIO
             }
             finally
             {
-                procBusy = false;
+                _semaphore.Release();
             }
         }
 
@@ -195,7 +191,7 @@ namespace KNTCommon.BusinessIO
         string? orderByA;
         int tableOptimizedIdx = 0;
         List<IoTaskDetailsDTO>? taskDetailsA;
-        private void ArchiveStep(IoTasksDTO task)
+        private async Task ArchiveStep(IoTasksDTO task)
         {
 #if DEBUG
             Console.WriteLine($"ArchiveStep noToArchive: {noToArchive}, noArchived: {noArchived}");
@@ -240,6 +236,10 @@ namespace KNTCommon.BusinessIO
 
                         int stepArchived = archiveRepository.ArchiveTables(AllTables, taskDetailsA, dayWhereA ?? string.Empty, orderByA ?? string.Empty, archiveStep, taskDetailsA[0].Par4 ?? string.Empty);
 
+#if DEBUG
+                        Console.WriteLine($"stepArchived: {stepArchived}");
+#endif
+
                         if (stepArchived > 0)
                         {
                             noArchived += stepArchived;
@@ -254,7 +254,7 @@ namespace KNTCommon.BusinessIO
                         {
                             if (noToArchive > 0 && noArchived > 0) // optimize
                             {
-                                archiveRepository.OptimizeTable(AllTables[tableOptimizedIdx]);
+                                await archiveRepository.OptimizeTable(AllTables[tableOptimizedIdx]);
                                 int percentDone = (tableOptimizedIdx + 1) * 100 / AllTables.Count;
                                 if(percentDone == 100) // not to complete
                                     percentDone = 99;
@@ -412,18 +412,15 @@ namespace KNTCommon.BusinessIO
                         }
 
                         bool complete = false;
-                        if (stepExport + 1 < noToExport)
+                        stepExport++;
+                        int percentDone = stepExport * 100 / noToExport;
+                        if (percentDone == 100) // not to complete all
                         {
-                            stepExport++;
-                            int percentDone = stepExport * 100 / noToExport;
-                            if (percentDone == 100) // not to complete all
-                            {
-                                percentDone = 99;
-                                complete = true;
-                            }
-                            ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Exporting: {percentDone}%", Const.NONE);
+                            complete = true;
                         }
+                        ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
+                        ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Exporting: {percentDone}%", Const.NONE);
+
                         if(complete) // end exporting
                         {
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
@@ -538,8 +535,6 @@ namespace KNTCommon.BusinessIO
                         {
                             stepDump++;
                             int percentDone = stepDump * 100 / noToDump;
-                        //fstaa test    if (percentDone == 100) // not to complete all
-                          //      percentDone = 99;
                             ioTasksRepository.IoTaskSetStatus(task.IoTaskId, percentDone);
                             ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Completed Dumping: {percentDone}%", Const.NONE);
                         }

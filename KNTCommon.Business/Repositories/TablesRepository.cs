@@ -68,7 +68,7 @@ namespace KNTCommon.Business.Repositories
             return tableNames;
         }
 
-        public async Task<(IEnumerable<Dictionary<string, object>> results, List<string> columnNames, List<string> columnPkNames)> GetDataFromTableAsync(string table, Dictionary<string, object> whrereCondition, string orderBy)
+        public async Task<(IEnumerable<Dictionary<string, object>> results, List<string> columnNames, List<string> columnPkNames)> GetDataFromTableAsync(string table, Dictionary<string, object> whrereCondition, string orderBy, int limit)
         {
             var results = new List<Dictionary<string, object>>();
             var columnNames = new List<string>();
@@ -99,6 +99,10 @@ namespace KNTCommon.Business.Repositories
                     // order by
                     if (!string.IsNullOrEmpty(orderBy))
                         query += " ORDER BY " + orderBy;
+
+                    // limit
+                    if(limit > 0)
+                        query += $" LIMIT {limit} ";
 
                     var connection = context.Database.GetDbConnection();
                     await connection.OpenAsync();
