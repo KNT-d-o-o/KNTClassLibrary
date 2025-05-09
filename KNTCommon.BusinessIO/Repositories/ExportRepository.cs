@@ -53,7 +53,7 @@ namespace KNTCommon.BusinessIO.Repositories
             AutoMapper = automapper;
         }
 
-        public bool ExportExcel(string tableName, string where, string order, string filePath, List<string> altCols, out string errStr)
+        public bool ExportExcel(string tableName, string where, string order, string filePath, List<string> altCols, List<string> labels, out string errStr)
         {
             errStr = string.Empty;
             bool ret = true;
@@ -155,11 +155,18 @@ namespace KNTCommon.BusinessIO.Repositories
                             }
                         }
 
-                        var worksheet = workbook.Worksheets.Add(tableName);
+                        string labelName = tableName;
+                        try
+                        {
+                            if(labels[0].Length > 0)
+                                labelName = labels[0];
+                        }
+                        catch { }
+                        var worksheet = workbook.Worksheets.Add(labelName);
 
                         // title of sheet
                         int row = 1;
-                        worksheet.Cell(row, 1).Value = tableName;
+                        worksheet.Cell(row, 1).Value = worksheet.Name;
                         worksheet.Cell(row, 2).Value = DateTime.Now;
 
                         if (data.Count > 0) // if data found
@@ -173,7 +180,14 @@ namespace KNTCommon.BusinessIO.Repositories
                             row += 2;
                             for (int i = 0; i < columns.Count; i++)
                             {
-                                worksheet.Cell(row, i + 1).Value = columns[i];
+                                labelName = columns[i];
+                                try
+                                {
+                                    if(labels[i + 1].Length > 0)
+                                        labelName = labels[i + 1];
+                                }
+                                catch { }
+                                worksheet.Cell(row, i + 1).Value = labelName;
                             }
 
                             // data rows

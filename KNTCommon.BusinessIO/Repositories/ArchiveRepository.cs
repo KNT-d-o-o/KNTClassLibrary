@@ -57,7 +57,7 @@ namespace KNTCommon.BusinessIO.Repositories
         {
             try
             {
-                uint timeout = 1500; // 25 minutes
+                uint timeout = 60 * 60 * 2;
                 using var dbContext = new EdnKntControllerMysqlContext();
                 var builder = new MySqlConnector.MySqlConnectionStringBuilder(dbContext.Database.GetConnectionString() ?? string.Empty)
                 {
@@ -177,6 +177,12 @@ namespace KNTCommon.BusinessIO.Repositories
                 DataTable dataTable = GetDataTable(tables[0], whereCondition, archivedFlag, 0, orderBy, false, noRows, new EdnKntControllerMysqlContext());
 
                 ret = dataTable.Rows.Count;
+
+#if DEBUG
+                    Console.WriteLine($"ArchiveTables table: {tables[0]}, ret: {ret}");
+#endif
+
+
                 if (ret > 0)
                 {
                     string retColumn = ioTaskDetails[0].Par2 ?? string.Empty;
@@ -192,7 +198,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         DataTable dataTableOther = GetDataTable(tables[i], whereConditionOther, string.Empty, 0, string.Empty, false, 0, new EdnKntControllerMysqlContext());
 
 #if DEBUG
-                        //    Console.WriteLine($"table: {tables[i]}, whereConditionOther: {whereConditionOther}, dataTableOther: {dataTableOther}");
+                            Console.WriteLine($"ArchiveTables table: {tables[i]}, whereConditionOther: {whereConditionOther}, dataTableOther: {dataTableOther}");
 #endif
 
                         // insert and then delete
@@ -333,13 +339,18 @@ namespace KNTCommon.BusinessIO.Repositories
                         {
                             foreach (DataRow row in dataTable.Rows)
                             {
-                                string insertQuery = $"INSERT INTO {table} ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}) VALUES ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => "@" + c.ColumnName))});";
+                                string insertQuery = $"INSERT IGNORE INTO {table} ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}) VALUES ({string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => "@" + c.ColumnName))});";
                                 using (MySql.Data.MySqlClient.MySqlCommand insertCommand = new(insertQuery, connection))
                                 {
                                     foreach (DataColumn column in dataTable.Columns)
                                     {
                                         insertCommand.Parameters.AddWithValue("@" + column.ColumnName, row[column.ColumnName]);
                                     }
+
+#if DEBUG
+                                //    Console.WriteLine($"InsertFromDataTable insertQuery: {insertQuery}");
+#endif
+
                                     insertCommand.ExecuteNonQuery();
                                 }
                             }
@@ -351,7 +362,9 @@ namespace KNTCommon.BusinessIO.Repositories
                         catch (Exception ex)
                         {
 
+#if DEBUG
                             Console.WriteLine($"reject: {table} {ex.Message}");
+#endif
 
                             transaction.Rollback();
                             return false;
@@ -409,15 +422,24 @@ namespace KNTCommon.BusinessIO.Repositories
                         try
                         {
                             string deleteQuery = $"DELETE FROM {table} WHERE {whereColumn} IN ({string.Join(", ", whereItems)});";
+
+#if DEBUG
+                            Console.WriteLine($"DeleteWhereInItems deleteQuery: {deleteQuery}");
+#endif
+
                             using (MySql.Data.MySqlClient.MySqlCommand deleteCommand = new(deleteQuery, connection))
                             {
                                 deleteCommand.ExecuteNonQuery();
                             }
                             transaction.Commit();
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            transaction.Rollback();
+                            if (connection.State == System.Data.ConnectionState.Open)
+                                transaction.Rollback();
+#if DEBUG
+                            Console.WriteLine("Napaka v DeleteWhereInItems: " + ex.Message);
+#endif
                             return false;
                         }
                     }
@@ -543,7 +565,7 @@ namespace KNTCommon.BusinessIO.Repositories
                         var command = new MySql.Data.MySqlClient.MySqlCommand(getTablesQuery, sourceConnection);
                         var reader = command.ExecuteReader();
 
-                        List<string> excludedTables = ioTasksRepository.GetIoTaskDetailsPar1(ioTasksRepository.GetIoTaskIdByTypeMode(1, 1));
+                        List<string> includedTables = ioTasksRepository.GetIoTaskDetailsPar1(ioTasksRepository.GetIoTaskIdByTypeMode(1, 1));
 
                         while (reader.Read())
                         {
@@ -551,20 +573,23 @@ namespace KNTCommon.BusinessIO.Repositories
 
                             if (arcTables is null || arcTables.Contains(tableName))
                             {
-                                string copyQuery = $"CREATE TABLE IF NOT EXISTS {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};";
-                                using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyQuery, targetConnection))
+                                if (includedTables.Contains(tableName))
                                 {
-                                    copyCommand.ExecuteNonQuery();
+                                    string copyQuery = $"CREATE TABLE IF NOT EXISTS {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};";
+                                    using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyQuery, targetConnection))
+                                    {
+                                        copyCommand.ExecuteNonQuery();
+                                    }
                                 }
-
-                                // copy non archivable tables
-                                if (!excludedTables.Contains(tableName) && arcTables is null)
+                                // re-create config (non archivable) tables
+                                else
                                 {
 #if DEBUG
                                     Console.WriteLine($"connStrArchive[0].tableName: {connStrArchive[0]}.{tableName}");
 #endif
-                                    copyQuery = $@"TRUNCATE TABLE {connStrArchive[0]}.{tableName};
-                                                   INSERT INTO {connStrArchive[0]}.{tableName} SELECT * FROM {connStr}.{tableName};";
+                                    string copyQuery = $@"DROP TABLE IF EXISTS {connStrArchive[0]}.{tableName};
+                                                        CREATE TABLE {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};
+                                                        INSERT INTO {connStrArchive[0]}.{tableName} SELECT * FROM {connStr}.{tableName};";
                                     using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyQuery, targetConnection))
                                     {
                                         copyCommand.ExecuteNonQuery();

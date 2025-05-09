@@ -1,5 +1,6 @@
 ﻿using AutoMapper.Internal.Mappers;
 using KNTCommon.Data.Models;
+using KNTToolsAndAccessories;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -13,14 +14,13 @@ namespace KNTCommon.Business.Repositories
     public class Localization
     {
         Dictionary<string, List<string>> translations = new Dictionary<string, List<string>>();
-        IParametersRepository Parameters;
+        ParametersRepository Parameters;
+        private readonly Tools t = new();
 
-        public Localization(IServiceProvider _serviceProvider)
+        public Localization(IServiceProvider _serviceProvider, ParametersRepository _parameters)
         {
+            Parameters = _parameters;
             AddTranslations();
-
-            using (var scope = _serviceProvider.CreateScope())
-                Parameters = scope.ServiceProvider.GetRequiredService<IParametersRepository>();
         }
 
         public void AddTranslations()
@@ -34,7 +34,7 @@ namespace KNTCommon.Business.Repositories
                 if (languageDictionarie.Key is null) // TODO change key in database as not null
                     continue;
 
-                AddOrUpdateTranslation(languageDictionarie.Key, languageDictionarie.English, languageDictionarie.Slovene, languageDictionarie.German, languageDictionarie.Croatian, languageDictionarie.Serbian);
+                AddOrUpdateTranslation(languageDictionarie.Key, languageDictionarie.English ?? "", languageDictionarie.Slovene ?? "", languageDictionarie.German ?? "", languageDictionarie.Croatian ?? "", languageDictionarie.Serbian ?? "");
             }
         }
 
@@ -48,19 +48,6 @@ namespace KNTCommon.Business.Repositories
         {
             key = key.ToLower();
             return translations.ContainsKey(key);
-        }
-
-        public string Get(string[] keys, params string[] args)
-        {
-            foreach(var key in keys)
-            {
-                if (ContainKey(key))
-                    return Get(key, args);
-            }
-
-#if DEBUG
-            throw new Exception($"Translation is missing. LanguageDictionarie does not contain any keys: '{string.Join(", ", keys)}'");// TODO write in error log
-#endif
         }
 
         public string Get(string key, params object[] args)
@@ -77,20 +64,26 @@ namespace KNTCommon.Business.Repositories
                 return key;
             }
 
-            int selectedLanguage = Convert.ToInt16(Parameters.GetParametersStr("activeLanguage")) - 1;
-            //int selectedLanguage = 1;
+            int selectedLanguage = 0;
+            try
+            {
+                selectedLanguage = Convert.ToInt16(Parameters.GetParametersStr("activeLanguage")) - 1;
+            }
+            catch { }
 
             var value = translations[key][selectedLanguage];
             try
             {
                 value = string.Format(value, args);
-            } catch (Exception e)
+            } catch (Exception ex)
             {
-                throw e;
+               // throw e;
+                t.LogEvent("KNTCommon.Business.Repositories.Localization #1 " + ex.Message);
             }
 
             //return $"*{value}";
             return value;
         }
+
     }
 }

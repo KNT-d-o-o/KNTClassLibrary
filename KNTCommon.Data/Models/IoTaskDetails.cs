@@ -19,6 +19,8 @@ public partial class IoTaskDetails
 
     public string? Par5 { get; set; }
 
+    public string? Par6 { get; set; }
+
     public int TaskDetailOrder { get; set; }
 
     public string? Info { get; set; }

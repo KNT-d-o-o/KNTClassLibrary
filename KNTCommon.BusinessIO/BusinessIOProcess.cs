@@ -22,19 +22,21 @@ namespace KNTCommon.BusinessIO
         private readonly ExportRepository? exportRepository;
         private readonly DumpRepository? dumpRepository;
         private readonly ParametersRepository? parametersRepository;
+        private readonly Localization? localization;
 
         private const int TASKID_ARCHIVE = 1;
         private const int TASKID_RESTORE = 2;
         private const int TASKID_EXPORT_EXCEL = 3;
         private const int TASKID_EXPORT_DUMP = 4;
 
-        public BusinessIOProcess(IoTasksRepository _ioTasksRepository, ArchiveRepository _archiveRepository, ExportRepository _exportRepository, DumpRepository _dumpRepository, ParametersRepository _parametersRepository)
+        public BusinessIOProcess(IoTasksRepository _ioTasksRepository, ArchiveRepository _archiveRepository, ExportRepository _exportRepository, DumpRepository _dumpRepository, ParametersRepository _parametersRepository, Localization? _localization)
         {
             ioTasksRepository = _ioTasksRepository;
             archiveRepository = _archiveRepository;
             exportRepository = _exportRepository;
             dumpRepository = _dumpRepository;
             parametersRepository = _parametersRepository;
+            localization = _localization;
         }
 
         public async Task<bool> OnStartAsync(CancellationToken cancellationToken, string serviceVersion)
@@ -406,7 +408,21 @@ namespace KNTCommon.BusinessIO
                         if(altCols.Length > 0)
                             altData = altCols.Split(';').ToList();
 
-                        if (!exportRepository.ExportExcel(tableName, whereConditionE ?? string.Empty, order, filePathXls ?? "C:/tmp.xlsx", altData, out errStr))
+                        List<string> lLabels = new();
+                        List<string> kLabels = new();
+                        string labels = taskDetailsE[stepExport].Par6 ?? string.Empty;
+                        if (labels.Length > 0)
+                            kLabels = labels.Split(';').ToList();
+                        if (localization != null)
+                        {
+                            foreach (string k in kLabels)
+                                if (k[0] == '"' && k[k.Length - 1] == '"')
+                                    lLabels.Add(k.Substring(1, k.Length - 2));
+                                else
+                                    lLabels.Add(localization.Get(k));
+                        }
+
+                        if (!exportRepository.ExportExcel(tableName, whereConditionE ?? string.Empty, order, filePathXls ?? "C:/tmp.xlsx", altData, lLabels, out errStr))
                         {
                             ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
                         }
@@ -526,9 +542,28 @@ namespace KNTCommon.BusinessIO
 
                         string errStr = string.Empty;
 
-                        if (!dumpRepository.DumpTable(tableName, whereCondition, whereColumn, filePathDump ?? "C/:tmp.sql", out errStr))
+                        if (whereColumn == string.Empty && whereCondition != string.Empty) // single export, number limit
                         {
-                            ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                            int limit = 0;
+                            long start = 0;
+                            try
+                            {
+                                limit = Convert.ToInt32(whereCondition);
+                                string startString = taskDetailsD[stepDump].Par4 ?? string.Empty;
+                                start = Convert.ToInt64(startString);
+                            }
+                            catch { }
+                            if (!dumpRepository.DumpTableSingle(tableName, limit, start, filePathDump ?? "C/:tmp.sql", out errStr))
+                            {
+                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                            }
+                        }
+                        else
+                        {
+                            if (!dumpRepository.DumpTable(tableName, whereCondition, whereColumn, filePathDump ?? "C/:tmp.sql", out errStr))
+                            {
+                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                            }
                         }
 
                         if (stepDump + 1 < noToDump)
