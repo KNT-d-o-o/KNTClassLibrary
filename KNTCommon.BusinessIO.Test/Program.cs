@@ -40,7 +40,7 @@ namespace KNTCommon.BusinessIO.Test
 
 
 #if DEBUG
-            Console.WriteLine("Start KNTCommon.BusinessIO.Test application.");
+            Console.WriteLine($"Start KNTCommon.BusinessIO.Test application version {AppInfo.Version}.");
 #endif
 
             Console.CancelKeyPress += (sender, e) =>

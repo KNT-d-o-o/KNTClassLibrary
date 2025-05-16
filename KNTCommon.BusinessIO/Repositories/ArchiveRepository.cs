@@ -359,7 +359,11 @@ namespace KNTCommon.BusinessIO.Repositories
 
                             transaction.Commit();
                         }
+#if DEBUG
                         catch (Exception ex)
+#else
+                        catch
+#endif
                         {
 
 #if DEBUG
@@ -433,7 +437,11 @@ namespace KNTCommon.BusinessIO.Repositories
                             }
                             transaction.Commit();
                         }
+#if DEBUG
                         catch (Exception ex)
+#else
+                        catch
+#endif
                         {
                             if (connection.State == System.Data.ConnectionState.Open)
                                 transaction.Rollback();

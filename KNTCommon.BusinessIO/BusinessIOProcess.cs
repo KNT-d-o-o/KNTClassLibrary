@@ -408,6 +408,7 @@ namespace KNTCommon.BusinessIO
                         if(altCols.Length > 0)
                             altData = altCols.Split(';').ToList();
 
+                        // labels
                         List<string> lLabels = new();
                         List<string> kLabels = new();
                         string labels = taskDetailsE[stepExport].Par6 ?? string.Empty;
@@ -416,10 +417,51 @@ namespace KNTCommon.BusinessIO
                         if (localization != null)
                         {
                             foreach (string k in kLabels)
+                            {
+                                if (k == string.Empty)
+                                    continue;
+
+                                // fixed label
+                                string[] pars = { };
                                 if (k[0] == '"' && k[k.Length - 1] == '"')
+                                {
                                     lLabels.Add(k.Substring(1, k.Length - 2));
+                                }
                                 else
-                                    lLabels.Add(localization.Get(k));
+                                {
+                                    // units / pars: <key>{unit_1,unit_2,..,unit_n}
+                                    string key = k;
+                                    List<string> parsLocal = new();
+                                    if (k.Contains("{") && k[k.Length - 1] == '}')
+                                    {
+                                        string[] kParts = k.Split('{');
+                                        if (kParts[0] != null)
+                                            key = kParts[0];
+                                        if (kParts[1] != null)
+                                        {
+                                            pars = kParts[1].Substring(0, kParts[1].Length - 1).Split(',');
+
+                                            // parameters
+                                            foreach (string p in pars)
+                                            {
+                                                if (!(p[0] == '\"' && p[p.Length - 1] == '\"'))
+                                                    parsLocal.Add(localization.Get(p));          // par from dictionary
+                                                else
+                                                    parsLocal.Add(p.Substring(1, p.Length - 2)); // explicit value of par
+                                            }
+                                        }
+                                    }
+
+                                    if (parsLocal.Count > 0)
+                                    {
+                                        lLabels.Add(localization.Get(key, parsLocal.ToArray())); // from dictionary
+                                    }
+                                    else
+                                    {
+                                        lLabels.Add(localization.Get(key)); // explicit value
+                                    }
+                                }
+                            }
                         }
 
                         if (!exportRepository.ExportExcel(tableName, whereConditionE ?? string.Empty, order, filePathXls ?? "C:/tmp.xlsx", altData, lLabels, out errStr))

@@ -77,7 +77,10 @@ namespace KNTCommon.BusinessIO.Repositories
                         if (where.Length > 0)
                         {
                             where = where.Replace(" AND ", " AND t.");
-                            query += $" WHERE t.{where}";
+                            if (where[0] == '.')
+                                query += " WHERE " + where.Substring(1, where.Length - 1);
+                            else
+                                query += $" WHERE t.{where}";
                         }
 
                         if (altCols.Count == 5 || altCols.Count == 6 && altCols[5] != "none") // alternative columns
@@ -156,13 +159,16 @@ namespace KNTCommon.BusinessIO.Repositories
                         }
 
                         string labelName = tableName;
+                        string labelNamePrev = string.Empty;
                         try
                         {
                             if(labels[0].Length > 0)
                                 labelName = labels[0];
+                            
                         }
                         catch { }
                         var worksheet = workbook.Worksheets.Add(labelName);
+                        labelNamePrev = labelName;
 
                         // title of sheet
                         int row = 1;
@@ -184,10 +190,15 @@ namespace KNTCommon.BusinessIO.Repositories
                                 try
                                 {
                                     if(labels[i + 1].Length > 0)
-                                        labelName = labels[i + 1];
+                                        labelName = labels[i + 1];                 
                                 }
                                 catch { }
                                 worksheet.Cell(row, i + 1).Value = labelName;
+
+                                // merge neighbour cells with same name
+                                if (labelName == labelNamePrev && labelNamePrev.Length > 0)
+                                    worksheet.Range(row, i, row, i + 1).Merge();
+                                labelNamePrev = labelName;
                             }
 
                             // data rows
