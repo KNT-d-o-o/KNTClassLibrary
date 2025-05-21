@@ -101,26 +101,30 @@ namespace KNTCommon.BusinessIO.Repositories
         }
 
         // get IO tasks details except not existed table => Par5 = "none"
-        public IEnumerable<IoTaskDetailsDTO> GetIoTaskDetails(int taskId)
+        public IEnumerable<IoTaskDetailsDTO> GetIoTaskDetails(int taskId, bool ignoreNone)
         {
             var ret = new List<IoTaskDetailsDTO>();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.Par5 != "none").OrderBy(x => x.TaskDetailOrder);
+                    IEnumerable<IoTaskDetails> details = new List<IoTaskDetails>();
+                    if(ignoreNone)
+                        details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId).OrderBy(x => x.TaskDetailOrder);
+                    else
+                        details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.Par5 != "none").OrderBy(x => x.TaskDetailOrder);
 
                     // set to none if not exists
                     foreach (IoTaskDetails t in details)
-                    {
-                        if (t.Par1 != null)
                         {
-                            if (!ArchiveRepository.TableExists(t.Par1))
+                            if (t.Par1 != null)
                             {
-                                t.Par5 = "none";
+                                if (!ArchiveRepository.TableExists(t.Par1))
+                                {
+                                    t.Par5 = "none";
+                                }
                             }
                         }
-                    }
                     context.SaveChanges();
 
                     ret = AutoMapper.Map<List<IoTaskDetailsDTO>>(details);
@@ -345,7 +349,7 @@ namespace KNTCommon.BusinessIO.Repositories
         // move file to compressed zip
         public bool CompressedFileToZip(string filePath)
         {
-            string zipPath = filePath.Split('.')[0] + ".zip";
+            string zipPath = filePath.Split(new string[] { ".sql" }, StringSplitOptions.None)[0] + ".zip";
 
             try
             {

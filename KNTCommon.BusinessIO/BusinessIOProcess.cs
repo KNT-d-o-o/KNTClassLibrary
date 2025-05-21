@@ -73,6 +73,17 @@ namespace KNTCommon.BusinessIO
             if (archiveRepository is null || ioTasksRepository is null)
                 return false;
 
+            // create Archive folder if not exists
+            string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string archivePath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "Archive"));
+            if (!Directory.Exists(archivePath))
+            {
+                Directory.CreateDirectory(archivePath);
+#if DEBUG
+                Console.WriteLine($"The '{archivePath}' folder was created.");
+#endif
+            }
+
             // create archive database: TASKID_ARCHIVE
             string? error;
             if (archiveRepository.CheckOrCreateArchiveDb(out error))
@@ -210,7 +221,7 @@ namespace KNTCommon.BusinessIO
                     if (noToArchive == 0)
                     {
                         dayBeforeStrA = DateTime.Now.AddDays(-archiveDays).Date.ToString("yyyy-MM-dd");
-                        taskDetailsA = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId);
+                        taskDetailsA = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId, false);
                         dayWhereA = (taskDetailsA[0].Par3 ?? string.Empty).Replace("{dayBeforeStr}", dayBeforeStrA);
                         orderByA = (taskDetailsA[0].Par3 ?? string.Empty).Split('<')[0];
 
@@ -307,7 +318,7 @@ namespace KNTCommon.BusinessIO
                 {
                     if (noToRestore == 0)
                     {
-                        taskDetailsR = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId);
+                        taskDetailsR = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId, false);
                         dayWhereR = (taskDetailsR[0].Par3 ?? string.Empty);
 
                         string orderAll = taskDetailsR[0].Par3 ?? string.Empty;
@@ -379,7 +390,7 @@ namespace KNTCommon.BusinessIO
                 if (noToExport == 0)
                 {
                     stepExport = 0;
-                    taskDetailsE = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId);
+                    taskDetailsE = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId, false);
                     noToExport = taskDetailsE.Count;
                     filePathXls = (task.Par1 ?? string.Empty).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
                     if (noToExport > 0)
@@ -519,7 +530,7 @@ namespace KNTCommon.BusinessIO
                 if (noToDump == 0)
                 {
                     stepDump = 0;
-                    taskDetailsD = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId);
+                    taskDetailsD = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId, true);
 
                     if (taskDetailsD.Count == 0 || taskDetailsD[0].Par5 == "getAll") // dump all
                     {
@@ -556,11 +567,12 @@ namespace KNTCommon.BusinessIO
                     string par1 = task.Par1 ?? string.Empty;
                     string[] pars1 = par1.Split(';');
 
-                    if (pars1.Length > 1) // check for zip
+                    if (pars1.Length > 1 && pars1[1] == "zip") // check for zip
                     {
-                        if (pars1[1] == "zip")
-                            toZip = true;
+                        toZip = true;
                     }
+                    else
+                        toZip = false;
 
                     filePathDump = (pars1[0]).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
                     if (noToDump > 0)
@@ -602,9 +614,12 @@ namespace KNTCommon.BusinessIO
                         }
                         else
                         {
-                            if (!dumpRepository.DumpTable(tableName, whereCondition, whereColumn, filePathDump ?? "C/:tmp.sql", out errStr))
+                            if ((taskDetailsD[stepDump].Par5 ?? string.Empty) != "none")
                             {
-                                ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                                if (!dumpRepository.DumpTable(tableName, whereCondition, whereColumn, filePathDump ?? "C/:tmp.sql", out errStr))
+                                {
+                                    ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                                }
                             }
                         }
 
