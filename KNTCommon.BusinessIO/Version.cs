@@ -8,14 +8,18 @@ namespace KNTCommon.BusinessIO
 {
     public static class AppInfo
     {
-        public const string Version = "1.0.1.1";
+        public const string Version = "1.0.1.2";
     }
 
-    /* *** Version 1.0.1.x *** 16/05/2025
+    /* *** Version 1.0.1.2 *** 22/05/2025
      * Enhancement:
-     *  Excel: localization support, cycling export.
-     *  Archive: optimization timeout to 2 hours.
-     *  DB export: single long tables support.
+     *  Change folder path to c:/Programs/Archive
+     * 
+    /* *** Version 1.0.1.1 *** 22/05/2025
+     * Enhancement:
+     *  Excel: localization support, cycling export, null values handling, own column for own data in connected views.
+     *  Archive: optimization timeout to 2 hours, ../Archive foldel to create if does not exists.
+     *  DB export: single long tables support, zip choose correction, excluded dump tables with none.
      * 
     /* *** Version 1.0.0.2 *** 11/04/2025
      * Archive: replace other tables at startup.

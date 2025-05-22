@@ -114,19 +114,6 @@ namespace KNTCommon.BusinessIO.Repositories
                     else
                         details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.Par5 != "none").OrderBy(x => x.TaskDetailOrder);
 
-                    // set to none if not exists
-                    foreach (IoTaskDetails t in details)
-                        {
-                            if (t.Par1 != null)
-                            {
-                                if (!ArchiveRepository.TableExists(t.Par1))
-                                {
-                                    t.Par5 = "none";
-                                }
-                            }
-                        }
-                    context.SaveChanges();
-
                     ret = AutoMapper.Map<List<IoTaskDetailsDTO>>(details);
                 }
             }

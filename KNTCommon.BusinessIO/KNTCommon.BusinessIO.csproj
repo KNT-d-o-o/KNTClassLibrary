@@ -29,15 +29,33 @@
 
   <ItemGroup>
     <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_iotaskdetails.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_iotasklogs.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_iotasks.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="DBChanges\1_0_0-1_0_1\edn_knt_machinemanagement_parameters.sql">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_1_2\edn_knt_machinemanagement_iotaskdetails.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_1_2\edn_knt_machinemanagement_iotasklogs.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_1_2\edn_knt_machinemanagement_iotasks.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_1_2\edn_knt_machinemanagement_parameters.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_1_2\edn_knt_machinemanagement_languagedictionary.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DBChanges\1_0_1_2\views_export_excel.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
