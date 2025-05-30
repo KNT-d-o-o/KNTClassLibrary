@@ -589,9 +589,13 @@ namespace KNTCommon.BusinessIO
                         string whereColumn = taskDetailsD[stepDump].Par2 ?? string.Empty;
                         string whereCondition = taskDetailsD[stepDump].Par3 ?? string.Empty;
 
-                        if (whereColumn != string.Empty) // join export
+                        if (whereColumn != string.Empty && stepDump > 0) // join export
                         {
                             whereCondition = $"SELECT {whereColumn} FROM {whereCondition} WHERE {taskDetailsD[0].Par3}";
+                        }
+                        else if (stepDump == 0)
+                        {
+                            whereCondition = $"SELECT {whereColumn} FROM {tableName} WHERE {taskDetailsD[0].Par3}";
                         }
 
                         string errStr = string.Empty;

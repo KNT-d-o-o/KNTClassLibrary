@@ -8,12 +8,17 @@ namespace KNTCommon.BusinessIO
 {
     public static class AppInfo
     {
-        public const string Version = "1.0.1.2";
+        public const string Version = "1.0.1.3";
     }
 
+    /* *** Version 1.0.1.x *** 30/05/2025
+     * Bugs:
+     *  DB Export where condition for step 0 stay par3
+     * 
     /* *** Version 1.0.1.2 *** 22/05/2025
      * Enhancement:
-     *  Change folder path to c:/Programs/Archive
+     *  Data: default data changes.
+     *  None tables: do not set automatic to none.
      * 
     /* *** Version 1.0.1.1 *** 22/05/2025
      * Enhancement:
