@@ -441,6 +441,9 @@ namespace KNTToolsAndAccessories
                     strVal = string.Format("{0:0.#}", val); // 1 decimal
             }
 
+
+        //    Console.WriteLine($"fstaa strVal {strVal} {format} {val}");
+
             return strVal;
         }
 

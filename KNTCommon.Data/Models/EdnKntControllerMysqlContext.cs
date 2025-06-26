@@ -54,6 +54,9 @@ namespace KNTCommon.Data.Models
         public virtual DbSet<CL_ArchiveIntervalType> CL_ArchiveIntervalType { get; set; }
         public virtual DbSet<CL_ArchiveMode> CL_ArchiveMode { get; set; }
 
+        public virtual DbSet<LanguageDictionary> LanguageDictionarys { get; set; }
+
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string[] connStr = GetConnectionData(false);
@@ -248,6 +251,13 @@ namespace KNTCommon.Data.Models
                 entity.HasKey(e => e.ServiceId);
 
                 entity.ToTable("ServiceControl");
+            });
+
+            modelBuilder.Entity<LanguageDictionary>(entity =>
+            {
+                entity.HasKey(e => e.LanguageDictionaryId);
+
+                entity.ToTable("LanguageDictionary");
             });
 
         }

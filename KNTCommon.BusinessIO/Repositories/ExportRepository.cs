@@ -27,6 +27,8 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 using System.Globalization;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace KNTCommon.BusinessIO.Repositories
 {
@@ -53,7 +55,7 @@ namespace KNTCommon.BusinessIO.Repositories
             AutoMapper = automapper;
         }
 
-        public bool ExportExcel(string tableName, string where, string order, string filePath, List<string> altCols, out string errStr)
+        public bool ExportExcel(string tableName, string where, string order, string filePath, List<string> altCols, List<string> labels, out string errStr)
         {
             errStr = string.Empty;
             bool ret = true;
@@ -77,7 +79,10 @@ namespace KNTCommon.BusinessIO.Repositories
                         if (where.Length > 0)
                         {
                             where = where.Replace(" AND ", " AND t.");
-                            query += $" WHERE t.{where}";
+                            if (where[0] == '.')
+                                query += " WHERE " + where.Substring(1, where.Length - 1);
+                            else
+                                query += $" WHERE t.{where}";
                         }
 
                         if (altCols.Count == 5 || altCols.Count == 6 && altCols[5] != "none") // alternative columns
@@ -93,7 +98,7 @@ namespace KNTCommon.BusinessIO.Repositories
                             {
                                 query = $@"
                                         SELECT t.*, 
-                                        GROUP_CONCAT(talt.{altCols[1]}, ':', talt.{altCols[3]} ORDER BY talt.{altCols[2]} SEPARATOR '|') AS Vals
+                                        GROUP_CONCAT(talt.{altCols[1]}, ':', talt.{altCols[3].Split('|')[0]} ORDER BY talt.{altCols[2]} SEPARATOR '|') AS Vals
                                         FROM {tableName} t
                                         LEFT JOIN {altCols[0]} talt ON t.{altCols[4]} = talt.{altCols[4]}";
                                 if (where.Length > 0)
@@ -102,13 +107,26 @@ namespace KNTCommon.BusinessIO.Repositories
                             }
                             else  // additional as columns
                             {
+                                // null value separator
+                                string nullVal = string.Empty;
+
+                                try
+                                {
+                                    int numVals = Convert.ToInt32(altCols[3].Split('|')[1]);
+                                    for (int i = 1; i < numVals; i++)
+                                        nullVal += "/|";
+                                }
+                                catch { }
+
                                 string columnQuery = @$"
-                                        SELECT GROUP_CONCAT(DISTINCT 
-                                            CONCAT('MAX(CASE WHEN talt.{altCols[1]} = ''', talt.{altCols[1]}, 
-                                            ''' THEN talt.{altCols[3]} ELSE NULL END) AS `', 
+                                            SELECT GROUP_CONCAT(DISTINCT 
+                                            CONCAT('COALESCE(MAX(CASE WHEN talt.{altCols[1]} = ''', talt.{altCols[1]}, 
+                                            ''' THEN talt.{altCols[3].Split('|')[0]} END), \'{nullVal}\') AS `', 
                                             talt.{altCols[1]}, '`')
                                             ORDER BY talt.{altCols[2]}) AS Columns
                                         FROM {altCols[0]} talt";
+
+
                                 if (where.Length > 0)
                                     columnQuery += $" WHERE talt.{where.Replace("t.", "talt.")}";
 
@@ -155,11 +173,21 @@ namespace KNTCommon.BusinessIO.Repositories
                             }
                         }
 
-                        var worksheet = workbook.Worksheets.Add(tableName);
+                        string labelName = tableName;
+                        string labelNamePrev = string.Empty;
+                        try
+                        {
+                            if(labels[0].Length > 0)
+                                labelName = labels[0];
+                            
+                        }
+                        catch { }
+                        var worksheet = workbook.Worksheets.Add(labelName);
+                        labelNamePrev = labelName;
 
                         // title of sheet
                         int row = 1;
-                        worksheet.Cell(row, 1).Value = tableName;
+                        worksheet.Cell(row, 1).Value = worksheet.Name;
                         worksheet.Cell(row, 2).Value = DateTime.Now;
 
                         if (data.Count > 0) // if data found
@@ -171,13 +199,27 @@ namespace KNTCommon.BusinessIO.Repositories
 
                             // headers of columns
                             row += 2;
+                            int rowHead = row;
                             for (int i = 0; i < columns.Count; i++)
                             {
-                                worksheet.Cell(row, i + 1).Value = columns[i];
+                                labelName = columns[i];
+                                try
+                                {
+                                    if(labels[i + 1].Length > 0)
+                                        labelName = labels[i + 1];                 
+                                }
+                                catch { }
+                                worksheet.Cell(row, i + 1).Value = labelName;
+
+                                // merge neighbour cells with same name
+                                if (labelName == labelNamePrev && labelNamePrev.Length > 0)
+                                    worksheet.Range(row, i, row, i + 1).Merge();
+                                labelNamePrev = labelName;
                             }
 
                             // data rows
                             row++;
+                            bool[] splitColls = new bool[columns.Count];
                             foreach (var item in data)
                             {
                                 if (row >= MAX_ROWS_PER_SHEET) // max rows control
@@ -187,11 +229,52 @@ namespace KNTCommon.BusinessIO.Repositories
                                 }
 
                                 var dict = (IDictionary<string, object>)item;
+                                int colOffset = 0;
+
                                 for (int col = 0; col < columns.Count; col++)
                                 {
-                                    worksheet.Cell(row, col + 1).Value = dict[columns[col]]?.ToString();
+                                    string? strVal = dict[columns[col]]?.ToString();
+
+                                    if (!string.IsNullOrEmpty(strVal) && strVal.Contains("/|")) // split cells - more data
+                                    {
+                                        var parts = strVal.Split("/|");
+                                        for (int i = 0; i < parts.Length; i++)
+                                        {
+                                            worksheet.Cell(row, col + 1 + colOffset + i).Value = parts[i];
+                                        }
+
+                                        // shift header
+                                        if (!splitColls[col])
+                                        {
+                                            int lastCol = worksheet.Row(rowHead).LastCellUsed()?.Address.ColumnNumber ?? 0;
+                                            for (int i = lastCol; i >= col + 1; i--)
+                                            {
+                                                if (i > col + 1)
+                                                {
+                                                    worksheet.Cell(rowHead, i + colOffset + parts.Length - 1).Value = worksheet.Cell(rowHead, i + colOffset).Value;
+                                                }
+                                                else
+                                                {
+                                                    for (int j = i + colOffset + 1; j < i + colOffset + parts.Length; j++)
+                                                    {
+                                                        worksheet.Cell(rowHead, j).Value = string.Empty;
+                                                    }
+
+                                                    worksheet.Range(rowHead, i + colOffset, rowHead, i + colOffset + parts.Length - 1).Merge();
+                                                }
+                                            }
+                                            splitColls[col] = true;
+
+                                        }
+
+                                        colOffset += parts.Length - 1;
+                                    }
+                                    else
+                                    {
+                                        worksheet.Cell(row, col + 1).Value = strVal;
+                                    }
                                 }
-                                
+
                                 row++;
                             }
                         }

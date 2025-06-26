@@ -14,15 +14,15 @@ namespace KNTCommon.Business.Repositories
     public class Localization
     {
         Dictionary<string, List<string>> translations = new Dictionary<string, List<string>>();
+
         IParametersRepository Parameters;
+
         private readonly Tools t = new();
 
-        public Localization(IServiceProvider _serviceProvider)
+        public Localization(IServiceProvider _serviceProvider, ParametersRepository _parameters)
         {
+            Parameters = _parameters;
             AddTranslations();
-
-            using (var scope = _serviceProvider.CreateScope())
-                Parameters = scope.ServiceProvider.GetRequiredService<IParametersRepository>();
         }
 
         void AddTranslations()
@@ -36,7 +36,7 @@ namespace KNTCommon.Business.Repositories
                 if (languageDictionarie.Key is null) // TODO change key in database as not null
                     continue;
 
-                AddOrUpdateTranslation(languageDictionarie.Key, languageDictionarie.English, languageDictionarie.Slovene, languageDictionarie.German, languageDictionarie.Croatian, languageDictionarie.Serbian);
+                AddOrUpdateTranslation(languageDictionarie.Key, languageDictionarie.English ?? "", languageDictionarie.Slovene ?? "", languageDictionarie.German ?? "", languageDictionarie.Croatian ?? "", languageDictionarie.Serbian ?? "");
             }
         }
 
@@ -87,7 +87,7 @@ namespace KNTCommon.Business.Repositories
             }
 
             int selectedLanguage = 1;
-            
+
             try
             {
                 selectedLanguage = Convert.ToInt16(Parameters.GetParametersStr("activeLanguage")) - 1;
@@ -113,15 +113,17 @@ namespace KNTCommon.Business.Repositories
             try
             {
                 value = string.Format(value, args);
+
             }
             catch (Exception ex)
             {
-                // throw e;
+               // throw e;
                 t.LogEvent("KNTCommon.Business.Repositories.Localization #1 " + ex.Message);
             }
 
             //return $"*{value}";
             return value;
         }
+
     }
 }

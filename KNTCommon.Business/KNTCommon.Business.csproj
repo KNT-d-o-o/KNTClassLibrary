@@ -35,6 +35,9 @@
     <None Update="Scripts\SetDateTime.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Scripts\SetIpAddress.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Scripts\ShutdownServer.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

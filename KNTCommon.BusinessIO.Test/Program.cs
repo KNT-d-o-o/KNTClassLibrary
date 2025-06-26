@@ -30,6 +30,7 @@ namespace KNTCommon.BusinessIO.Test
                     services.AddScoped<ExportRepository>();
                     services.AddScoped<DumpRepository>();
                     services.AddScoped<ParametersRepository>();
+                    services.AddScoped<Localization>();
                     services.AddSingleton<BusinessIOProcess>();                
                 });
             var host = builder.Build();
@@ -39,7 +40,7 @@ namespace KNTCommon.BusinessIO.Test
 
 
 #if DEBUG
-            Console.WriteLine("Start KNTCommon.BusinessIO.Test application.");
+            Console.WriteLine($"Start KNTCommon.BusinessIO.Test application version {AppInfo.Version}.");
 #endif
 
             Console.CancelKeyPress += (sender, e) =>

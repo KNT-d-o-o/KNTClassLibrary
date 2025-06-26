@@ -43,6 +43,8 @@ namespace KNTCommon.BusinessIO.Repositories
         /// iotaskdetails.Par3[1..]: join table
         /// iotaskdetails.Par4: -
         /// iotaskdetails.Par5[0]: getAll - all tables to export - means also other tables without conditions
+        /// iotaskdetails.Par6[0]: excel sheet name
+        /// iotaskdetails.Par6[1..]: excel column names
         /// TableDetailOrder: -
         /// </summary>
         /// 
@@ -56,6 +58,99 @@ namespace KNTCommon.BusinessIO.Repositories
         {
             Factory = factory;
             AutoMapper = automapper;
+        }
+
+
+        // dump single table and append to file: used for long table data
+        public bool DumpTableSingle(string tableName, int batchSize, long offset, string baseFilePath, out string errStr)
+        {
+            errStr = string.Empty;
+            bool ret = true;
+            bool moreData = true;
+
+#if DEBUG
+            Console.WriteLine($"start DB export single on table {tableName} " + DateTime.Now);
+#endif
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    string connectionString = context.Database.GetDbConnection().ConnectionString;
+                    var connectionParams = new MySqlConnectionStringBuilder(connectionString);
+                    string server = connectionParams.Server;
+                    string database = connectionParams.Database;
+                    string user = connectionParams.UserID;
+                    string password = connectionParams.Password;
+                    string connStr = $"server={server};user={user};password={password};database={database}";
+                    using var conn = new MySqlConnection(connStr);
+                    conn.Open();
+
+                    while (moreData)
+                    {
+                        string filePath = $"{baseFilePath}";
+                        if(batchSize > 0)
+                            filePath += $"_{offset:D10}.sql";
+
+                        using var writer = new StreamWriter(filePath, append: true);
+
+                        string query = $"SELECT * FROM {tableName}";
+                        if (batchSize > 0)
+                        {
+                            writer.WriteLine($"-- Exporting table: {tableName}, offset: {offset}");
+                            query += $" LIMIT {batchSize} OFFSET {offset}";
+                        }
+                        else
+                        {
+                            writer.WriteLine($"-- Exporting table: {tableName}");
+                        }
+
+                        using var cmd = new MySqlCommand(query, conn)
+                        {
+                            CommandTimeout = 1800 // 30 min
+                        };
+                        using var reader = cmd.ExecuteReader();
+
+                        int rowCount = 0;
+
+                        while (reader.Read())
+                        {
+                            rowCount++;
+                            // row for SQL INSERT format:
+                            var values = new object[reader.FieldCount];
+                            reader.GetValues(values);
+                            string formatted = string.Join(", ", values.Select(v =>
+                            {
+                                if (v == null || v == DBNull.Value)
+                                    return "NULL";
+                                if (v is string s)
+                                    return $"'{s.Replace("'", "''")}'"; // SQL escape for '
+                                if (v is DateTime dt)
+                                    return $"'{dt:yyyy-MM-dd HH:mm:ss}'";
+                                return v.ToString();
+                            }));
+                            writer.WriteLine($"INSERT INTO {tableName} VALUES ({formatted});");
+                        }
+
+                        if (batchSize > 0)
+                        {
+                            if (rowCount < batchSize)
+                                moreData = false;
+                            else
+                                offset += batchSize;
+                        }
+                        else
+                            moreData = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errStr = "KNTCommon.BusinessIO.Repositories.DumpRepository #3 " + ex.Message;
+                t.LogEvent(errStr);
+                ret = false;
+            }
+
+            return ret;
         }
 
         // dump table and append to file

@@ -55,6 +55,11 @@ namespace KNTCommon.Business.Scripts
             }
         }
 
+        /// <summary>
+        /// Set system date and time
+        /// </summary>
+        /// <param name="newDateTime"></param>
+        /// <exception cref="FileNotFoundException"></exception>
         public void SetSystemTime(DateTime newDateTime)
         {
             try
@@ -144,6 +149,32 @@ namespace KNTCommon.Business.Scripts
             }
             return true;
         }
+
+        public void SetIpAddress(string interfaceAlias, string ipAddress, string netmask)
+        {
+            try
+            {
+                //fstaa    string args = "SetIP " + ipAddress + " " + netmask;
+                //fstaa    Process.Start("EDN-KNT ConsoleAdminTools", args);
+
+                string exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EDN-KNT ConsoleAdminTools.exe");
+                string args = $"SetIPForAlias {ipAddress} {netmask} \"{interfaceAlias}\"";
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = args,
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WorkingDirectory = Path.GetDirectoryName(exePath)
+                };
+                Process.Start(startInfo);
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Scripts #4 " + ex.Message);
+            }
+        }
+
 
     }
 }
