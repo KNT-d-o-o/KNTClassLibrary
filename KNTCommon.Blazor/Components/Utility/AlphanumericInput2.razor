@@ -1,0 +1,76 @@
+﻿@inject Radzen.DialogService dialogService
+@inject HelperService Helper
+
+<RadzenTextBox Name="@Name" Style="width:100%;" Value="@Value" @onclick="OpenKeyboard" id="@CSSId" class="defaultAlphanumericInput" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" Placeholder="@Placeholder" @onkeydown="OpenKeyboard" Disabled="@Disabled"></RadzenTextBox>
+
+
+@code {
+    [Parameter]
+    public string? LabelTitle { get; set; }
+
+    [Parameter]
+    public string? CSSId { get; set; }
+
+    [Parameter]
+    public string? Placeholder { get; set; }
+
+    [Parameter]
+    public bool? IsPassword { get; set; }
+
+    [Parameter]
+    public string? Name { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ReturnedValue { get; set; }
+
+    [Parameter]
+    public virtual string Value
+    {
+        get => _value; 
+        set
+        {
+            if (_value == value) return;
+
+            _value = value.ToString();
+            ValueChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    string _value;
+
+    //[Parameter]
+    //public Expression<Func<TValue>> ValueExpression { get; set; }
+
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    async Task OpenKeyboard()
+    {
+        MyLoggerCommon.WriteLine("AplhanumericInput2 1");   
+        if (Value is null)
+            Value = string.Empty;
+        if (IsPassword is null)
+            IsPassword = false;
+        MyLoggerCommon.WriteLine("AplhanumericInput2 2");
+
+        var result = await dialogService.OpenAsync<AlphanumericKeyboardDialog>
+        (LabelTitle, Helper.CreateDialogBlazorComponentParameters("InputValue", Value, "IsPassword", IsPassword), Helper.GetDialogOptions("AlphanumericKeyboardOptions MaxSizeWindow"));
+
+        MyLoggerCommon.WriteLine("AplhanumericInput2 3");
+        if (result != null)
+        {
+            MyLoggerCommon.WriteLine("AplhanumericInput2 4");
+            Value = result.ToString();
+            await ReturnedValue.InvokeAsync(Value);
+        }
+    }
+}

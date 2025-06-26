@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MySql.EntityFrameworkCore;
 using System.Xml;
 using System.Xml.Linq;
+using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Options;
+using KNTSMM.Data.Models;
 
 namespace KNTCommon.Data.Models
 {
@@ -44,10 +47,25 @@ namespace KNTCommon.Data.Models
 
         public virtual DbSet<ServiceControl> ServiceControls { get; set; }
 
+        public virtual DbSet<Results> Results { get; set; }
+
+        public virtual DbSet<AppVersion> AppVersion { get; set; }
+
+        public virtual DbSet<CL_ArchiveIntervalType> CL_ArchiveIntervalType { get; set; }
+        public virtual DbSet<CL_ArchiveMode> CL_ArchiveMode { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string[] connStr = GetConnectionData(false);
-            optionsBuilder.UseMySQL($"server={connStr[2]};database={connStr[0]};user=KNT;password={connStr[1]}");
+            optionsBuilder.UseMySQL($"server={connStr[2]};database={connStr[0]};user=KNT;password={connStr[1]};CharSet=utf8;AllowUserVariables=true");
+            // AllowUserVariables=true - variable v upgrade skripti
+            // charset=utf8mb4 - zaradi cirilice
+        }
+
+        public string GetConnectionString()
+        {
+            string[] connStr = GetConnectionData(false);
+            return $"server={connStr[2]};database={connStr[0]};user=KNT;password={connStr[1]}";
         }
 
         // get connection string data
@@ -108,7 +126,7 @@ namespace KNTCommon.Data.Models
                 entity.Property(e => e.InitializationVector).HasMaxLength(32);
                 entity.Property(e => e.PasswordHash).HasMaxLength(32);
             });
-
+            /*
             modelBuilder.Entity<UserSession>(entity =>
             {
                 entity.HasKey(e => e.UserSessionId);
@@ -118,7 +136,7 @@ namespace KNTCommon.Data.Models
                 entity.HasOne(d => d.User).WithMany(p => p.UserSessions)
                     .HasForeignKey(d => d.UsersId)
                     .HasConstraintName("FK_UserSession_Users");
-            });
+            });*/
 
             modelBuilder.Entity<ErrorList>(entity =>
             {

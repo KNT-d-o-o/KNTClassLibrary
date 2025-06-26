@@ -1,0 +1,103 @@
+﻿@using KNTCommon.Business.Repositories
+@using KNTCommon.Business.Interface
+@using KNTCommon.Business.DTOs
+@using KNTCommon.Blazor.Services;
+@inject KNTCommon.Blazor.Services.HelperService Helper
+
+@inject IMaintenanceRepository MaintenanceRepository
+@inject Localization Localization
+@inject SharedContainerCommon SharedContainerCommon
+
+@inject DialogService DialogService
+
+@using KNTCommon.Blazor.Components.Base
+@inherits SearchPageBaseCS
+
+
+<div class="container-fluid Animation">
+    <div class="row frame-padding custom-body">
+        <div class="col-12" style="padding:0;">
+
+            <div class="Animation" style="width: 100%; height: 85vh">
+                <RadzenDataGrid Data="DataList" TItem="IoTaskLogsDTO" AllowPaging="true" PageSize="1000" PagerAlwaysVisible="true"
+                AllowSorting="true" AllowColumnResize="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.And" EditMode="DataGridEditMode.Single"
+                AllowVirtualization="true"
+                style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+                    <Columns>
+
+                        <RadzenDataGridColumn Property="@nameof(IoTaskLogs.IoTaskLogId)" Title="@Localization.Get(nameof(IoTaskLogs.IoTaskLogId))" Width="240px" Frozen="true">
+                            <FilterTemplate>
+                                <div class="Animation FlexContainer">
+                                    <RadzenDropDown Data="@ConstantsCommon.NumericDropdownConditions" TValue="string" Value="@GetCondition(nameof(IoTaskLogs.IoTaskLogId))" Change="@(val => SetCondition(nameof(IoTaskLogs.IoTaskLogId), val))" class="dropdown custom-condition-dropdown" />
+                                    <NumericInput LabelTitle="@Localization.Get(nameof(IoTaskLogs.IoTaskLogId))" InputValue="@GetStringValue(nameof(IoTaskLogs.IoTaskLogId))" ReturnedValue="@(val => SetStringValue(nameof(IoTaskLogs.IoTaskLogId), val))" AllowDecimal=false AllowNegative=false></NumericInput>
+                                </div>
+                            </FilterTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="@nameof(IoTaskLogs.IoTaskLogType)" Title="@Localization.Get(nameof(IoTaskLogs.IoTaskLogType))" Width="240px">
+                            <FilterTemplate>
+                                <div class="Animation FlexContainer">
+                                    <RadzenDropDown Data="@ConstantsCommon.NumericDropdownConditions" TValue="string" Value="@GetCondition(nameof(IoTaskLogs.IoTaskLogType))" Change="@(val => SetCondition(nameof(IoTaskLogs.IoTaskLogType), val))" class="dropdown custom-condition-dropdown" />
+                                    <NumericInput LabelTitle="@Localization.Get(nameof(IoTaskLogs.IoTaskLogType))" InputValue="@GetStringValue(nameof(IoTaskLogs.IoTaskLogType))" ReturnedValue="@(val => SetStringValue(nameof(IoTaskLogs.IoTaskLogType), val))" AllowDecimal=false AllowNegative=false></NumericInput>
+                                </div>
+                            </FilterTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="@nameof(IoTaskLogs.Info)" Title="@Localization.Get(nameof(IoTaskLogs.Info))" Width="1600px">
+                            <FilterTemplate>
+                                <div class="Animation FlexContainer">
+                                    <RadzenDropDown Data="@ConstantsCommon.NumericDropdownConditions" TValue="string" Value="@GetCondition(nameof(IoTaskLogs.Info))" Change="@(val => SetCondition(nameof(IoTaskLogs.Info), val))" class="dropdown custom-condition-dropdown" />
+                                    <AlphanumericInput LabelTitle="@Localization.Get(nameof(IoTaskLogs.Info))" InputValue="@GetStringValue(nameof(IoTaskLogs.Info))" ReturnedValue="@(val => SetStringValue(nameof(IoTaskLogs.Info), val))"></AlphanumericInput>
+                                </div>
+                            </FilterTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="@nameof(IoTaskLogsDTO.DateAndTime)" Title="@Localization.Get(nameof(IoTaskLogsDTO.DateAndTime))" FormatString="@ConstantsCommon.DateAndTimeFormat" Width="245px">
+                            <FilterTemplate>
+                                <div class="Animation FixContainer">
+                                    <RadzenDatePicker TValue="DateTime" Value="@GetDateTimeValue(nameof(IoTaskLogsDTO.DateAndTime))" Change="@(val => SetDateTimeValue(nameof(IoTaskLogsDTO.DateAndTime), val))" DateFormat="dd.MM.yyyy" class="custom-datepicker" AllowClear />
+                                </div>
+                            </FilterTemplate>
+                        </RadzenDataGridColumn>
+
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    public override SearchPageArgs searchPageArgs { get; set; } = new SearchPageArgs()
+        {
+            columns = new List<Column>()
+            {
+                new Column(){ FilterColumn=nameof(IoTaskLogsDTO.IoTaskId), FilterParam=string.Empty, FilterCondition=string.Empty },
+                new Column(){ FilterColumn=nameof(IoTaskLogsDTO.IoTaskLogId), FilterParam=string.Empty, FilterCondition=string.Empty },
+                new Column(){ FilterColumn=nameof(IoTaskLogsDTO.IoTaskLogType), FilterParam=string.Empty, FilterCondition=string.Empty },
+                new Column(){ FilterColumn=nameof(IoTaskLogsDTO.DateAndTime), FilterParam=string.Empty, FilterCondition="today" },
+                new Column(){ FilterColumn=nameof(IoTaskLogsDTO.Info), FilterParam=string.Empty, FilterCondition="%" },
+            }
+        };
+
+    public IEnumerable<IoTaskLogsDTO> DataList { get; set; }
+
+    [Parameter]
+    public int IoTaskId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetIntValue(nameof(IoTaskLogsDTO.IoTaskId), IoTaskId, false); // TODO static?
+
+        await LoadData();
+
+        await base.OnInitializedAsync();
+    }
+
+    public async override Task LoadData()
+    {
+        DataList = await MaintenanceRepository.GetIoTasksLogsAsync(searchPageArgs);
+    }
+}

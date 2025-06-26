@@ -9,7 +9,7 @@
 
 <div class="Animation FlexContainer">
 
-    <RadzenDataGrid TItem="Dictionary<string, object>" Data=@Data @ref="ordersGrid"
+    <RadzenDataGrid TItem="Dictionary<string, object>" Data=@Data @ref="ordersGrid" EmptyText=@Localization.Get("RadzenDataGridColumn_EmptyText")
     AllowFiltering="true" FilterMode="FilterMode.Simple" AllowAlternatingRows="false" EnableVirtualization="true"
     AllowSorting="true" AllowColumnResize="true" PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
     ColumnWidth="300px" EditMode="DataGridEditMode.Single" LogicalFilterOperator="LogicalFilterOperator.And" PageNumbersCount="10" style="height: 75vh"
@@ -19,9 +19,10 @@
             {
                 foreach (var columnName in ColumnNames)
                 {
+                    var columnNameWithParams = (new List<string>() { "Leak", "LeakMax", "LeakAvg", "LeakMin", "LeakLastPoint" }.Contains(columnName)) ? Localization.Get(columnName, "") : Localization.Get(columnName);
                     <RadzenDataGridColumn TItem="Dictionary<string, object>"
                     Property="@columnName"
-                    Title="@columnName">
+                    Title="@columnNameWithParams">
 
                         <Template Context="row">
                             @if (row.ContainsKey(columnName))
@@ -49,19 +50,28 @@
             <RadzenDataGridColumn Sortable="false">
                 <FilterTemplate>
                     <div class="Animation FixContainer">
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Light" Icon="refresh" Click="() => OnRefreshClick()" Size="ButtonSize.Large" title="Add"></RadzenButton>
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="() => AddNewRow(null)" Size="ButtonSize.Large" title="Add"></RadzenButton>
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Export XLS" Icon="grid_on" Click="ExportTableXls" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Export SQL" Icon="database" Click="ExportTableSql" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Light" Icon="refresh" Click="() => OnRefreshClick()" Size="ButtonSize.Large" title=@Localization.Get("ButtonRefresh")></RadzenButton>
 
+                        @if (!SharedContainerCommon.IsOldArchiveDatabase)
+                        {
+                            <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="() => AddNewRow(null)" Size="ButtonSize.Large" title="Add"></RadzenButton>
+                        }
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Icon="grid_on" Click="ExportTableXls" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" title=@Localization.Get("ButtonExportXLS")></RadzenButton>
+                        @if (!SharedContainerCommon.IsOldArchiveDatabase)
+                        {
+                            <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Export SQL" Icon="database" Click="ExportTableSql" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
+                        }
                     </div>
                 </FilterTemplate>
                 <Template Context="row">
-                    <div>
+                    @if (!SharedContainerCommon.IsOldArchiveDatabase)
+                    {
+                       <div>
                         <RadzenButton Click="() => EditRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "close" : "edit")" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Edit"></RadzenButton>
                         <RadzenButton Click="() => DeleteDbRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Delete"></RadzenButton>
                         <RadzenButton Click="@((editingRow == row || insertingRow == row) ? () => UpdateDbRow(row) : () => AddNewRow(row))" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "save" : "library_add")" ButtonStyle="ButtonStyle.Success" Variant="Variant.Filled" Shade="Shade.Dark" Size="ButtonSize.Large" title="Copy"></RadzenButton>
-                    </div>
+                    </div> 
+                    }                    
                 </Template>
             </RadzenDataGridColumn>
 
@@ -273,7 +283,7 @@
             return;
 
         var result = await DialogService.OpenAsync<ConfirmationDialog>
-                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export Excel", "details", TableName, "weight", 0),
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "ButtonExportExcel", "details", TableName, "weight", 0),
                 Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {

@@ -1,0 +1,238 @@
+﻿@using KNTCommon.Business.Repositories
+@using KNTCommon.Business.Interface
+@using KNTCommon.Business.DTOs
+
+@inject IMaintenanceRepository MaintenanceRepository
+@inject Localization Localization
+@inject SharedContainerCommon SharedContainerCommon
+
+
+@if(data is not null){
+    <RadzenTemplateForm Data="@data" TItem="IoTasksDTO" >
+        <RadzenFieldset Text="@Localization.Get("LabelArchive")">
+
+            <RadzenRow Class="rz-p-0 rz-p-lg-4" Gap="80px">
+                <RadzenColumn Size="12" SizeMD="12">
+                    <RadzenStack Gap="1rem">
+
+
+
+            <RadzenRow>
+                @{                
+                    foreach (var parameter in parameterDTOs)
+                    {
+                        <RadzenColumn Size="1">
+                            <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(parameter.ParName)</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="1" >
+                            <NumericInput2 LabelTitle="@Localization.Get(parameter.ParValue)" @bind-Value="@parameter.ParValue" Disabled="@SharedContainerCommon.IsArchive" AllowNegative="false" AllowDecimal="false"></NumericInput2>
+                        </RadzenColumn>
+                    }                
+                }
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="1">
+                    <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.IoTaskType))</span></h3></RadzenLabel>
+                </RadzenColumn>
+                <RadzenColumn Size="2">
+                    <RadzenRadioButtonList @bind-Value=@data.IoTaskType TValue="int" Disabled="@SharedContainerCommon.IsArchive">
+                        <Items>
+                            <RadzenRadioButtonListItem Text="Db" Value="1" />
+                            <RadzenRadioButtonListItem Text="Excel" Value="3" />
+                        </Items>
+                    </RadzenRadioButtonList>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="1">
+                    <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving))</span></h3></RadzenLabel>
+                </RadzenColumn>
+                <RadzenColumn Size="1">
+                    <RadzenCheckBox LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving))" @bind-Value="@data.TimeCriteriaModel.AutomaticArchiving" Disabled="@SharedContainerCommon.IsArchive"></RadzenCheckBox>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="1">
+                    <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveMode))</span></h3></RadzenLabel>
+                </RadzenColumn>
+                <RadzenColumn Size="1">
+                    <RadzenDropDown Data="archiveMode" @bind-Value="data.TimeCriteriaModel.ArchiveMode" TextProperty="Item2" ValueProperty="Item1" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @{
+                            if (data.TimeCriteriaModel.ArchiveMode == (int)ArchiveMode.SetDate)
+                {
+                    <RadzenRow>
+                        <RadzenColumn Size="1">
+                            <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnDay))</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                            <NumericInput2 LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnDay))" @bind-Value="@data.TimeCriteriaModel.EveryMonthOnDay" Disabled="@SharedContainerCommon.IsArchive"></NumericInput2>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="1">
+                                        <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnHour))</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                                        <RadzenDatePicker @bind-Value=@data.TimeCriteriaModel.EveryMonthOnHour ShowTime="true" TimeOnly="true" DateFormat="HH:mm" Disabled="@SharedContainerCommon.IsArchive" />
+                        </RadzenColumn>
+                    </RadzenRow>                        
+                }
+                            else if (data.TimeCriteriaModel.ArchiveMode == (int)ArchiveMode.Interval)
+                {
+                    <RadzenRow>
+                        <RadzenColumn Size="1">
+                            <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalType))</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                            <RadzenDropDown Data="archiveInterval" @bind-Value="data.TimeCriteriaModel.ArchiveIntervalType" TextProperty="Item2" ValueProperty="Item1" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
+                        </RadzenColumn>
+               
+                        @{
+                            if (data.TimeCriteriaModel.ArchiveIntervalType == (int)ArchiveIntervalType.Day)
+                            {
+                                <RadzenColumn Size="1">
+                                                <NumericInput2 LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddDays))" @bind-Value="@data.TimeCriteriaModel.AddDays" Disabled="@SharedContainerCommon.IsArchive" MinValue="1" MaxValue="365"></NumericInput2>
+                                </RadzenColumn>
+                            }
+                            else if (data.TimeCriteriaModel.ArchiveIntervalType == (int)ArchiveIntervalType.Hour)
+                            {
+                                <RadzenColumn Size="1">
+                                    <NumericInput2 LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddHours))" @bind-Value="@data.TimeCriteriaModel.AddHours" Disabled="@SharedContainerCommon.IsArchive" MinValue="1" MaxValue="48"></NumericInput2>
+                                </RadzenColumn>
+                            }
+                                        else if (data.TimeCriteriaModel.ArchiveIntervalType == (int)ArchiveIntervalType.Minute)
+                            {
+                                <RadzenColumn Size="1">
+                                    <NumericInput2 LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddMinutes))" @bind-Value="@data.TimeCriteriaModel.AddMinutes" Disabled="@SharedContainerCommon.IsArchive" MinValue="1" MaxValue="120"></NumericInput2>
+                                </RadzenColumn>
+                            }
+                        }
+
+                    </RadzenRow>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="1">
+                                        <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalSelectedHour))</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                                        <RadzenDatePicker @bind-Value=@data.TimeCriteriaModel.ArchiveIntervalSelectedHour ShowTime="true" TimeOnly="true" DateFormat="HH:mm" Disabled="@SharedContainerCommon.IsArchive" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="1">
+                                        <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalStartDate))</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="1">
+                                        <RadzenDatePicker @bind-Value=@data.TimeCriteriaModel.ArchiveIntervalStartDate DateFormat="dd.MM.yyyy" class="custom-datepicker" Disabled="@SharedContainerCommon.IsArchive" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="1">
+                            <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ExportLocation))</span></h3></RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4">
+                            @* TODO temp solution radzen dont support selecting only path  *@
+                            <AlphanumericInput2 LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddMinutes))" @bind-Value="@data.TimeCriteriaModel.ExportLocation" Disabled="@SharedContainerCommon.IsArchive"></AlphanumericInput2>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                }
+            }
+
+
+            // dateTimePickerArchiveSetDateInt -- ArchiveSetDateInterval
+            // dateTimePickerArchiveInterval -- ArchiveInterval
+            //textBoxSelectExportLocation
+
+
+
+
+
+
+            ------
+            // ostalo
+
+            @*
+            <div class="mb-2">
+            <strong>@Localization.Get(nameof(LeakTesterDetailsDTO.DeltaP)): </strong> <span>@Accessories.FormatToDecimalValues(2, details?.DeltaP ?? 0)Pa</span>
+        </div>
+
+        <div class="mb-2">
+            <strong>@Localization.Get(nameof(LeakTesterDetailsDTO.DeltaV)): </strong> <span>@Accessories.FormatToDecimalValues(2, details?.DeltaV ?? 0)ml</span>
+        </div>
+
+        <div class="mb-2" style="color: @details?.ResultColour">
+            <strong>@Localization.Get(nameof(LeakTesterDetailsDTO.Leak), SharedContainer.leakDisplayUnit): </strong> <span>@Accessories.FormatToDecimalValues(2, Accessories.LeakToUnit(details?.Leak ?? 0, SharedContainer.leakUnit))ml/min</span>
+        </div>
+
+        <div class="mb-2" style="color: @((string.IsNullOrEmpty(details?.Error)) ? ResultRepository.GetColor(ResultRepository.ResultTypes.OK) : ResultRepository.GetColor(ResultRepository.ResultTypes.Error) )">
+            <strong>@Localization.Get(nameof(LeakTesterDetailsDTO.Error)): </strong> <span>@details?.Error</span>
+        </div>
+
+
+        *@
+
+
+
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>>
+
+
+        </RadzenFieldset>
+    </RadzenTemplateForm>
+}
+
+@code {
+    //public LeakTesterDetailsDTO? details { get; set; }
+    //public List<LeakTesterPointsDTO> Items { get; set; }
+
+    public IoTasksDTO? data { get; set; }
+    public List<Tuple<int, string>> archiveMode { get; set; } = new();
+    public List<Tuple<int, string>> archiveInterval { get; set; } = new();
+
+    List<ParameterDTO> parameterDTOs { get; set; }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //details = await LeakTesterRepository.GetDetailsAsync(TransactionDetailsId);
+        //
+        //Items = await LeakTesterRepository.GetDataPointsAsync(details.TransactionDetailsCounter);
+
+        archiveMode.Add(new Tuple<int, string>(0, "SetDate"));
+        archiveMode.Add(new Tuple<int, string>(1, "Interval"));
+
+        archiveInterval.Add(new Tuple<int, string>(0, "Days"));
+        archiveInterval.Add(new Tuple<int, string>(1, "Hours"));
+        archiveInterval.Add(new Tuple<int, string>(2, "Minutes"));
+
+        parameterDTOs = await MaintenanceRepository.GetArchiveParameters();
+        await LoadData();
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadData()
+    {
+        data = await MaintenanceRepository.GetIoTaskAsync(1);
+        await MaintenanceRepository.GetArchiveParameters();
+    }
+
+    async Task OnArchiveModeChange()
+    {
+        //await LoadData();
+
+        //MaintenanceRepository.ModifyIoTasksDTO(data);
+    }
+}

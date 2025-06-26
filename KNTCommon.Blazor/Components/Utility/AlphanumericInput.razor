@@ -1,9 +1,7 @@
 ﻿@inject Radzen.DialogService dialogService
 @inject HelperService Helper
 
-<div class="Animation">
-    <RadzenTextBox Style="width:100%;" Value="@InputValue" @onclick="OpenKeyboard" id="@CSSId" class="defaultAlphanumericInput" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" Placeholder="@Placeholder" @onkeydown="OpenKeyboard"></RadzenTextBox>
-</div>
+<RadzenTextBox Style="width:100%;" Value="@InputValue" @onclick="OpenKeyboard" id="@CSSId" class="defaultAlphanumericInput" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" Placeholder="@Placeholder" @onkeydown="OpenKeyboard"></RadzenTextBox>
 
 @code {
     [Parameter]

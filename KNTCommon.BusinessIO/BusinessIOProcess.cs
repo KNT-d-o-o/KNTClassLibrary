@@ -99,9 +99,9 @@ namespace KNTCommon.BusinessIO
 #endif
                 if (ioTasksRepository != null)
                 {
-                    IEnumerable<IoTasksDTO> ioTasks = ioTasksRepository.GetIoTasks();
+                    IEnumerable<DTOs.IoTasksDTO> ioTasks = ioTasksRepository.GetIoTasks();
 
-                    foreach (IoTasksDTO ioTask in ioTasks)
+                    foreach (DTOs.IoTasksDTO ioTask in ioTasks)
                     {
                         if (ioTask.ExecuteDateAndTime < DateTime.Now && ioTask.Status < 100)
                         {
@@ -127,7 +127,7 @@ namespace KNTCommon.BusinessIO
                             break; // execute only first priority task
                         }
                     }
-                    foreach (IoTasksDTO ioTask in ioTasks) // set remaining time info
+                    foreach (DTOs.IoTasksDTO ioTask in ioTasks) // set remaining time info
                     {
                         if (ioTask.ExecuteDateAndTime > DateTime.Now)
                         {
@@ -191,7 +191,7 @@ namespace KNTCommon.BusinessIO
         string? orderByA;
         int tableOptimizedIdx = 0;
         List<IoTaskDetailsDTO>? taskDetailsA;
-        private async Task ArchiveStep(IoTasksDTO task)
+        private async Task ArchiveStep(DTOs.IoTasksDTO task)
         {
 #if DEBUG
             Console.WriteLine($"ArchiveStep noToArchive: {noToArchive}, noArchived: {noArchived}");
@@ -293,7 +293,7 @@ namespace KNTCommon.BusinessIO
         string? dayWhereR;
         string? orderByR;
         List<IoTaskDetailsDTO>? taskDetailsR;
-        private void RestoreStep(IoTasksDTO task)
+        private void RestoreStep(DTOs.IoTasksDTO task)
         {
             try
             {
@@ -367,7 +367,7 @@ namespace KNTCommon.BusinessIO
         List<IoTaskDetailsDTO>? taskDetailsE;
         string? whereConditionE;
         string? nextDateTimeConditionE;
-        private void ExportExcelStep(IoTasksDTO task)
+        private void ExportExcelStep(DTOs.IoTasksDTO task)
         { 
             try
             {
@@ -451,7 +451,7 @@ namespace KNTCommon.BusinessIO
         string? filePathDump;
         List<IoTaskDetailsDTO>? taskDetailsD;
         bool toZip = false;
-        private void ExportDumpStep(IoTasksDTO task)
+        private void ExportDumpStep(DTOs.IoTasksDTO task)
         { 
             try
             {

@@ -1,4 +1,5 @@
-﻿@inject DialogService DialogService
+﻿
+@inject DialogService DialogService
 @inject ITablesRepository TablesRepository
 @inject KNTCommon.Blazor.Services.HelperService Helper
 @inject KNTCommon.Blazor.Services.WindowsServiceHelper WindowsServiceHelper
@@ -6,23 +7,27 @@
 @* DatabaseTablesComponent *@
 
 <div class="Animation FixContainer">
-    <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText="No tables found"
+    <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText=@Localization.Get("RadzenDataGridColumn_EmptyText")
     TItem="Dictionary<string, object>"
     AllowAlternatingRows="false"
     AllowSorting="true" AllowColumnResize="true" PagerHorizontalAlign="HorizontalAlign.Left"
     EditMode="DataGridEditMode.Single" style="height: 75vh"
     >
         <Columns>
-            <RadzenDataGridColumn TItem="string" Property="." Title="Table Name">
+            <RadzenDataGridColumn TItem="string" Property="." Title="@Localization.Get("LabelTableName")">
                 <Template Context="table">
                     <span @onclick="(() => OnCellClick(table))" style="cursor: pointer;">@table</span>
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="string" Property="." Title="SQL" Width="10%">
-                <Template Context="table">
-                    <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Import" Icon="database" Click="() => OnSql(table)" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
-                </Template>
-            </RadzenDataGridColumn>
+            @if (!SharedContainerCommon.IsOldArchiveDatabase)
+            {
+                <RadzenDataGridColumn TItem="string" Property="." Title="SQL" Width="10%">
+                    <Template Context="table">
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Import" Icon="database" Click="() => OnSql(table)" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
+                    </Template>
+                </RadzenDataGridColumn>
+            }
+
         </Columns>
     </RadzenDataGrid>
 </div>
@@ -38,6 +43,17 @@
         try
         {
             Tables = await TablesRepository.GetDatabaseTablesAsync();
+
+            if (SharedContainerCommon.IsOldArchiveDatabase)
+            {
+                var displayTables = new List<string>() { "transactions","transactiondetails","transactiondetailslog","transactionslog","leaktestermeasurementsdetails",
+                                                         "leaktestermeasurementsdetailslog","leaktestermeasurements","leaktestermeasurementslog",
+                                                         "heliummeasurement","heliummeasuredpoints",
+                                                         "forcepath","forcepathdetails","forcepathwindows",
+                                                         "dimensionsmeasurements"};
+                Tables = Tables.Where(x => displayTables.Contains(x)).ToList();
+            }
+
         }
         catch (Exception ex)
         {
@@ -53,8 +69,8 @@
     private async Task OnCellClick(string tableName)
     {
         var param = Helper.CreateDialogBlazorComponentParameters("TableName", tableName);
-        var result = await DialogService.OpenAsync<TableDetailsDialog>($"Edit table: {tableName}", param, Helper.GetDialogOptions("MaxSizeWindow"));
-
+        var result = await DialogService.OpenAsync<TableDetailsDialog>(Localization.Get(nameof(TableDetailsDialog), tableName), param, Helper.GetDialogOptions("MaxSizeWindow"));
+        
     }
 
     private async Task OnSql(string tableName)

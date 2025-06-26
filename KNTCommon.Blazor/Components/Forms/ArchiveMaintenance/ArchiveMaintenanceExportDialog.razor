@@ -1,0 +1,126 @@
+﻿@using KNTCommon.Business.Repositories
+@using KNTCommon.Business.Interface
+@using KNTCommon.Business.DTOs
+
+@inject IMaintenanceRepository MaintenanceRepository
+@inject DialogService DialogService
+
+@inherits PageBaseCS
+
+
+<RadzenTemplateForm Data="@ArchiveMaintenanceExportDialogModel" TItem="ArchiveMaintenanceExportDialogModel">
+
+    <RadzenRow Class="rz-p-0 rz-p-lg-4">
+        <RadzenColumn Size="12" SizeMD="12">
+            <RadzenStack Gap="2rem">
+                <RadzenRow>
+                    <RadzenColumn Size="3">
+                        <RadzenCheckBox TValue="bool" @bind-Value="@ArchiveMaintenanceExportDialogModel.SaveAsZip" Name="@nameof(ArchiveMaintenanceExportDialogModel.SaveAsZip)" />
+                        <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.SaveAsZip))" Component="@nameof(ArchiveMaintenanceExportDialogModel.SaveAsZip)" class="labelEdit-middle rz-ms-2" />
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="6">
+                        <RadzenCheckBox TValue="bool" @bind-Value="@ArchiveMaintenanceExportDialogModel.DumpAllTables" Name="@nameof(ArchiveMaintenanceExportDialogModel.DumpAllTables)" />
+                        <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.DumpAllTables))" Component="@nameof(ArchiveMaintenanceExportDialogModel.DumpAllTables)" class="labelEdit-middle rz-ms-2" />
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="3">
+                        <RadzenCheckBox TValue="bool" @bind-Value="@ArchiveMaintenanceExportDialogModel.Advanced" Name="@nameof(ArchiveMaintenanceExportDialogModel.Advanced)" />
+                        <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.Advanced))" Component="@nameof(ArchiveMaintenanceExportDialogModel.Advanced)" class="labelEdit-middle rz-ms-2" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (ArchiveMaintenanceExportDialogModel.Advanced)
+                {                
+                    <RadzenRow>
+                        <RadzenColumn>
+                            <RadzenRadioButtonList @bind-Value=ArchiveMaintenanceExportDialogModel.FilterType TValue="FilterTypeEnum?">
+                                <Items>
+                                    <RadzenRadioButtonListItem Text="@Localization.Get($"{nameof(ArchiveMaintenanceExportDialogModel.FilterType)}.{FilterTypeEnum.Date}")" Value="FilterTypeEnum.Date" TValue="FilterTypeEnum?" class="labelEdit-middle" />
+                                    <RadzenRadioButtonListItem Text="@Localization.Get($"{nameof(ArchiveMaintenanceExportDialogModel.FilterType)}.{FilterTypeEnum.TransactionId}")" Value="FilterTypeEnum.TransactionId" TValue="FilterTypeEnum?" class="labelEdit-middle" />
+                                </Items>
+                            </RadzenRadioButtonList>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    @if (ArchiveMaintenanceExportDialogModel.FilterType == FilterTypeEnum.Date)
+                    {
+                        <RadzenRow>
+                            <RadzenColumn Size="6">
+                                <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.DateFrom))" Component="@nameof(ArchiveMaintenanceExportDialogModel.DateFrom)" class="labelEdit-middle" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                <RadzenDatePicker @bind-value="@ArchiveMaintenanceExportDialogModel.DateFrom" DateFormat=@ConstantsCommon.DatePickerFormat />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="6">
+                                <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.DateTo))" Component="@nameof(ArchiveMaintenanceExportDialogModel.DateTo)" class="labelEdit-middle" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                <RadzenDatePicker @bind-Value="@ArchiveMaintenanceExportDialogModel.DateTo" DateFormat=@ConstantsCommon.DatePickerFormat Min="@ArchiveMaintenanceExportDialogModel.DateFrom" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+                    else if (ArchiveMaintenanceExportDialogModel.FilterType == FilterTypeEnum.TransactionId)
+                    {
+                        <RadzenRow>
+                            <RadzenColumn Size="6">
+                                <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.TransactionIdFrom))" Component="@nameof(ArchiveMaintenanceExportDialogModel.TransactionIdFrom)" class="labelEdit-middle" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                <NumericInput2 @bind-value="@ArchiveMaintenanceExportDialogModel.TransactionIdFrom" AllowNegative=false AllowDecimal=false />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="6">
+                                <RadzenLabel Text="@Localization.Get(nameof(ArchiveMaintenanceExportDialogModel.TransactionIdTo))" Component="@nameof(ArchiveMaintenanceExportDialogModel.TransactionIdTo)" class="labelEdit-middle" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="6">
+                                <NumericInput2 @bind-Value="@ArchiveMaintenanceExportDialogModel.TransactionIdTo" AllowNegative=false AllowDecimal=false MinValue="@ArchiveMaintenanceExportDialogModel.TransactionIdFrom" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+                }
+            </RadzenStack>
+
+            <br />
+            <RadzenStack AlignItems="AlignItems.End">
+                <RadzenButton class="RadzenGridAddButtonForm rz-ripple" ButtonStyle="ButtonStyle.Success" Click="() => ReturnResult(true)" style="color: black; width: 20vw;">@Localization.Get("ButtonExport")</RadzenButton>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenTemplateForm>
+
+
+@code {
+    [Parameter]
+    public int IoTaskId { get; set; }
+
+    ArchiveMaintenanceExportDialogModel ArchiveMaintenanceExportDialogModel { get; set; } = new();
+        
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+    }
+
+    public override async Task LoadData()
+    {
+        ArchiveMaintenanceExportDialogModel = await MaintenanceRepository.GetIoTasksFilter(IoTaskId);
+    }
+
+    private async Task ReturnResult(bool apply)
+    {
+        if (apply)
+        {
+            await MaintenanceRepository.SetIoTasksFilter(ArchiveMaintenanceExportDialogModel);
+            DialogService.Close(true);
+        }
+        else
+            DialogService.Close(false);
+    }
+
+}

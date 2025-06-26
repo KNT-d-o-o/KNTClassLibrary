@@ -28,6 +28,17 @@ namespace KNTCommon.Business.AutoMapper
             CreateMap<ServiceControl, ServiceControlDTO>().ReverseMap();
             CreateMap<ServiceControlDTO, ServiceControl>().ReverseMap();
 
+            CreateMap<Results, ResultsDTO>().ReverseMap();
+            CreateMap<ResultsDTO, Results>().ReverseMap();
+
+            CreateMap<IoTasks, IoTasksDTO>().ReverseMap();
+            CreateMap<IoTasksDTO, IoTasks>().ReverseMap();
+
+            CreateMap<IoTaskLogs, IoTaskLogsDTO>().ReverseMap();
+            CreateMap<IoTaskLogsDTO, IoTaskLogs>().ReverseMap();
+            
+
+
         }
     }
 }

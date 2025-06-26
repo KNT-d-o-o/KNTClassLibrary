@@ -35,7 +35,7 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="OxyPlot.Blazor" Version="2.6.0" />
-    <PackageReference Include="Radzen.Blazor" Version="5.6.12" />
+    <PackageReference Include="Radzen.Blazor" Version="7.0.7" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.EventLog" Version="9.0.2" />
     <PackageReference Include="System.Formats.Asn1" Version="9.0.1" />
@@ -49,6 +49,10 @@
   <ItemGroup>
     <ProjectReference Include="..\KNTCommon.Business\KNTCommon.Business.csproj" />
     <ProjectReference Include="..\KNTCommon.Data\KNTCommon.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Model\" />
   </ItemGroup>
 
 </Project>

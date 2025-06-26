@@ -1,4 +1,4 @@
-﻿namespace KNTCommon.Data.Models;
+﻿namespace KNTCommon.Business.DTOs;
 
 public partial class ParameterDTO
 {

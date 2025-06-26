@@ -4,6 +4,16 @@ using Radzen;
 
 namespace KNTCommon.Blazor.Services
 {
+    // NOTE enum must have same name as style in .css file
+
+    public enum DialogOptionsTypeEnum
+    {
+        ConfirmationWrapper,
+        halfSizeWindow,
+        DialogLarge,
+        MaxSizeWindow,        
+    }
+
     public class HelperService
     {
         private readonly NotificationService NS;
@@ -48,6 +58,16 @@ namespace KNTCommon.Blazor.Services
             options.Draggable = false;
             options.CloseDialogOnOverlayClick = true;
             options.CssClass = dialogCss;
+            return options;
+        }
+
+        public DialogOptions GetDialogOptions(DialogOptionsTypeEnum? dialogOptionsType)
+        {
+            var options = new DialogOptions();
+            options.Resizable = false;
+            options.Draggable = false;
+            options.CloseDialogOnOverlayClick = true;
+            options.CssClass = Enum.GetName(dialogOptionsType.GetType(), dialogOptionsType);
             return options;
         }
 

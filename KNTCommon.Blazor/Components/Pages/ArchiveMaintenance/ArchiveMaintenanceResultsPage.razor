@@ -1,0 +1,262 @@
+﻿@using KNTCommon.Business.Repositories
+@using KNTCommon.Business.Interface
+@using KNTCommon.Business.DTOs
+@using KNTCommon.Blazor.Services;
+@using KNTCommon.Blazor.Components.Forms.ArchiveMaintenance
+
+@using KNTCommon.Blazor.Services
+@inject KNTCommon.Blazor.Services.HelperService Helper
+
+@inject IMaintenanceRepository MaintenanceRepository
+@inject Localization Localization
+@inject SharedContainerCommon SharedContainerCommon
+
+@inject DialogService DialogService
+@inherits PageBaseCS
+
+
+
+<div class="Animation">
+
+    <RadzenRow Class="rz-p-0 rz-p-lg-4" Gap="80px">
+        <RadzenColumn Size="12" SizeMD="12">
+            <RadzenStack Gap="1rem">
+                <RadzenRow>
+                    @{
+                        if (parameterDTOs is not null)
+                            foreach (var parameter in parameterDTOs)
+                            {
+                                <RadzenColumn Size="1">
+                                    <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(parameter.ParName)</span></h3></RadzenLabel>
+                                </RadzenColumn>
+                                <RadzenColumn Size="1">
+                                    <NumericInput2 LabelTitle="@Localization.Get(parameter.ParValue)" @bind-Value="@parameter.ParValue" Disabled="@SharedContainerCommon.IsArchive" AllowNegative="false" AllowDecimal="false"></NumericInput2>
+                                </RadzenColumn>
+                            }
+                    }
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <br/>
+
+
+
+    @*
+<div class="container-fluid Animation">
+    <div class="row frame-padding custom-body">
+        <div class="col-12" style="padding:0;">
+
+            <div class="Animation" style="width: 100%; height: 85vh">
+                <RadzenDataGrid Data="DataList" TItem="vforcepathDTO" AllowPaging="true" PageSize="1000" PagerAlwaysVisible="true"
+                AllowSorting="true" AllowColumnResize="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.And" EditMode="DataGridEditMode.Single"
+                AllowVirtualization="true"
+                style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+
+
+    *@
+
+    <div class="container-fluid Animation">
+        <div class="row frame-padding custom-body">
+            <div class="col-12" style="padding:0;">
+
+                <div class="Animation" style="width: 100%; height: 85vh">
+
+
+                    <div class="Animation" style="width: 100%; height: 85vh">
+
+                        <RadzenDataGrid Data="Items" TItem="IoTasksDTO" 
+                        AllowSorting="true" AllowColumnResize="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                        LogicalFilterOperator="LogicalFilterOperator.And"
+                        style="width: 100%; height: 100%; display: flex; flex-direction: column;" RowRender="@RowRender">
+                            <Columns>
+                                <RadzenDataGridColumn Property="@nameof(IoTasksDTO.IoTaskId)" Title="@Localization.Get(nameof(IoTasksDTO.IoTaskId))" Width="160px" Frozen=true>
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@(nameof(IoTasksDTO.IoTaskName))" Title="@Localization.Get(nameof(IoTasksDTO.IoTaskName))" Width="500px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                @*
+                                    <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving))" Width="350px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                *@
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving))" Width="350px">
+                                    <FilterTemplate></FilterTemplate>
+
+                                    <Template Context="data">
+                                        <RadzenCheckBox LabelTitle="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AutomaticArchiving))" @bind-Value="@data.TimeCriteriaModel.AutomaticArchiving" Disabled=true></RadzenCheckBox>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@(nameof(IoTasksDTO.Status))" Title="@Localization.Get(nameof(IoTasksDTO.Status))" Width="150px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@(nameof(IoTasksDTO.Info))" Title="@Localization.Get(nameof(IoTasksDTO.Info))" Width="800px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.ArchiveModeDescription)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveModeDescription))" Width="280px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>    
+
+                                @* SetDate *@
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnDay)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnDay))" Width="300px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnHour)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.EveryMonthOnHour))" Width="160px" FormatString="{0:HH:mm}">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+
+                                @* Interval *@
+
+                                @*
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.AddDays)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddDays))" Width="160px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.AddHours)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddHours))" Width="160px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.AddMinutes)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.AddMinutes))" Width="160px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                *@
+
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalTypeAmount)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalTypeAmount))" Width="160px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalTypeDescription)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalTypeDescription))" Width="160px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalSelectedHour)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalSelectedHour))" Width="220px" FormatString="{0:HH:mm}">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@($"{nameof(IoTasksDTO.TimeCriteriaModel)}.{nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalStartDate)}")" Title="@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveIntervalStartDate))" Width="245px" FormatString="{0:dd.MM.yyyy}">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>              
+
+                                <RadzenDataGridColumn Property="@(nameof(IoTasksDTO.Par1))" Title="@Localization.Get(nameof(IoTasksDTO.Par1))" Width="800px">
+                                    <FilterTemplate></FilterTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Title="" Width="@($"{4*3}rem")" CssClass="no-right-border">
+                                    <Template Context="Datacontext">
+                                        <div>
+                                            <RadzenButton Click="() => OpenEditInsertDialog(Datacontext)" Icon="edit" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title=" Edit" Visible=@(!SharedContainerCommon.IsArchive)></RadzenButton>
+                                            <RadzenButton Icon="search" Click="() => OpenDetails(Datacontext)" ButtonStyle="@ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Details"></RadzenButton>
+                                            <RadzenButton Icon="play_circle" Click="() => RunIoTask(Datacontext)" ButtonStyle="@ButtonStyle.Success" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Run IoTask" Visible="@(Datacontext.IoTaskMode == 2)" Disabled="@(Datacontext.Status >= 0 && Datacontext.Status < 100)"></RadzenButton>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+
+                        </RadzenDataGrid>
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    public List<IoTasksDTO> Items { get; set; }
+
+    List<ParameterDTO> parameterDTOs { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        enablePeriodicReload = true;
+
+        parameterDTOs = await MaintenanceRepository.GetArchiveParameters();
+        await LoadData();
+
+        await base.OnInitializedAsync();
+    }
+
+    public override async Task LoadData()
+    {
+        Items = await MaintenanceRepository.GetIoTasksAsync(SharedContainerCommon.LoggedPower);        
+    }
+
+    async Task OpenDetails(IoTasksDTO ioTasksDTO)
+    {
+        var param = Helper.CreateDialogBlazorComponentParameters(nameof(ArchiveMaintenanceLogResultsPage.IoTaskId), ioTasksDTO.IoTaskId);
+        var result = await DialogService.OpenAsync<ArchiveMaintenanceLogResultsPage>(Localization.Get(nameof(ArchiveMaintenanceLogResultsPage), ioTasksDTO.IoTaskId), param, Helper.GetDialogOptions(DialogOptionsTypeEnum.MaxSizeWindow));
+
+        if (result != null)
+        {
+
+        }
+    }
+
+    async Task OpenEditInsertDialog(IoTasksDTO ioTasksDTO)
+    {
+        var param = Helper.CreateDialogBlazorComponentParameters(nameof(ArchiveMaintenanceAddOrEditDialog.IoTaskId), ioTasksDTO.IoTaskId);
+        var result = await DialogService.OpenAsync<ArchiveMaintenanceAddOrEditDialog>(Localization.Get(nameof(ArchiveMaintenanceAddOrEditDialog), ioTasksDTO.IoTaskId), param, Helper.GetDialogOptions(DialogOptionsTypeEnum.DialogLarge));
+
+        if (result != null)
+        {
+            await LoadData();
+        }
+    }
+    
+
+    async Task RunIoTask(IoTasksDTO ioTasksDTO)
+    {
+        bool? result = false;
+
+        if (ioTasksDTO.IoTaskId == 6)
+        {
+            result = await DialogService.OpenAsync<ArchiveMaintenanceExportDialog>("TITLE", Helper.CreateDialogBlazorComponentParameters(nameof(ArchiveMaintenanceExportDialog.IoTaskId), ioTasksDTO.IoTaskId), Helper.GetDialogOptions(DialogOptionsTypeEnum.ConfirmationWrapper));
+        }
+        else
+        {
+            result = await DialogService.OpenAsync<ConfirmationDialog>("", Helper.CreateDialogBlazorComponentParameters(nameof(ConfirmationDialog.action), "Run", nameof(ConfirmationDialog.details), Localization.Get("ConfirmIoTaskLabel", ioTasksDTO.IoTaskName), nameof(ConfirmationDialog.weight), 0), Helper.GetDialogOptions("ConfirmationWrapper"));
+        }
+
+        if (result == true)
+        {
+            await MaintenanceRepository.SetIoTasksAsStartAsync(ioTasksDTO.IoTaskId);
+
+            Helper.NotifySuccess("");
+
+            await LoadData();
+        }
+        else
+            Helper.NotifyWarning("Cancled ");
+    }
+
+
+    void RowRender(RowRenderEventArgs<IoTasksDTO> args)
+    {
+        if (args.Data.Status == 0)
+        {
+            args.Attributes.Add("class", "preparing-row");
+        }else if (args.Data.Status > 0 && args.Data.Status < 100)
+        {
+            args.Attributes.Add("class", "working-row");
+            //args.Attributes.Add("style", "bgcolor='yellow' !important;"); // TODO this dont work?
+        }        
+    }
+
+}

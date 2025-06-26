@@ -376,8 +376,9 @@ namespace KNTToolsAndAccessories
         /// </summary>
         /// <param name="format"></param>
         /// <param name="val"></param>
+        /// <param name="shortformat"></param>
         /// <returns></returns>
-        public static string FormatToDecimalValues(int format, double val, bool shortExp)
+        public static string FormatToDecimalValues(int format, double val, bool shortformat=false)
         {
             if (format == 0) // 15 decimal
                 return string.Format("{0,1:0.###############}", val);
@@ -385,53 +386,64 @@ namespace KNTToolsAndAccessories
 
             if ((format == 3 && Math.Abs(val) < 0.01) && val != 0)
             {
-                if (!shortExp)
+                if (!shortformat)
                     strVal = string.Format("{0:0.###E+00}", val); // Exp E+00, 3 decimal
                 else
                     strVal = string.Format("{0:0.###E+0}", val); // Exp E+0, 3 decimal
             }
             else if ((format == 2 && Math.Abs(val) < 0.001) && val != 0)
             {
-                if (!shortExp)
+                if (!shortformat)
                     strVal = string.Format("{0:0.##E+00}", val); // Exp E+00, Exp, 2 decimal
                 else
                     strVal = string.Format("{0:0.##E+0}", val); // Exp E+0, Exp, 2 decimal
             }
             else if ((format == 1 && Math.Abs(val) < 0.0001) && val != 0)
             {
-                if (!shortExp)
+                if (!shortformat)
                     strVal = string.Format("{0:0.#E+00}", val); // Exp E+00, 1 decimal
                 else
                     strVal = string.Format("{0:0.#E+0}", val); // Exp E+0, 1 decimal
             }
-            else if (((format == 3 && Math.Abs(val) < 0.1) || (format == 2 && Math.Abs(val) < 0.01) || (format == 1 && Math.Abs(val) < 0.001)) && val != 0)
-                strVal = string.Format("{0:0.#####}", val); // 5 decimal
+            else if (((format == 5 && Math.Abs(val) < 0.1) || (format == 2 && Math.Abs(val) < 0.01) || (format == 1 && Math.Abs(val) < 0.001)) && val != 0)
+            {
+                if (!shortformat)
+                    strVal = string.Format("{0:N5}", val); // 5 decimal with zeroes
+                else
+                    strVal = string.Format("{0:0.#####}", val); // 5 decimal
+            }
             else if (((format == 3 && Math.Abs(val) < 1) || (format == 2 && Math.Abs(val) < 0.1) || (format == 1 && Math.Abs(val) < 0.01)) && val != 0)
-                strVal = string.Format("{0:0.####}", val); // 4 decimal
+            {
+                if (!shortformat)
+                    strVal = string.Format("{0:N4}", val); // 4 decimal with zeroes
+                else
+                    strVal = string.Format("{0:0.####}}", val); // 4 decimal
+            }
             else if ((format == 3 || (format == 2 && Math.Abs(val) < 1) || (format == 1 && Math.Abs(val) < 0.1)) && val != 0)
-                strVal = string.Format("{0:0.###}", val); // 3 decimal
+            {
+                if (!shortformat)
+                    strVal = string.Format("{0:N3}", val); // 3 decimal with zeroes
+                else
+                    strVal = string.Format("{0:0.###}}", val); // 3 decimal
+            }
             else if ((format == 2 || (format == 1 && Math.Abs(val) < 1)) && val != 0)
-                strVal = string.Format("{0:0.##}", val); // 2 decimal
+            {
+                if (!shortformat)
+                    strVal = string.Format("{0:N2}", val); // 2 decimal with zeroes
+                else
+                    strVal = string.Format("{0:0.##}", val); // 2 decimal
+            }
             else
-                strVal = string.Format("{0:0.#}", val); // 1 decimal
+            {
+                if (!shortformat)
+                    strVal = string.Format("{0:N1}", val); // 1 decimal with zeroes
+                else
+                    strVal = string.Format("{0:0.#}", val); // 1 decimal
+            }
+
             return strVal;
         }
 
-        /// <summary>
-        /// get nice number step for graph
-        /// </summary>
-        /// <param name="min"></param>
-        /// <param name="max"></param>
-        /// <param name="desiredTicks"></param>
-        /// <returns></returns>
-        public static double GetNiceStep(double min, double max, int desiredTicks)
-        {
-            double range = max - min;
-            double rawStep = range / desiredTicks;
-            double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
-            double refinedStep = Math.Ceiling(rawStep / magnitude) * magnitude;
-            return refinedStep;
-        }
 
         /// <summary>
         /// dots ...

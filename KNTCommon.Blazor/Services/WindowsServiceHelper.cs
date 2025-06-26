@@ -14,8 +14,8 @@ namespace KNTCommon.Blazor.Services
 
     public class WindowsServiceHelper
     {
-        private readonly TablesRepository tablesRepository;
-        public WindowsServiceHelper(TablesRepository _tablesRepository)
+        private readonly ITablesRepository tablesRepository;
+        public WindowsServiceHelper(ITablesRepository _tablesRepository)
         {
             tablesRepository = _tablesRepository;
         }

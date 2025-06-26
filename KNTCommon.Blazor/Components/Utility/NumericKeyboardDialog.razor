@@ -30,9 +30,9 @@
                     <td><button id="Backspace" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Backspace"))'><RadzenIcon Icon="west" IconColor="@Colors.Warning" class="large-icon"></RadzenIcon></button></td>
                 </tr>
                 <tr>
-                    <td><button id="comma" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator))'>@CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator</button></td>
+                    <td><div style="@(AllowDecimal ? "" : "visibility: hidden")"><button id="comma" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator))'>@CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator</button></div></td>
                     <td><button id="num0" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("0"))'>0</button></td>
-                    <td> <button id="minus" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("-"))'>-</button></td>
+                    <td> <div style="@(AllowNegative ? "" : "visibility: hidden")"><button id="minus" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("-"))'>-</button></div></td>
                     <button id="Clear" keyboardButtonLarge class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Clear"))'><RadzenIcon Icon="close" IconColor="@Colors.Danger" class="large-icon"></RadzenIcon></button>
                 </tr>
             </table>
@@ -46,6 +46,12 @@
 
     [Parameter]
     public string? LabelValue { get; set; }
+
+    [Parameter]
+    public bool AllowNegative { get; set; }
+
+    [Parameter]
+    public bool AllowDecimal { get; set; }
 
     private string? Value { get; set; } = string.Empty;
     int? cursorIndex = 0;

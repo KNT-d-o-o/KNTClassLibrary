@@ -13,8 +13,8 @@ namespace KNTCommon.BusinessIO.AutoMapper
     {
         public MappingProfiles()
         {
-            CreateMap<IoTasks, IoTasksDTO>().ReverseMap();
-            CreateMap<IoTasksDTO, IoTasks>().ReverseMap();
+            CreateMap<IoTasks, DTOs.IoTasksDTO>().ReverseMap();
+            CreateMap<DTOs.IoTasksDTO, IoTasks>().ReverseMap();
 
             CreateMap<IoTaskDetails, IoTaskDetailsDTO>().ReverseMap();
             CreateMap<IoTaskDetailsDTO, IoTaskDetails>().ReverseMap();

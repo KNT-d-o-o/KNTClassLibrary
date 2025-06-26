@@ -3,13 +3,13 @@
 @* ConfirmationDialog *@
 
 <div class="ConfirmationInner Animation">
-    <span style="font-size:1.5rem;">Confirm to @(action ?? string.Empty)</span>
+    <span style="font-size:1.5rem;">@Localization.Get("LabelConfirmTo") @LocalizedAction</span>
     <br />
     <span style="font-size:2rem;">@details</span>
     <br />
     <br />
     <RadzenStack AlignItems="AlignItems.End">
-        <RadzenButton class="RadzenGridAddButtonForm rz-ripple" ButtonStyle="@bStyle" Click="() => ReturnResult(true)" style="color: black; width: 20vw;">@action</RadzenButton>
+        <RadzenButton class="RadzenGridAddButtonForm rz-ripple" ButtonStyle="@bStyle" Click="() => ReturnResult(true)" style="color: black; width: 20vw;">@LocalizedAction</RadzenButton>
     </RadzenStack>
 </div>
 
@@ -22,6 +22,17 @@
 
     [Parameter]
     public int weight { get; set; }
+
+    string LocalizedAction { get {
+            if (action == string.Empty)
+                return "";
+
+            if (Localization.ContainKey(action))
+                return Localization.Get(action);
+
+            return action;
+        } 
+    }
 
     ButtonStyle bStyle;
 

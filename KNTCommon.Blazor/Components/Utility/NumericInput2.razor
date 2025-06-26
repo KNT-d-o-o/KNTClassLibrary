@@ -1,0 +1,207 @@
+﻿@inject DialogService dialogService
+@inject HelperService Helper
+@typeparam TValue // bug can be any type i want int or decimal
+
+<RadzenTextBox Value="@InputValueString" @onclick="OpenKeyboard" id="@CSSId" class="defaultNumericInput" Placeholder="@Placeholder" @onkeydown="OpenKeyboard" ReadOnly="@ReadOnly" Style="@Style" Disabled="@Disabled"></RadzenTextBox>
+
+@code {
+    //[Parameter]
+    //public string? InputValue { get; set; }
+
+    [Parameter]
+    public bool AllowNegative { get; set; } = true;
+
+    [Parameter]
+    public bool AllowDecimal { get; set; } = true;
+    /*
+    [Parameter]
+    public double? MinValue { get; set; }
+
+    [Parameter]
+    public double? MaxValue { get; set; }
+    */
+
+    [Parameter]
+    public TValue? MinValue { get; set; }
+
+    [Parameter]
+    public TValue? MaxValue { get; set; }
+
+
+
+    [Parameter]
+    public string? LabelTitle { get; set; }
+
+    [Parameter]
+    public string? CSSId { get; set; }
+
+    [Parameter]
+    public string? Placeholder { get; set; }
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
+
+    [Parameter]
+    public EventCallback<TValue> ReturnedValue { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ReturnedValueString { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    public bool IsOpen { get; set; } = false;
+
+    [Parameter]
+    public virtual string InputValueString
+    {
+        get => _value is null ? null : _value.ToString();
+        set
+        {
+            if (_value is null && value is null) return;
+
+            if (_value is not null && _value.ToString()!.Equals(value)) return;
+
+            _value = To<TValue>(value);
+            //ValueChanged.InvokeAsync(value);
+        }
+    }
+
+
+    [Parameter]
+    public virtual TValue Value
+    {
+        get => _value;
+        set
+        {
+            if (_value is null && value is null) return;
+
+            if (_value is not null && _value.Equals(value)) return;
+
+            _value = To<TValue>(value);
+            ValueChanged.InvokeAsync(value);
+        }
+    }    
+
+    [Parameter]
+    public EventCallback<TValue> ValueChanged { get; set; }
+
+    TValue _value;
+
+    public T To<T>(object obj)
+    {
+        Type t = typeof(T);
+        Type u = Nullable.GetUnderlyingType(t);
+
+        if (u != null)
+        {
+            return (obj == null) ? default(T) : (T)Convert.ChangeType(obj, u);
+        }
+        else
+        {
+            return (T)Convert.ChangeType(obj, t);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    async Task OpenKeyboard()
+    {
+        MyLoggerCommon.WriteLine("NumericInput2 1");
+
+        if (IsOpen)
+            return;
+
+        if (ReadOnly)
+            return;
+
+        IsOpen = true;
+
+        //if (Value is null)
+        //    InputValue = string.Empty;           
+        MyLoggerCommon.WriteLine("NumericInput2 2");
+
+
+        var result = await dialogService.OpenAsync<NumericKeyboardDialog>
+        (LabelTitle, Helper.CreateDialogBlazorComponentParameters(nameof(NumericKeyboardDialog.InputValue), InputValueString, nameof(NumericKeyboardDialog.AllowNegative), AllowNegative, nameof(NumericKeyboardDialog.AllowDecimal), AllowDecimal), Helper.GetDialogOptions("NumericKeyboardOptions halfSizeWindow"));
+
+        IsOpen = false;
+
+        MyLoggerCommon.WriteLine("NumericInput2 3");
+        if (result != null)
+        {
+            MyLoggerCommon.WriteLine("NumericInput2 4");
+            var InputValue = result.ToString();
+            /*
+            if (typeof(TValue) == typeof(int) || typeof(TValue) == typeof(int))
+                return;
+            */
+
+            /*
+            double val;
+            if (double.TryParse(InputValue, out val))
+            {
+                if (MaxValue is not null && val > MaxValue)
+                    InputValue = MaxValue.ToString();
+                if (MinValue is not null && val < MinValue)
+                    InputValue = MinValue.ToString();
+                }
+            */
+
+                        MyLoggerCommon.WriteLine("NumericInput2 5");
+            // exception
+
+            if (MinValue is null && MaxValue is null)
+            {
+                Value = To<TValue>(result);
+                await ReturnedValue.InvokeAsync(Value);
+                await ReturnedValueString.InvokeAsync(Value.ToString());
+                return;
+            } else
+            {
+                if (BindConverter.TryConvertTo<TValue>(InputValue, CultureInfo.CurrentCulture, out TValue parsedValue))
+                {
+                    result = parsedValue!;
+
+                    // Clamp z uporabo Comparer<T>
+                    /*
+                    Comparer<T>.Default.Compare(x, y)
+
+                    Vrne:
+                        -1, če je x < y
+                        0, če je x == y
+                        1, če je x > y
+                    */
+                    if (MinValue is not null && result is not null && Comparer<TValue>.Default.Compare(result, MinValue) < 0)
+                    {
+                        result = MinValue!;
+                    }
+
+                    if (MaxValue is not null && result is not null && Comparer<TValue>.Default.Compare(result, MaxValue) > 0)
+                    {
+                        result = MaxValue!;
+                    }
+
+                    Value = To<TValue>(result);
+                    await ReturnedValue.InvokeAsync(Value);
+                    await ReturnedValueString.InvokeAsync(Value.ToString());
+                    return;
+                }
+            }
+
+            MyLoggerCommon.WriteLine("NumericInput2 6");
+            // BUG karkoli pride do sem....
+            // če je bindana vrednost int vpišeš pa decimal
+            throw new Exception("NumericInput2 cannot parse");
+            await ReturnedValue.InvokeAsync(Value);
+            await ReturnedValueString.InvokeAsync(Value.ToString());
+        }
+    }
+}
+

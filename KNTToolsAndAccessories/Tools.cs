@@ -5,6 +5,15 @@ namespace KNTToolsAndAccessories
 {
     public class Tools
     {
+        public void LogEvent2(int errorNum, String msg)
+        {
+            StackTrace stackTrace = new StackTrace();
+            var fullName = stackTrace!.GetFrame(1)!.GetMethod()!.DeclaringType!.FullName;
+            var m = $"{fullName} #{errorNum} {msg}";
+
+            LogEvent(m);
+        }
+
         public void LogEvent(String msg)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

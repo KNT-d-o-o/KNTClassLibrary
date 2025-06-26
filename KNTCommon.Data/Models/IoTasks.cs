@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace KNTCommon.Data.Models;
 
 public partial class IoTasks
 {
+    [Key]
     public int IoTaskId { get; set; }
 
     public string? IoTaskName { get; set; }
@@ -21,8 +23,8 @@ public partial class IoTasks
 
     public DateTime? ExecuteDateAndTime { get; set; }
 
-    public int Status { get; set; }
+    public int? Status { get; set; }
 
     public string? Info { get; set; }
-
 }
+

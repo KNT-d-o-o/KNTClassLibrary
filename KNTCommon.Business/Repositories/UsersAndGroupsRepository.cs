@@ -233,7 +233,7 @@ namespace KNTCommon.Business.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    return AutoMapper.Map<UserGroupDTO>(context.UserGroups.First(x => x.GroupId == groupId));
+                    return AutoMapper.Map<UserGroupDTO>(context.UserGroups.First(x => x.GroupId == groupId)); // TODO FK user-usergroup
                 }
             }
             catch (Exception ex)

@@ -11,7 +11,7 @@
         <RadzenFieldset>
             <RadzenRow id="RadzenRowMarginFormsSettingsLeft">
                 <RadzenColumn Size="3">
-                    <RadzenLabel class="labelEdit" Text="Language"></RadzenLabel>
+                    <RadzenLabel class="labelEdit" Text="@Localization.Get("LabelLanguage")"></RadzenLabel>
                 </RadzenColumn>
                 <RadzenColumn Size="5">
                     <RadzenDropDown class="OverviewDropdown" Data="@languages" TextProperty="Text" ValueProperty="Value" @bind-Value="selectedLanguage" Change="OnChangeLanguage"></RadzenDropDown>
@@ -20,10 +20,10 @@
 
             <RadzenRow id="RadzenRowMarginFormsSettingsLeft">
                 <RadzenColumn Size="3">
-                    <RadzenLabel class="labelEdit" Text="Date and Time"></RadzenLabel>
+                    <RadzenLabel class="labelEdit" Text="@Localization.Get("LabelDateAndTime")"></RadzenLabel>
                 </RadzenColumn>
                 <RadzenColumn Size="7">
-                    <RadzenDatePicker class="custom-datepicker" @bind-Value="@selectedDate" ShowTime="true" HoursStep="1" MinutesStep="1" DateFormat="dd.MM.yyyy HH:mm" Change="OnDateChange" Inline="true" />
+                    <RadzenDatePicker class="custom-datepicker" @bind-Value="@selectedDate" ShowTime="true" HoursStep="1" MinutesStep="1" DateFormat="dd.MM.yyyy HH:mm" Change="OnDateChange" />
                 </RadzenColumn>
             </RadzenRow>
 

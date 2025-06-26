@@ -62,14 +62,14 @@ namespace KNTCommon.BusinessIO.Repositories
         }
 
         // get actual IO tasks: Priority > 0, Status < 0
-        public IEnumerable<IoTasksDTO> GetIoTasks()
+        public IEnumerable<DTOs.IoTasksDTO> GetIoTasks()
         {
-            var ret = new List<IoTasksDTO>();
+            var ret = new List<DTOs.IoTasksDTO>();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    ret = AutoMapper.Map<List<IoTasksDTO>>(context.IoTasks.Where(x => x.Priority > 0).OrderBy(x => x.Priority));
+                    ret = AutoMapper.Map<List<DTOs.IoTasksDTO>>(context.IoTasks.Where(x => x.Priority > 0).OrderBy(x => x.Priority));
                 }
             }
             catch (Exception ex)
@@ -88,7 +88,7 @@ namespace KNTCommon.BusinessIO.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var task = AutoMapper.Map<IoTasksDTO>(context.IoTasks.Where(x => x.IoTaskType == type && x.IoTaskMode == mode).First());
+                    var task = AutoMapper.Map<DTOs.IoTasksDTO>(context.IoTasks.Where(x => x.IoTaskType == type && x.IoTaskMode == mode).First());
                     id = task.IoTaskId;
                 }
             }
