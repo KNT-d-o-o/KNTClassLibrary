@@ -1,4 +1,5 @@
-﻿using AutoMapper.Internal.Mappers;
+﻿//backup
+using AutoMapper.Internal.Mappers;
 using KNTCommon.Data.Models;
 using KNTToolsAndAccessories;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,25 +15,25 @@ namespace KNTCommon.Business.Repositories
     public class Localization
     {
         Dictionary<string, List<string>> translations = new Dictionary<string, List<string>>();
-
-        IParametersRepository Parameters;
-
+        IParametersRepository _parameters;
         private readonly Tools t = new();
 
-        public Localization(IServiceProvider _serviceProvider, ParametersRepository _parameters)
+        public Localization(IServiceProvider _serviceProvider) // TODO use di -ParametersRepository _parameters
         {
-            Parameters = _parameters;
             AddTranslations();
+
+            using (var scope = _serviceProvider.CreateScope())
+                _parameters = scope.ServiceProvider.GetRequiredService<IParametersRepository>();
         }
 
         void AddTranslations()
-        {            
+        {
             using var context = new EdnKntControllerMysqlContext();
             var languageDictionaries = context.LanguageDictionaries.ToList();
 
             translations.Clear();
             foreach (var languageDictionarie in languageDictionaries)
-            {                
+            {
                 if (languageDictionarie.Key is null) // TODO change key in database as not null
                     continue;
 
@@ -54,7 +55,7 @@ namespace KNTCommon.Business.Repositories
 
         public string Get(string[] keys, params string[] args)
         {
-            foreach(var key in keys)
+            foreach (var key in keys)
             {
                 if (ContainKey(key))
                     return Get(key, args);
@@ -90,10 +91,10 @@ namespace KNTCommon.Business.Repositories
 
             try
             {
-                selectedLanguage = Convert.ToInt16(Parameters.GetParametersStr("activeLanguage")) - 1;
+                selectedLanguage = Convert.ToInt16(_parameters.GetParametersStr("activeLanguage")) - 1;
             }
             catch { }
-            
+
             var value = string.Empty;
 
             try
@@ -113,17 +114,15 @@ namespace KNTCommon.Business.Repositories
             try
             {
                 value = string.Format(value, args);
-
             }
             catch (Exception ex)
             {
-               // throw e;
+                // throw e;
                 t.LogEvent("KNTCommon.Business.Repositories.Localization #1 " + ex.Message);
             }
 
             //return $"*{value}";
             return value;
         }
-
     }
 }
