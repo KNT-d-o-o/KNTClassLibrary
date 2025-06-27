@@ -447,6 +447,21 @@ namespace KNTToolsAndAccessories
             return strVal;
         }
 
+        /// <summary>
+        /// get nice number step for graph
+        /// </summary>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <param name="desiredTicks"></param>
+        /// <returns></returns>
+        public static double GetNiceStep(double min, double max, int desiredTicks)
+        {
+            double range = max - min;
+            double rawStep = range / desiredTicks;
+            double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
+            double refinedStep = Math.Ceiling(rawStep / magnitude) * magnitude;
+            return refinedStep;
+        }
 
         /// <summary>
         /// dots ...

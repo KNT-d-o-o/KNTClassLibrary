@@ -4,10 +4,10 @@
 
 
 <div class="alphanumericKeyboardWrapper Animation">
-    @* <RadzenTextBox id="RadzenTextboxANDialog" Value="@Value" type="@(IsPassword == null || IsPassword == false ? "text" : "password")" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox> *@
     <RadzenTextBox id="RadzenTextboxANDialog"
                    type="@(IsPassword == null || IsPassword == false ? "text" : "password")"
                    @bind-Value="@Value"
+                   @onkeydown="SearchInputKeyDown"
                    @onblur="@(async () => await GetCursorIndexAsync())">
     </RadzenTextBox>
     <br /> 
@@ -387,4 +387,27 @@
         }
 
     }
+
+    private async Task SearchInputKeyDown(KeyboardEventArgs e)
+    {
+        await GetCursorIndexAsync();
+
+        if (e.Key == "Enter")
+        {
+            cursorIndex--;
+            GetButtonValue("Enter");
+        }
+        else if (e.Key == "Backspace")
+        {
+            cursorIndex++;
+            GetButtonValue("Backspace");
+
+        }
+        else if (e.Key.Length == 1) // It's a character
+        {
+            cursorIndex--;
+            GetButtonValue(e.Key);
+        }
+    }
+
 }

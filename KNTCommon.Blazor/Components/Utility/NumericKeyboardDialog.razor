@@ -2,9 +2,9 @@
 @inject IJSRuntime JSRuntime
 
 <div class="numericKeyboardWrapper Animation">
-  @*  <RadzenTextBox id="RadzenTextboxNDialog" Value="@Value" @onkeydown='(e => SearchInputKeyDown(e))'></RadzenTextBox> *@
     <RadzenTextBox id="RadzenTextboxNDialog"
                    @bind-Value="@Value"
+                   @onkeydown="SearchInputKeyDown"
                    @onblur="@(async () => await GetCursorIndexAsync())">
     </RadzenTextBox>
     <br />
@@ -69,7 +69,6 @@
         cursorIndex = await JSRuntime.InvokeAsync<int>("getCaretPosition", "RadzenTextboxNDialog");
     }
 
-    string? valPrev = string.Empty;
     private async void GetButtonValue(string input)
     {
         if (input == "Enter")
@@ -95,11 +94,51 @@
         {
             //error?
         }
-        valPrev = Value;
 
         StateHasChanged();
 
         await JSRuntime.InvokeVoidAsync("setFocusAndCursor", "RadzenTextboxANDialog", cursorIndex);
     }
 
+    private async Task SearchInputKeyDown(KeyboardEventArgs e)
+    {
+        await GetCursorIndexAsync();
+        var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+
+        switch (e.Key)
+        {
+            case "Enter":
+                GetButtonValue("Enter");
+                break;
+            case "Backspace":
+                cursorIndex++;
+                GetButtonValue("Backspace");
+                break;
+            case ".":
+            case ",":
+                if (AllowDecimal && (e.Key == decimalSeparator || e.Key == "." || e.Key == ","))
+                {
+                    GetButtonValue(decimalSeparator);
+                }
+                break;
+            case "-":
+                if (AllowNegative)
+                {
+                    GetButtonValue("-");
+                }
+                break;
+            case "0":
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+            case "5":
+            case "6":
+            case "7":
+            case "8":
+            case "9":
+                GetButtonValue(e.Key);
+                break;
+        }
+    }
 }

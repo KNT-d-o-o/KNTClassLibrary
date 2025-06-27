@@ -145,6 +145,7 @@ namespace KNTCommon.Business.Utilites
             {
                 if (cursorIndex.HasValue && wholeString is not null)
                 {
+                    
                     wholeString = wholeString.Insert(cursorIndex.Value, newInputCharacter);
                 }
                 else wholeString += newInputCharacter;

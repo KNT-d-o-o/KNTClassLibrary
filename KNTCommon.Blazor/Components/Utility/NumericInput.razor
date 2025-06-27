@@ -32,7 +32,7 @@
     public bool ReadOnly { get; set; }
 
     [Parameter]
-    public string Style { get; set; }
+    public string? Style { get; set; }
 
     [Parameter]
     public EventCallback<string> ReturnedValue { get; set; }
@@ -47,12 +47,13 @@
         if (ReadOnly)
             return;
         if (InputValue is null)
-            InputValue = string.Empty;           
+            InputValue = string.Empty;
 
         var result = await dialogService.OpenAsync<NumericKeyboardDialog>
         (LabelTitle, Helper.CreateDialogBlazorComponentParameters(nameof(NumericKeyboardDialog.InputValue), InputValue, nameof(NumericKeyboardDialog.AllowNegative), AllowNegative, nameof(NumericKeyboardDialog.AllowDecimal), AllowDecimal), Helper.GetDialogOptions("NumericKeyboardOptions halfSizeWindow"));
         if (result != null)
         {
+            var InputValuePrev = InputValue;
             InputValue = result.ToString();
 
             double val;
@@ -62,6 +63,11 @@
                     InputValue = MaxValue.ToString();
                 if (MinValue is not null && val < MinValue)
                     InputValue = MinValue.ToString();
+            }
+            else
+            {
+                InputValue = InputValuePrev;
+                return;
             }
 
             await ReturnedValue.InvokeAsync(InputValue);
