@@ -9,7 +9,7 @@ public partial class User
     [Key]
     public int UsersId { get; set; }
 
-    public string UserId { get; set; } = null!;
+    public string? UserId { get; set; } = null!;
 
     public string? UserName { get; set; }
 

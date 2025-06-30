@@ -4,5 +4,6 @@
     {
         bool Register(int usersId, string insertedUsername, string insertedPassword, int? groupId, int? logout, bool insert);
         bool Login(string insertedUsername, string insertedPassword);
+        bool SetDefaultPasswd(int userId);
     }
 }
