@@ -135,5 +135,39 @@ namespace KNTCommon.Business.Repositories
                 return false;
             }
         }
+
+
+        /// <summary>
+        /// Set default passwd for admins
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public bool SetDefaultPasswd(int userId)
+        {
+            bool ret = false;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var user = context.Users.FirstOrDefault(x => x.UsersId == userId && x.a1 == 1);
+                    if (user is null)
+                        return false;
+                    user.Password = "<DT-Sum>";
+
+                    if (user.UserName != null)
+                    {
+                        ret = Register(userId, user.UserName, user.Password, user.GroupId, user.logout, false);
+                        context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.AuthenticationRepository #4 " + ex.Message);
+                return false;
+            }
+            return ret;
+        }
+
     }
 }

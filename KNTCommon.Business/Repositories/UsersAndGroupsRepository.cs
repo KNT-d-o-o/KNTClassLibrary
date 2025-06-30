@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
-using KNTToolsAndAccessories;
 using KNTCommon.Business.DTOs;
 using KNTCommon.Data.Models;
+using KNTToolsAndAccessories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
+using Mysqlx.Crud;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -47,18 +48,26 @@ namespace KNTCommon.Business.Repositories
             return ret; 
         }
 
-        public IEnumerable<string>? GetAllUserNames()
+        /// <summary>
+        /// Get all user names
+        /// </summary>
+        /// <param name="noAdmin"></param> // means only not admin usernames
+        /// <returns></returns>
+        public IEnumerable<string>? GetAllUserNames(bool noAdmin)
         {
             var ret = new List<string>();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    List<UserDTO> users = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.UsersId != 1 && x.UsersId != 2 && x.UsersId != 3).ToList());
-
+                    List<UserDTO> users;
+                    if (noAdmin)
+                        users = AutoMapper.Map<List<UserDTO>>(context.Users.Where(x => x.a1 != 1).ToList());
+                    else
+                        users = AutoMapper.Map<List<UserDTO>>(context.Users.ToList());
                     foreach (UserDTO u in users)
                     {
-                        if(u.UserName != null)
+                        if (u.UserName != null)
                             ret.Add(u.UserName);
                     }
                 }
@@ -163,6 +172,28 @@ namespace KNTCommon.Business.Repositories
             catch (Exception ex)
             {
                 t.LogEvent("KNTCommon.Business.Repositories.UsersAndGroupsRepository #5 " + ex.Message);
+            }
+            return user;
+        }
+
+        /// <summary>
+        /// Find next admin user
+        /// </summary>
+        /// <param name="prevUsersId"></param>
+        /// <returns></returns>
+        public UserDTO? GetAdminUserNext(int prevUsersId)
+        {
+            UserDTO user = new();
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    user = AutoMapper.Map<UserDTO>(context.Users.Where(x => x.a1 == 1 && x.UsersId > prevUsersId).FirstOrDefault());
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.UsersAndGroupsRepository #16 " + ex.Message);
             }
             return user;
         }
