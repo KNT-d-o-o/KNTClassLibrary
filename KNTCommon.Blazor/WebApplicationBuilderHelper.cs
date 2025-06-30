@@ -57,6 +57,7 @@ namespace KNTCommon.Business
             builder.Services.AddTransient<TimerService>();
             builder.Services.AddSingleton<Localization>();
             builder.Services.AddSingleton<ResultRepository>();
+            builder.Services.AddSingleton<SecurityManager>();            
 
             var connString = builder.Configuration.GetConnectionString("connString");
             if (connString != null)
@@ -90,7 +91,7 @@ namespace KNTCommon.Business
                 .SelectMany(assembly => assembly.GetTypes())
                 .Where(t => t.Name.EndsWith("Repository") && t.IsInterface)
                 .ToList();
-
+            MyLoggerCommon.WriteLine($"[WebApplicationHelper][AddAllRepositorys]");
             foreach (var repositoryType in repositoryTypes)
             {
                 var implementationType = assemblies
@@ -100,6 +101,7 @@ namespace KNTCommon.Business
                 if (implementationType != null)
                 {
                     builder.Services.AddScoped(repositoryType, implementationType); // TODO log added scopes
+                    MyLoggerCommon.WriteLine($"[WebApplicationHelper] repositoryType: {repositoryType}, implementationType: {implementationType}");
                 }
             }
         }

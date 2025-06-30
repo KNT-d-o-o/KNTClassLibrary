@@ -1,0 +1,90 @@
+﻿@using KNTCommon.Business.EventHandlers
+@using Radzen.Blazor
+@using KNTCommon.Business.Interface
+@using KNTCommon.Business.Repositories
+@using KNTCommon.Business.DTOs
+@using KNTCommon.Data.Models
+
+
+
+
+@inject IParametersRepository Parameters
+@inject HelperService Helper
+@inject KNTCommon.Business.Scripts.PowerShellHelper PSHelper
+@inject IModuleRepository ModuleRepository
+@* SettingsCommonComponent *@
+
+<div class="ScrollableOuterDiv Animation">
+
+
+
+
+    <EditForm Model="@moduleDTOs" OnSubmit="OnSubmit">
+        <RadzenRow Class="rz-p-0 rz-p-lg-4">
+            <RadzenColumn Size="12" SizeMD="12">
+                <RadzenStack Gap="1rem">
+
+                    <RadzenRow>
+                        <Items>
+                            @{
+                                if (moduleDTOs is not null)
+                                    foreach (var item in moduleDTOs)
+                                    {
+                                        <RadzenColumn Size="3">
+                                            <RadzenCheckBox TValue="bool" @bind-Value="@item.Enabled" Name="@item.ModuleName" />
+                                            <RadzenLabel Text="@Localization.Get(item.DescriptionLang)" Component="@item.ModuleName" class="labelEdit-middle rz-ms-2" />
+                                        </RadzenColumn>
+
+                                            foreach (var functionality in item.ModuleFunctionalityDTO)
+                                            {
+                                                 <RadzenColumn Size="3">
+                                                    <RadzenCheckBox TValue="bool" @bind-Value="@functionality.Enabled" Name="@functionality.FunctionalityName" class="checkbox-functionality" />
+                                                    <RadzenLabel Text="@Localization.Get(functionality.DescriptionLang)" Component="@functionality.FunctionalityName" class="labelEdit-middle rz-ms-2" />
+                                                </RadzenColumn>
+                                            }
+                                        }
+                                    }                                    
+                                </Items>
+                        </RadzenRow>
+
+                    </RadzenStack>
+                </RadzenColumn>
+
+            </RadzenRow>
+            <br />
+            <RadzenStack AlignItems="AlignItems.End">
+                <RadzenButton class="RadzenGridAddButtonForm rz-ripple" Icon="check" ButtonStyle="ButtonStyle.Success" ButtonType="ButtonType.Submit" Shade="Shade.Darker"></RadzenButton>
+            </RadzenStack>
+        </EditForm>
+
+
+</div>
+
+@code {
+    List<CL_ModuleDTO> moduleDTOs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+    }    
+
+    public async Task LoadData()
+    {
+        moduleDTOs = await ModuleRepository.GetModulesAsync();
+    }
+
+    async Task OnSubmit()
+    {
+        var result = await ModuleRepository.SetModuleVisibility(moduleDTOs);
+
+        if (result)
+        {
+            Helper.NotifySuccess("");
+        }
+        else
+        {
+            Helper.NotifyError("");
+        }
+    }
+}

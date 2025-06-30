@@ -55,6 +55,8 @@ namespace KNTCommon.Data.Models
         public virtual DbSet<CL_ArchiveMode> CL_ArchiveMode { get; set; }
 
         public virtual DbSet<LanguageDictionary> LanguageDictionarys { get; set; }
+        public virtual DbSet<CL_Module> CL_Module { get; set; }
+        public virtual DbSet<CL_ModuleFunctionality> CL_ModuleFunctionality { get; set; }        
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

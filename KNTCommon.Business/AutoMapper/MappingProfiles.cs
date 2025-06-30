@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using KNTCommon.Business.DTOs;
 using KNTCommon.Data.Models;
+using KNTSMM.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,9 +37,12 @@ namespace KNTCommon.Business.AutoMapper
 
             CreateMap<IoTaskLogs, IoTaskLogsDTO>().ReverseMap();
             CreateMap<IoTaskLogsDTO, IoTaskLogs>().ReverseMap();
-            
 
+            CreateMap<CL_Module, CL_ModuleDTO>().ReverseMap();
+            CreateMap<CL_ModuleDTO, CL_Module>().ReverseMap();
 
+            CreateMap<CL_ModuleFunctionality, CL_ModuleFunctionalityDTO>().ReverseMap();
+            CreateMap<CL_ModuleFunctionalityDTO, CL_ModuleFunctionality>().ReverseMap();
         }
     }
 }
