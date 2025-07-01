@@ -68,93 +68,99 @@ namespace KNTCommon.Business.Repositories
             return tableNames;
         }
 
-        public async Task<(IEnumerable<Dictionary<string, object>> results, List<string> columnNames, List<string> columnPkNames)> GetDataFromTableAsync(string table, Dictionary<string, object> whrereCondition, string orderBy, int limit)
+        public async Task<(
+    IEnumerable<Dictionary<string, object>> results,
+    List<string> columnNames,
+    List<string> columnPkNames,
+    int totalCount)> GetDataFromTableAsync(
+        string table,
+        Dictionary<string, object> whereCondition,
+        string orderBy,
+        int skip,
+        int take)
         {
             var results = new List<Dictionary<string, object>>();
             var columnNames = new List<string>();
             var columnPkNames = new List<string>();
+            int totalCount = 0;
 
             try
             {
                 var columnTypes = GetColumnTypes(table);
 
-                using (var context = Factory.CreateDbContext())
+                using var context = Factory.CreateDbContext();
+                var connection = context.Database.GetDbConnection();
+                await connection.OpenAsync();
+
+                var whereSql = "";
+                if (whereCondition.Count > 0)
                 {
-                    var query = $"SELECT * FROM {table}";
-
-                    // where condition
-                    if (whrereCondition.Count > 0)
+                    whereSql = " WHERE ";
+                    int j = 0;
+                    foreach (var key in whereCondition.Keys)
                     {
-                        query += " WHERE ";
-                        int j = 0;
-                        foreach (var key in whrereCondition.Keys)
-                        {
-                            if (j > 0)
-                                query += " AND ";
-                            query += SetWherePart(key, whrereCondition[key], columnTypes[key]);
-                            j++;
-                        }
+                        if (j > 0) whereSql += " AND ";
+                        whereSql += SetWherePart(key, whereCondition[key], columnTypes[key]);
+                        j++;
                     }
+                }
 
-                    // order by
-                    if (!string.IsNullOrEmpty(orderBy))
-                        query += " ORDER BY " + orderBy;
+                // count query
+                string countQuery = $"SELECT COUNT(*) FROM {table} {whereSql}";
+                using (var countCommand = connection.CreateCommand())
+                {
+                    countCommand.CommandText = countQuery;
+                    totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
+                }
 
-                    // limit
-                    if(limit > 0)
-                        query += $" LIMIT {limit} ";
+                // main data query
+                string query = $"SELECT * FROM {table} {whereSql}";
+                if (!string.IsNullOrEmpty(orderBy))
+                    query += $" ORDER BY {orderBy}";
+                if (take > 0)
+                    query += $" LIMIT {take} OFFSET {skip}";
 
-                    var connection = context.Database.GetDbConnection();
-                    await connection.OpenAsync();
-
-                    using (var command = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = query;
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        command.CommandText = query;
-                        using (var reader = await command.ExecuteReaderAsync())
+                        for (int i = 0; i < reader.FieldCount; i++)
+                            columnNames.Add(reader.GetName(i));
+
+                        while (await reader.ReadAsync())
                         {
+                            var row = new Dictionary<string, object>();
                             for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                columnNames.Add(reader.GetName(i));
-                            }
-
-                            while (await reader.ReadAsync())
-                            {
-                                var row = new Dictionary<string, object>();
-                                for (int i = 0; i < reader.FieldCount; i++)
-                                {
-                                    row[reader.GetName(i)] = reader.GetValue(i);
-                                }
-                                results.Add(row);
-                            }
+                                row[reader.GetName(i)] = reader.GetValue(i);
+                            results.Add(row);
                         }
                     }
+                }
 
-                    // find primary keys
-                    var pkQuery = $@"
-                        SELECT DISTINCT COLUMN_NAME
-                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-                        WHERE TABLE_NAME = '{table}' 
-                        AND CONSTRAINT_NAME = 'PRIMARY'";
+                // primary keys
+                var pkQuery = $@"
+            SELECT DISTINCT COLUMN_NAME
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            WHERE TABLE_NAME = '{table}' 
+            AND CONSTRAINT_NAME = 'PRIMARY'";
 
-                    using (var pkCommand = connection.CreateCommand())
+                using (var pkCommand = connection.CreateCommand())
+                {
+                    pkCommand.CommandText = pkQuery;
+                    using (var pkReader = await pkCommand.ExecuteReaderAsync())
                     {
-                        pkCommand.CommandText = pkQuery;
-                        using (var pkReader = await pkCommand.ExecuteReaderAsync())
-                        {
-                            while (await pkReader.ReadAsync())
-                            {
-                                columnPkNames.Add(pkReader.GetString(0));
-                            }
-                        }
+                        while (await pkReader.ReadAsync())
+                            columnPkNames.Add(pkReader.GetString(0));
                     }
-
                 }
             }
             catch (Exception ex)
             {
                 t.LogEvent("KNTCommon.Business.Repositories.TablesRepository #2 " + ex.Message);
             }
-            return (results, columnNames, columnPkNames);
+
+            return (results, columnNames, columnPkNames, totalCount);
         }
 
         // insert 

@@ -9,11 +9,12 @@
 
 <div class="Animation FlexContainer">
 
-    <RadzenDataGrid TItem="Dictionary<string, object>" Data=@Data @ref="ordersGrid" EmptyText=@Localization.Get("RadzenDataGridColumn_EmptyText")
-    AllowFiltering="true" FilterMode="FilterMode.Simple" AllowAlternatingRows="false" EnableVirtualization="true"
-    AllowSorting="true" AllowColumnResize="true" PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-    ColumnWidth="300px" EditMode="DataGridEditMode.Single" LogicalFilterOperator="LogicalFilterOperator.And" PageNumbersCount="10" style="height: 75vh"
-    LoadData="@OnLoadData">
+    <RadzenDataGrid Data="@Data" TItem="Dictionary<string, object>" AllowPaging="true" PageSize="1000" PagerAlwaysVisible="true"
+                    AllowSorting="true" AllowColumnResize="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                    ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.And" EditMode="DataGridEditMode.Single"
+                    AllowVirtualization="false" @ref="ordersGrid" LoadData="@OnLoadData" Count="@totalCount"
+                    style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+
         <Columns>
             @if (ColumnNames != null)
             {
@@ -50,16 +51,18 @@
             <RadzenDataGridColumn Sortable="false">
                 <FilterTemplate>
                     <div class="Animation FixContainer">
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Light" Icon="refresh" Click="() => OnRefreshClick()" Size="ButtonSize.Large" title=@Localization.Get("ButtonRefresh")></RadzenButton>
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" style="margin-right: 8px" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Light" Icon="refresh" Click="() => OnRefreshClick()" Size="ButtonSize.Large" title=@Localization.Get("ButtonRefresh")></RadzenButton>
 
                         @if (!SharedContainerCommon.IsOldArchiveDatabase)
                         {
-                            <RadzenButton class="RadzenGridContextButtons rz-ripple" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="() => AddNewRow(null)" Size="ButtonSize.Large" title="Add"></RadzenButton>
+                            <RadzenButton class="RadzenGridContextButtons rz-ripple" style="margin-right: 8px" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Success" Icon="add" Click="() => AddNewRow(null)" Size="ButtonSize.Large" title="Add"></RadzenButton>
                         }
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Icon="grid_on" Click="ExportTableXls" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" title=@Localization.Get("ButtonExportXLS")></RadzenButton>
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" Icon="grid_on" Click="ExportTableXls" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" title="Export XLS grid" Variant="Variant.Filled"></RadzenButton>
+                        <RadzenButton class="RadzenGridContextButtons rz-ripple" style="margin-right: 8px" Icon="grid_on" Click="ExportTableXlsAll" ButtonStyle="@ButtonStyle.Secondary" Shade="Shade.Darker" Size="ButtonSize.Large" title="Export XLS all" Variant="Variant.Filled"></RadzenButton>
                         @if (!SharedContainerCommon.IsOldArchiveDatabase)
                         {
-                            <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Export SQL" Icon="database" Click="ExportTableSql" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
+                            <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Export SQL grid" Icon="database" Click="ExportTableSql" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" Variant="Variant.Filled"></RadzenButton>
+                            <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Export SQL all" Icon="database" Click="ExportTableSqlAll" ButtonStyle="@ButtonStyle.Secondary" Shade="Shade.Darker" Size="ButtonSize.Large" Variant="Variant.Filled"></RadzenButton>
                         }
                     </div>
                 </FilterTemplate>
@@ -67,10 +70,10 @@
                     @if (!SharedContainerCommon.IsOldArchiveDatabase)
                     {
                        <div>
-                        <RadzenButton Click="() => EditRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "close" : "edit")" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Edit"></RadzenButton>
-                        <RadzenButton Click="() => DeleteDbRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Delete"></RadzenButton>
-                        <RadzenButton Click="@((editingRow == row || insertingRow == row) ? () => UpdateDbRow(row) : () => AddNewRow(row))" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "save" : "library_add")" ButtonStyle="ButtonStyle.Success" Variant="Variant.Filled" Shade="Shade.Dark" Size="ButtonSize.Large" title="Copy"></RadzenButton>
-                    </div> 
+                            <RadzenButton Click="() => EditRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "close" : "edit")" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Edit"></RadzenButton>
+                            <RadzenButton Click="() => DeleteDbRow(row)" class="RadzenGridContextButtons rz-ripple" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Filled" Shade="Shade.Darker" Size="ButtonSize.Large" title="Delete"></RadzenButton>
+                            <RadzenButton Click="@((editingRow == row || insertingRow == row) ? () => UpdateDbRow(row) : () => AddNewRow(row))" class="RadzenGridContextButtons rz-ripple" Icon="@((editingRow == row || insertingRow == row) ? "save" : "library_add")" ButtonStyle="ButtonStyle.Success" Variant="Variant.Filled" Shade="Shade.Dark" Size="ButtonSize.Large" title="Copy"></RadzenButton>
+                        </div> 
                     }                    
                 </Template>
             </RadzenDataGridColumn>
@@ -94,6 +97,7 @@
     private List<string>? ColumnPkNames;
 
     bool isLoading = false;
+    int totalCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -106,7 +110,12 @@
         isLoading = true;
 
         if (TableName != null)
-            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, new Dictionary<string, object>(), string.Empty, 100);
+            (Data, ColumnNames, ColumnPkNames, totalCount) = await TablesRepository.GetDataFromTableAsync(
+                TableName, 
+                new Dictionary<string, object>(), 
+                string.Empty,
+                skip: 0,
+                take: 1000);
         
         isLoading = false;
     }
@@ -125,7 +134,12 @@
         }
 
         if (TableName != null)
-            (Data, ColumnNames, ColumnPkNames) = await TablesRepository.GetDataFromTableAsync(TableName, filterArray, args.OrderBy, 100);
+            (Data, ColumnNames, ColumnPkNames, totalCount) = await TablesRepository.GetDataFromTableAsync(
+                TableName,
+                filterArray,
+                args.OrderBy,
+                skip: args.Skip ?? 0,
+                take: args.Top ?? 1000);
 
         isLoading = false;
     }
@@ -283,7 +297,7 @@
             return;
 
         var result = await DialogService.OpenAsync<ConfirmationDialog>
-                ("", Helper.CreateDialogBlazorComponentParameters("action", "ButtonExportExcel", "details", TableName, "weight", 0),
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export Excel Grid", "details", TableName, "weight", 0),
                 Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {
@@ -294,13 +308,33 @@
         }
     }
 
-    public async Task ExportTableSql()
+    public async Task ExportTableXlsAll()
+    {
+        if (TableName is null)
+            return;
+
+        var result = await DialogService.OpenAsync<ConfirmationDialog>(
+            "", Helper.CreateDialogBlazorComponentParameters("action", "Export Excel All", "details", TableName, "weight", 0),
+            Helper.GetDialogOptions("ConfirmationWrapper"));
+
+        if (result == true)
+        {
+            // Load all rows from DB
+            var allData = await WindowsServiceHelper.LoadEntireTableAsync(TableName);
+            if (allData != null && allData.Any())
+            {
+                Helper.Notify(await WindowsServiceHelper.ExportToExcel(JSRuntime, allData.ToList(), TableName));
+            }
+        } 
+    }
+
+    public async Task ExportTableSqlAll()
     {
         if (TableName is null)
             return;
 
         var result = await DialogService.OpenAsync<ConfirmationDialog>
-                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL", "details", TableName, "weight", 0),
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL All", "details", TableName, "weight", 0),
                 Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {
@@ -311,5 +345,21 @@
         }
     }
 
+    public async Task ExportTableSql()
+    {
+        if (TableName is null)
+            return;
+
+        var result = await DialogService.OpenAsync<ConfirmationDialog>
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL Grid", "details", TableName, "weight", 0),
+                Helper.GetDialogOptions("ConfirmationWrapper"));
+        if (result == true)
+        {
+            if (Data is not null && Data.Any())
+            {
+                Helper.Notify(await WindowsServiceHelper.GenerateSQLDumpFromData(TableName, Data.ToList()));
+            }
+        }
+    }
 
 }
