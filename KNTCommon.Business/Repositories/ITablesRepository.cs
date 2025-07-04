@@ -7,7 +7,18 @@ namespace KNTCommon.Business.Repositories
     public interface ITablesRepository
     {
         Task<List<string>> GetDatabaseTablesAsync();
-        Task<(IEnumerable<Dictionary<string, object>> results, List<string> columnNames, List<string> columnPkNames)> GetDataFromTableAsync(string table, Dictionary<string, object> whrereCondition, string orderBy, int limit);
+
+        Task<(
+    IEnumerable<Dictionary<string, object>> results,
+    List<string> columnNames,
+    List<string> columnPkNames,
+    int totalCount)> GetDataFromTableAsync(
+        string table,
+        Dictionary<string, object> whereCondition,
+        string orderBy,
+        int skip,
+        int take);
+
         bool UpdateTableRow(string table, Dictionary<string, object> row, List<string>? pk);
         bool InsertTableRow(string table, Dictionary<string, object> row);
         bool DeleteTableRow(string table, Dictionary<string, object> row, List<string>? pk);

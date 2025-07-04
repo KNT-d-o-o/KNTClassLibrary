@@ -6,7 +6,7 @@ public static class MyLoggerCommon
 {
     static readonly object _lock = new();
     static int _queryCount = 0;
-    static string filePath = "C:/log.txt";
+    static string filePath = "C:/Programs/log.txt";
     public static void WriteLine(string message)
     {
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");

@@ -1,12 +1,17 @@
-﻿using System;
-using System.ServiceProcess;
-using KNTCommon.Business;
+﻿using AutoMapper;
 using ClosedXML.Excel;
-using Microsoft.JSInterop;
-using System.Collections;
-using MySql.Data.MySqlClient;
-using System.Text;
+using DocumentFormat.OpenXml.InkML;
+using KNTCommon.Business;
 using KNTCommon.Business.Repositories;
+using KNTCommon.Data.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
+using MySql.Data.MySqlClient;
+using System;
+using System.Collections;
+using System.Data.Common;
+using System.ServiceProcess;
+using System.Text;
 
 namespace KNTCommon.Blazor.Services
 {
@@ -96,6 +101,33 @@ namespace KNTCommon.Blazor.Services
             return true;
         }
 
+        public static async Task<List<Dictionary<string, object?>>> LoadEntireTableAsync(string tableName)
+        {
+            var result = new List<Dictionary<string, object?>>();
+
+            using var context = new EdnKntControllerMysqlContext();
+            using var connection = new MySqlConnection(context.GetConnectionString());
+
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = $"SELECT * FROM `{tableName}`";
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                var row = new Dictionary<string, object?>();
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                }
+                result.Add(row);
+            }
+
+            return result;
+        }
+
         public async Task<bool> GenerateSQLDump(string tableName, string addStrFileName)
         {
             try
@@ -128,6 +160,47 @@ namespace KNTCommon.Blazor.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error SQL dump: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static async Task<bool> GenerateSQLDumpFromData(string tableName, List<Dictionary<string, object>> data)
+        {
+            try
+            {
+                if (data == null || data.Count == 0)
+                    return false;
+
+                var columnNames = data.First().Keys.ToList();
+
+                string currentDirectory = Directory.GetCurrentDirectory();
+                Directory.CreateDirectory(Path.Combine(currentDirectory, "DbExport")); // Ensure dir exists
+
+                using var writer = new StreamWriter(Path.Combine(currentDirectory, "DbExport", $"{tableName}_filtered.sql"), false, Encoding.UTF8);
+
+                foreach (var row in data)
+                {
+                    var values = columnNames.Select(col =>
+                    {
+                        var value = row[col];
+                        if (value == null)
+                            return "NULL";
+                        if (value is string || value is DateTime)
+                            return $"'{Convert.ToString(value)?.Replace("'", "''")}'"; // escape single quotes
+                        if (value is bool)
+                            return (bool)value ? "1" : "0";
+                        return value.ToString(); // number
+                    });
+
+                    string insert = $"INSERT INTO `{tableName}` ({string.Join(", ", columnNames.Select(col => $"`{col}`"))}) VALUES ({string.Join(", ", values)});";
+                    await writer.WriteLineAsync(insert);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating SQL dump from filtered data: {ex.Message}");
                 return false;
             }
         }
