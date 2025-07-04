@@ -29,7 +29,7 @@
                             <RadzenLabel Style="margin-top:1.5vh;"><h3><span style="color:whitesmoke;">@Localization.Get(nameof(IoTasksDTO.TimeCriteriaModel.ArchiveMode))</span></h3></RadzenLabel>
                         </RadzenColumn>
                         <RadzenColumn Size="2">
-                            <RadzenDropDown Data="archiveMode" @bind-Value="data.TimeCriteriaModel.ArchiveMode" TextProperty="@nameof(KNTSMM.Data.Models.CL_ArchiveMode.DescriptionLang)"  ValueProperty="@nameof(KNTSMM.Data.Models.CL_ArchiveMode.ArchiveModeId)" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
+                            <RadzenDropDown Data="archiveMode" @bind-Value="data.TimeCriteriaModel.ArchiveMode" TextProperty="@nameof(CL_ArchiveMode.DescriptionLang)"  ValueProperty="@nameof(CL_ArchiveMode.ArchiveModeId)" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
                         </RadzenColumn>
                     </RadzenRow>
 
@@ -65,7 +65,7 @@
                                                                                 <RadzenDropDown Data="archiveInterval" @bind-Value="data.TimeCriteriaModel.ArchiveIntervalType" TextProperty="Item2" ValueProperty="Item1" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
 
                                         *@
-                                    <RadzenDropDown Data="archiveInterval" @bind-Value="data.TimeCriteriaModel.ArchiveIntervalType" TextProperty="@nameof(KNTSMM.Data.Models.CL_ArchiveIntervalType.DescriptionLang)" ValueProperty="@nameof(KNTSMM.Data.Models.CL_ArchiveIntervalType.ArchiveIntervalTypeId)" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
+                                    <RadzenDropDown Data="archiveInterval" @bind-Value="data.TimeCriteriaModel.ArchiveIntervalType" TextProperty="@nameof(CL_ArchiveIntervalType.DescriptionLang)" ValueProperty="@nameof(CL_ArchiveIntervalType.ArchiveIntervalTypeId)" Disabled="@SharedContainerCommon.IsArchive"></RadzenDropDown>
 
 
                                 </RadzenColumn>
@@ -162,8 +162,8 @@
     //public List<LeakTesterPointsDTO> Items { get; set; }
 
     public IoTasksDTO? data { get; set; }
-    IEnumerable<KNTSMM.Data.Models.CL_ArchiveMode>? archiveMode { get; set; }
-    IEnumerable<KNTSMM.Data.Models.CL_ArchiveIntervalType>? archiveInterval { get; set; }
+    IEnumerable<CL_ArchiveMode>? archiveMode { get; set; }
+    IEnumerable<CL_ArchiveIntervalType>? archiveInterval { get; set; }
 
     [Parameter]
     public int IoTaskId { get; set; }

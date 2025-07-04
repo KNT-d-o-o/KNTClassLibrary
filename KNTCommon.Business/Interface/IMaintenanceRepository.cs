@@ -1,6 +1,6 @@
 ﻿using KNTCommon.Business.DTOs;
 using KNTCommon.Business.Models;
-using KNTSMM.Data.Models;
+using KNTCommon.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

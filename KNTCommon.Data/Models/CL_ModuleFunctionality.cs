@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace KNTSMM.Data.Models;
+namespace KNTCommon.Data.Models;
 
 public partial class CL_ModuleFunctionality
 {

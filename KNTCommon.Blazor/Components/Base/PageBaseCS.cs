@@ -17,6 +17,8 @@ namespace KNTCommon.Blazor.Components.Base
 
         abstract public Task LoadData();
 
+        public List<string> visibleColumns = new(); // NOTE should be in SearchPageBaseCS, but some pages have visibility and not searching....
+
         public void Navigate(string pageName)
         {
             NavigationManager.NavigateTo(pageName);
@@ -68,7 +70,7 @@ namespace KNTCommon.Blazor.Components.Base
             {
                 await LoadData();
                 // BUG: used for reloading grid - to update data in grid, but at same time it invoke NumericInput2 - check grid.Reload() might be better
-                //await InvokeAsync(StateHasChanged); 
+                await InvokeAsync(StateHasChanged); 
             }
         }
 

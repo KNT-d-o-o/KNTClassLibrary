@@ -57,7 +57,10 @@ namespace KNTCommon.Business
             builder.Services.AddTransient<TimerService>();
             builder.Services.AddSingleton<Localization>();
             builder.Services.AddSingleton<ResultRepository>();
-            builder.Services.AddSingleton<SecurityManager>();            
+            builder.Services.AddSingleton<SecurityManager>();
+            builder.Services.AddSingleton<Settings>();
+
+            
 
             var connString = builder.Configuration.GetConnectionString("connString");
             if (connString != null)

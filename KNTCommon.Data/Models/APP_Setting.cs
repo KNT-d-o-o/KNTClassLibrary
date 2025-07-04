@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KNTCommon.Data.Models;
 
-public partial class CL_ArchiveMode
+public partial class APP_Setting
 {
     [Key]
-    public int ArchiveModeId { get; set; }
+    public int SettingId { get; set; }
 
-    public string DescriptionLang { get; set; } = null!;
+    public string SettingKey { get; set; } = null!;
 
-    public string Name { get; set; } = null!;
+    public string SettingValue { get; set; }
+
+    public string? Comment { get; set; }
 }

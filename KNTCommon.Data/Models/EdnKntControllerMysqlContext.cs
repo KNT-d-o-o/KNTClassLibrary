@@ -11,7 +11,6 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Options;
-using KNTSMM.Data.Models;
 
 namespace KNTCommon.Data.Models
 {
@@ -56,8 +55,9 @@ namespace KNTCommon.Data.Models
 
         public virtual DbSet<LanguageDictionary> LanguageDictionarys { get; set; }
         public virtual DbSet<CL_Module> CL_Module { get; set; }
-        public virtual DbSet<CL_ModuleFunctionality> CL_ModuleFunctionality { get; set; }        
+        public virtual DbSet<CL_ModuleFunctionality> CL_ModuleFunctionality { get; set; }
 
+        public virtual DbSet<APP_Setting> APP_Setting { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

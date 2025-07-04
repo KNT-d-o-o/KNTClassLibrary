@@ -108,7 +108,7 @@ namespace KNTCommon.Business.Repositories
                 return value;
             }
 
-            if (value is null) // TODO translation should not be null temp soultion
+            if (string.IsNullOrEmpty(value)) // TODO translation should not be null temp soultion
                 return key;
 
             try
