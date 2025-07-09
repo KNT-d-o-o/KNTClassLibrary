@@ -1,6 +1,10 @@
-﻿using System.Diagnostics;
-using System.ServiceProcess;
+﻿using KNTCommon.Business.Models;
 using KNTToolsAndAccessories;
+using System;
+using System.Diagnostics;
+using System.Management.Automation;
+using System.Net.NetworkInformation;
+using System.ServiceProcess;
 
 namespace KNTCommon.Business.Scripts
 {
@@ -150,14 +154,44 @@ namespace KNTCommon.Business.Scripts
             return true;
         }
 
-        public void SetIpAddress(string interfaceAlias, string ipAddress, string netmask)
+        public List<NetworkInterfaceInfo> GetNetworkInterfaces()
+        {
+            var list = new List<NetworkInterfaceInfo>();
+
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus != OperationalStatus.Up)
+                    continue;
+
+                var ipProps = ni.GetIPProperties();
+                foreach (var addr in ipProps.UnicastAddresses)
+                {
+                    if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        string ip = addr.Address.ToString();
+
+                        // not include Loopback
+                        if (ni.Name.Contains("Loopback") || ip == "127.0.0.1")
+                            continue;
+
+                        list.Add(new NetworkInterfaceInfo
+                        {
+                            Name = ni.Name,
+                            IpAddress = ip,
+                            SubnetMask = addr.IPv4Mask?.ToString() ?? "255.255.255.0"
+                        });
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        public bool SetIpAddress(string interfaceAlias, string ipAddress, string netmask)
         {
             try
             {
-                //fstaa    string args = "SetIP " + ipAddress + " " + netmask;
-                //fstaa    Process.Start("EDN-KNT ConsoleAdminTools", args);
-
-                string exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EDN-KNT ConsoleAdminTools.exe");
+                string exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "KNTConsoleAdminTools.exe");
                 string args = $"SetIPForAlias {ipAddress} {netmask} \"{interfaceAlias}\"";
                 var startInfo = new ProcessStartInfo
                 {
@@ -167,14 +201,44 @@ namespace KNTCommon.Business.Scripts
                     Verb = "runas",
                     WorkingDirectory = Path.GetDirectoryName(exePath)
                 };
-                Process.Start(startInfo);
+                var process = Process.Start(startInfo);
+
+                if (process == null)
+                    throw new Exception("Process could not be created.");
+
+                process.WaitForExit();
+                Thread.Sleep(1000);
+
+                var actualIp = GetIpForInterface(interfaceAlias);
+                if(actualIp != ipAddress)
+                    throw new Exception($"IP address not changed. Expected: {ipAddress}, Found: {actualIp ?? "null"}");
             }
             catch (Exception ex)
             {
                 t.LogEvent("KNTCommon.Business.Scripts #4 " + ex.Message);
+                return false;
             }
+            return true;
         }
 
+        public string? GetIpForInterface(string interfaceAlias)
+        {
+            foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (nic.Name == interfaceAlias || nic.Description.Contains(interfaceAlias))
+                {
+                    var ipProps = nic.GetIPProperties();
+                    foreach (var addr in ipProps.UnicastAddresses)
+                    {
+                        if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        {
+                            return addr.Address.ToString();
+                        }
+                    }
+                }
+            }
+            return null;
+        }
 
     }
 }
