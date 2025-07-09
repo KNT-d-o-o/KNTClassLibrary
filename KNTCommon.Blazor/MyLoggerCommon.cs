@@ -1,12 +1,18 @@
 ﻿
 
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Text;
 using System.Text.RegularExpressions;
 
 public static class MyLoggerCommon
 {
     static readonly object _lock = new();
     static int _queryCount = 0;
-    static string filePath = "C:/Programs/log.txt";
+
+    static string baseDir = AppContext.BaseDirectory;
+    static string? parentDir = Directory.GetParent(baseDir)?.FullName;
+    static string filePath = Path.Combine(parentDir ?? string.Empty, "Log.txt");
+
     public static void WriteLine(string message)
     {
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");

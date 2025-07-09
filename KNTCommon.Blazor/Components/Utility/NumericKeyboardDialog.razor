@@ -13,27 +13,27 @@
         <div class="numericKeyboard">
             <table>
                 <tr>
-                    <td><button id="num7" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("1"))'>1</button></td>
-                    <td><button id="num8" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("2"))'>2</button></td>
-                    <td><button id="num9" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("3"))'>3</button></td>
+                    <td><button id="num7" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("1", true))'>1</button></td>
+                    <td><button id="num8" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("2", true))'>2</button></td>
+                    <td><button id="num9" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("3", true))'>3</button></td>
                 </tr>
                 <tr>
-                    <td><button id="num4" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("4"))'>4</button></td>
-                    <td><button id="num5" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("5"))'>5</button></td>
-                    <td><button id="num6" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("6"))'>6</button></td>
-                    <td><button id="enterNumeric" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Enter"))'><RadzenIcon Icon="done" IconColor="@Colors.Success" class="large-icon"></RadzenIcon></button></td>
+                    <td><button id="num4" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("4", true))'>4</button></td>
+                    <td><button id="num5" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("5", true))'>5</button></td>
+                    <td><button id="num6" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("6", true))'>6</button></td>
+                    <td><button id="enterNumeric" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Enter", true))'><RadzenIcon Icon="done" IconColor="@Colors.Success" class="large-icon"></RadzenIcon></button></td>
                 </tr>
                 <tr>
-                    <td><button id="num3" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("7"))'>7</button></td>
-                    <td><button id="num2" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("8"))'>8</button></td>
-                    <td><button id="num1" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("9"))'>9</button></td>
-                    <td><button id="Backspace" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Backspace"))'><RadzenIcon Icon="west" IconColor="@Colors.Warning" class="large-icon"></RadzenIcon></button></td>
+                    <td><button id="num3" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("7", true))'>7</button></td>
+                    <td><button id="num2" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("8", true))'>8</button></td>
+                    <td><button id="num1" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("9", true))'>9</button></td>
+                    <td><button id="Backspace" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Backspace", true))'><RadzenIcon Icon="west" IconColor="@Colors.Warning" class="large-icon"></RadzenIcon></button></td>
                 </tr>
                 <tr>
-                    <td><div style="@(AllowDecimal ? "" : "visibility: hidden")"><button id="comma" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator))'>@CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator</button></div></td>
-                    <td><button id="num0" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("0"))'>0</button></td>
-                    <td> <div style="@(AllowNegative ? "" : "visibility: hidden")"><button id="minus" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("-"))'>-</button></div></td>
-                    <button id="Clear" keyboardButtonLarge class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Clear"))'><RadzenIcon Icon="close" IconColor="@Colors.Danger" class="large-icon"></RadzenIcon></button>
+                    <td><div style="@(AllowDecimal ? "" : "visibility: hidden")"><button id="comma" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator, true))'>@CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator</button></div></td>
+                    <td><button id="num0" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("0", true))'>0</button></td>
+                    <td> <div style="@(AllowNegative ? "" : "visibility: hidden")"><button id="minus" class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("-", true))'>-</button></div></td>
+                    <button id="Clear" keyboardButtonLarge class="keyboardButton keyboardButtonLarge rz-ripple" @onclick='(() => GetButtonValue("Clear", true))'><RadzenIcon Icon="close" IconColor="@Colors.Danger" class="large-icon"></RadzenIcon></button>
                 </tr>
             </table>
         </div>
@@ -69,35 +69,29 @@
         cursorIndex = await JSRuntime.InvokeAsync<int>("getCaretPosition", "RadzenTextboxNDialog");
     }
 
-    private async void GetButtonValue(string input)
+    private async void GetButtonValue(string input, bool getIndex)
     {
+        if(getIndex)
+            await GetCursorIndexAsync();
+
         if (input == "Enter")
         {
             dialogService.Close(Value);
+            return;
         }
-        if (input != null)
-        {
-            int strLen = (Value ?? string.Empty).Length;
 
-            Value = KeyboardUtilities.ParseKeyboardInputForNumericKeyboard(input, Value, cursorIndex);
-            int strLenDiff = (Value ?? string.Empty).Length - strLen;
-            if (strLenDiff >= 0 || (strLenDiff < 0 && cursorIndex >= (strLenDiff * -1)))
-            {
-                cursorIndex += strLenDiff;
-            }
-            else
-            {
-                cursorIndex = 0;
-            }
-        }
-        else
-        {
-            //error?
-        }
+        int strLenBefore = (Value ?? string.Empty).Length;
+
+        Value = KeyboardUtilities.ParseKeyboardInputForNumericKeyboard(input, Value, cursorIndex);
+
+        int strLenAfter = (Value ?? string.Empty).Length;
+        int strLenDiff = strLenAfter - strLenBefore;
+
+        cursorIndex += strLenDiff;
 
         StateHasChanged();
 
-        await JSRuntime.InvokeVoidAsync("setFocusAndCursor", "RadzenTextboxANDialog", cursorIndex);
+        await JSRuntime.InvokeVoidAsync("setFocusAndCursor", "RadzenTextboxNDialog", cursorIndex);
     }
 
     private async Task SearchInputKeyDown(KeyboardEventArgs e)
@@ -105,26 +99,30 @@
         await GetCursorIndexAsync();
         var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
 
+        if (e.Key != "Backspace")
+            cursorIndex--;
+        else
+            cursorIndex++;
+
         switch (e.Key)
         {
             case "Enter":
-                GetButtonValue("Enter");
+                GetButtonValue("Enter", false);
                 break;
             case "Backspace":
-                cursorIndex++;
-                GetButtonValue("Backspace");
+                GetButtonValue("Backspace", false);
                 break;
             case ".":
             case ",":
                 if (AllowDecimal && (e.Key == decimalSeparator || e.Key == "." || e.Key == ","))
                 {
-                    GetButtonValue(decimalSeparator);
+                    GetButtonValue(decimalSeparator, false);
                 }
                 break;
             case "-":
                 if (AllowNegative)
                 {
-                    GetButtonValue("-");
+                    GetButtonValue("-", false);
                 }
                 break;
             case "0":
@@ -137,8 +135,10 @@
             case "7":
             case "8":
             case "9":
-                GetButtonValue(e.Key);
+                GetButtonValue(e.Key, false);
                 break;
         }
+        if (e.Key != "Backspace")
+            cursorIndex++;
     }
 }

@@ -417,14 +417,14 @@ namespace KNTToolsAndAccessories
                 if (!shortformat)
                     strVal = string.Format("{0:N4}", val); // 4 decimal with zeroes
                 else
-                    strVal = string.Format("{0:0.####}}", val); // 4 decimal
+                    strVal = string.Format("{0:0.####}", val); // 4 decimal
             }
             else if ((format == 3 || (format == 2 && Math.Abs(val) < 1) || (format == 1 && Math.Abs(val) < 0.1)) && val != 0)
             {
                 if (!shortformat)
                     strVal = string.Format("{0:N3}", val); // 3 decimal with zeroes
                 else
-                    strVal = string.Format("{0:0.###}}", val); // 3 decimal
+                    strVal = string.Format("{0:0.###}", val); // 3 decimal
             }
             else if ((format == 2 || (format == 1 && Math.Abs(val) < 1)) && val != 0)
             {
@@ -440,9 +440,6 @@ namespace KNTToolsAndAccessories
                 else
                     strVal = string.Format("{0:0.#}", val); // 1 decimal
             }
-
-
-        //    Console.WriteLine($"fstaa strVal {strVal} {format} {val}");
 
             return strVal;
         }

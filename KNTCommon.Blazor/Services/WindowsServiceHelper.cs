@@ -5,6 +5,7 @@ using KNTCommon.Business;
 using KNTCommon.Business.Repositories;
 using KNTCommon.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.JSInterop;
 using MySql.Data.MySqlClient;
 using System;
@@ -101,9 +102,9 @@ namespace KNTCommon.Blazor.Services
             return true;
         }
 
-        public static async Task<List<Dictionary<string, object?>>> LoadEntireTableAsync(string tableName)
+        public static async Task<List<Dictionary<string, object>>> LoadEntireTableAsync(string tableName)
         {
-            var result = new List<Dictionary<string, object?>>();
+            var result = new List<Dictionary<string, object>>();
 
             using var context = new EdnKntControllerMysqlContext();
             using var connection = new MySqlConnection(context.GetConnectionString());
@@ -117,15 +118,22 @@ namespace KNTCommon.Blazor.Services
 
             while (await reader.ReadAsync())
             {
-                var row = new Dictionary<string, object?>();
+                var row = new Dictionary<string, object>();
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? "N/A" : reader.GetValue(i);
                 }
                 result.Add(row);
             }
 
             return result;
+        }
+
+        public string GetDumpPath(string tableName, string addStrFileName)
+        {
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string filePath = $"{currentDirectory}\\DbExport\\{tableName}{addStrFileName}.sql";
+            return filePath;
         }
 
         public async Task<bool> GenerateSQLDump(string tableName, string addStrFileName)
@@ -140,10 +148,7 @@ namespace KNTCommon.Blazor.Services
                 }
 
                 List<string> insertQueries = await tablesRepository.GetInsertRecordsStatement(tableName);
-
-                string currentDirectory = Directory.GetCurrentDirectory();
-
-                using (var writer = new StreamWriter($"{currentDirectory}\\DbExport\\{tableName}{addStrFileName}.sql", false, Encoding.UTF8))
+                using (var writer = new StreamWriter(GetDumpPath(tableName, addStrFileName), false, Encoding.UTF8))
                 {
                     writer.WriteLine(createTableResult);
                     writer.WriteLine(); // Empty line for separation
@@ -164,7 +169,7 @@ namespace KNTCommon.Blazor.Services
             }
         }
 
-        public static async Task<bool> GenerateSQLDumpFromData(string tableName, List<Dictionary<string, object>> data)
+        public async Task<bool> GenerateSQLDumpFromData(string tableName, string addStrFileName, List<Dictionary<string, object>> data)
         {
             try
             {
@@ -172,11 +177,7 @@ namespace KNTCommon.Blazor.Services
                     return false;
 
                 var columnNames = data.First().Keys.ToList();
-
-                string currentDirectory = Directory.GetCurrentDirectory();
-                Directory.CreateDirectory(Path.Combine(currentDirectory, "DbExport")); // Ensure dir exists
-
-                using var writer = new StreamWriter(Path.Combine(currentDirectory, "DbExport", $"{tableName}_filtered.sql"), false, Encoding.UTF8);
+                using var writer = new StreamWriter(GetDumpPath(tableName, addStrFileName), false, Encoding.UTF8);
 
                 foreach (var row in data)
                 {

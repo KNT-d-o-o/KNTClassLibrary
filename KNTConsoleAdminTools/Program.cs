@@ -1,62 +1,127 @@
 ﻿using System;
-using System.Management;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Management;
+using System.IO;
+using System.Threading;
 
-namespace KNTConsoleAdminTools
+namespace ConsoleAdminTools
 {
     class Program
     {
         static void Main(string[] args)
         {
-            if (args.Length < 4)
-            {
-                Console.WriteLine("Usage: KNTConsoleAdminTools.exe SetIP <ETHERNET_NAME> <IP_ADDRESS> <SUBNET_MASK>");
-                return;
-            }
+            const string logFile = "logConsoleAdminTools.txt";
 
-            string function = args[0];
-            string interfaceName = args[1];
-            string ip_address = args[2];
-            string subnet_mask = args[3];
-
-            if (function == "SetIP")
+            try
             {
-                try
+                string function = args[0];
+                string ip_address = args[1];
+                string subnet_mask = args[2];
+                string interfaceAlias = string.Empty;
+
+                if (args.Length >= 4)
+                    interfaceAlias = args[3];
+
+                // set IP address and subnet mask for interface Ethernet
+                if (function == "SetIP")
                 {
-                    if (OperatingSystem.IsWindows())
+                    ManagementClass objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
+                    ManagementObjectCollection objMOC = objMC.GetInstances();
+
+                    foreach (ManagementObject objMO in objMOC.Cast<ManagementObject>())
                     {
-                        var objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
-                        var objMOC = objMC.GetInstances();
-
-                        foreach (ManagementObject objMO in objMOC.Cast<ManagementObject>())
+                        if ((bool)objMO["IPEnabled"])
                         {
-                            bool ipEnabled = (bool)objMO["IPEnabled"];
-                            string? netConnId = objMO["NetConnectionID"] as string;
-
-                            if (ipEnabled && !string.IsNullOrEmpty(netConnId) && netConnId.Equals(interfaceName, StringComparison.OrdinalIgnoreCase))
+                            try
                             {
-                                var newIP = objMO.GetMethodParameters("EnableStatic");
+                                ManagementBaseObject setIP;
+                                ManagementBaseObject newIP =
+                                    objMO.GetMethodParameters("EnableStatic");
+
                                 newIP["IPAddress"] = new string[] { ip_address };
                                 newIP["SubnetMask"] = new string[] { subnet_mask };
 
-                                objMO.InvokeMethod("EnableStatic", newIP, null);
-                                Console.WriteLine($"IP Set: {ip_address} / {subnet_mask}");
-                                return;
+                                setIP = objMO.InvokeMethod("EnableStatic", newIP, null);
+
+                                File.AppendAllText(logFile, $"{function} Successful: {ip_address} {subnet_mask}{Environment.NewLine}");
+                            }
+                            catch (Exception ex)
+                            {
+                                File.AppendAllText(logFile, $"{function} Error: {ex.Message}{Environment.NewLine}");
+                                throw;
                             }
                         }
                     }
+                }
 
-                    Console.WriteLine("No enabled network adapter found.");
-                }
-                catch (Exception ex)
+                else if (function == "SetIPForAlias")
                 {
-                    Console.WriteLine("Error: " + ex.Message);
+                    // 1. Poišči DeviceID adapterja s podanim NetConnectionID (interfaceAlias)
+                    int deviceId = -1;
+                    var adapterSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapter WHERE NetConnectionID IS NOT NULL");
+                    foreach (ManagementObject adapter in adapterSearcher.Get())
+                    {
+                        var netConnectionId = adapter["NetConnectionID"]?.ToString();
+                        if (netConnectionId != null && netConnectionId.Equals(interfaceAlias, StringComparison.OrdinalIgnoreCase))
+                        {
+                            deviceId = Convert.ToInt32(adapter["DeviceID"]);
+                            break;
+                        }
+                    }
+
+                    if (deviceId == -1)
+                    {
+                        throw new Exception($"Adapter with name {interfaceAlias} not found.");
+                    }
+
+                    // 2. Poizveduj konfiguracijo z Index = deviceId
+                    string query = $"SELECT * FROM Win32_NetworkAdapterConfiguration WHERE Index = {deviceId}";
+                    var configSearcher = new ManagementObjectSearcher(query);
+                    var configs = configSearcher.Get();
+
+                    if (!configs.Cast<ManagementObject>().Any())
+                    {
+                        throw new Exception($"Configuration with Index={deviceId} not found.");
+                    }
+
+                    foreach (ManagementObject config in configs)
+                    {
+                        if ((bool)config["IPEnabled"])
+                        {
+                            // Nastavi statični IP in subnet masko
+                            ManagementBaseObject newIP = config.GetMethodParameters("EnableStatic");
+                            newIP["IPAddress"] = new string[] { ip_address };
+                            newIP["SubnetMask"] = new string[] { subnet_mask };
+
+                            var result = config.InvokeMethod("EnableStatic", newIP, null);
+
+                            // Po potrebi preveri rezultat:
+                            uint returnCode = (uint)result["ReturnValue"];
+                            if (returnCode != 0)
+                            {
+                                // Napaka pri nastavitvi IP
+                                File.AppendAllText(logFile, $"Error on setting IP: ReturnCode={returnCode}{Environment.NewLine}");
+                            }
+                            else
+                            {
+                                File.AppendAllText(logFile, $"SetIPForAlias successful: {interfaceAlias} {ip_address} {subnet_mask}{Environment.NewLine}");
+                            }
+                        }
+                        else
+                        {
+                            File.AppendAllText(logFile, $"SetIPForAlias: Adapter {interfaceAlias} not IP-enabled.{Environment.NewLine}");
+                        }
+                    }
                 }
             }
-            else
+            catch (Exception ex) 
             {
-                Console.WriteLine("Unknown function.");
+                File.AppendAllText(logFile, $"ConsoleAdminTools Error: {ex.Message}{Environment.NewLine}");
             }
+
         }
     }
 }

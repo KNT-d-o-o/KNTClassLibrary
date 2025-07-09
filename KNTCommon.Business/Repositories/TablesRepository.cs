@@ -220,7 +220,7 @@ namespace KNTCommon.Business.Repositories
                         else
                             where += " AND ";
 
-                        where += $"{key} = {FormatValue(row[key], columnTypes[key])}";
+                        where += $"`{key}` = {FormatValue(row[key], columnTypes[key])}";
                         iwhere++;
                     }
                     else
@@ -231,7 +231,7 @@ namespace KNTCommon.Business.Repositories
                         if (i > 0)
                             query += ", ";
 
-                        query += $"{key} = {FormatValue(row[key], columnTypes[key])}";
+                        query += $"`{key}` = {FormatValue(row[key], columnTypes[key])}";
                         i++;
                     }
                 }
@@ -381,7 +381,7 @@ namespace KNTCommon.Business.Repositories
                 case "nvarchar":
                 case "char":
                 case "text":
-                    where += $"LOWER({key}) LIKE LOWER('%{(valObj.ToString() ?? string.Empty).Replace("'", "''")}%')";
+                    where += $"LOWER(`{key}`) LIKE LOWER('%{(valObj.ToString() ?? string.Empty).Replace("'", "''")}%')";
                     break;
 
                 case "datetime":
@@ -389,9 +389,9 @@ namespace KNTCommon.Business.Repositories
                 case "time":
                 case "timestamp":
                     if (!(valObj.ToString() ?? string.Empty).Contains(" "))
-                        where += $"DATE({key}) = {FormatValue(valObj, type)}";
+                        where += $"DATE(`{key}`) = {FormatValue(valObj, type)}";
                     else
-                        where += $"{key} = {FormatValue(valObj, type)}";
+                        where += $"`{key}` = {FormatValue(valObj, type)}";
                     break;
 
                 case "decimal":
@@ -405,11 +405,11 @@ namespace KNTCommon.Business.Repositories
                         decimalPlaces = BitConverter.GetBytes(decimal.GetBits(number)[3])[2];
                     }
                     catch { }
-                    where += $"ROUND({key}, {decimalPlaces}) = {FormatValue(valObj, type)}";
+                    where += $"ROUND(`{key}`, {decimalPlaces}) = {FormatValue(valObj, type)}";
                     break;
 
                 default:
-                    where += $"{key} = {FormatValue(valObj, type)}";
+                    where += $"`{key}` = {FormatValue(valObj, type)}";
                     break;
             }
 
@@ -529,11 +529,10 @@ namespace KNTCommon.Business.Repositories
             return insertQueries;
         }
 
-        public async Task<bool> ExecuteSqlFromFile(string file)
+        public async Task<bool> ExecuteSqlFromFile(string filePath)
         {
             try
             {
-                string filePath = $"{Directory.GetCurrentDirectory()}\\DbExport\\{file}.sql";
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     var connectionString = context.Database.GetConnectionString();

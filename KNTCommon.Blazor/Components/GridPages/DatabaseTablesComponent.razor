@@ -70,18 +70,19 @@
     {
         var param = Helper.CreateDialogBlazorComponentParameters("TableName", tableName);
         var result = await DialogService.OpenAsync<TableDetailsDialog>(Localization.Get(nameof(TableDetailsDialog), tableName), param, Helper.GetDialogOptions("MaxSizeWindow"));
-        
+
     }
 
     private async Task OnSql(string tableName)
     {
+        string filepath = WindowsServiceHelper.GetDumpPath(tableName, string.Empty);
         var result = await DialogService.OpenAsync<ConfirmationDialog>
-                ("", Helper.CreateDialogBlazorComponentParameters("action", "Import SQL", "details", tableName, "weight", 1),
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Import SQL", "details", $"{filepath} -> {tableName}", "weight", 1),
                 Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {
             if (await WindowsServiceHelper.GenerateSQLDump(tableName, DateTime.Now.ToString("yyyyMMddHHmmss")))
-                Helper.Notify(await TablesRepository.ExecuteSqlFromFile(tableName));
+                Helper.Notify(await TablesRepository.ExecuteSqlFromFile(filepath));
         }
     }
 

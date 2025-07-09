@@ -16,54 +16,34 @@ namespace KNTCommon.Business.Utilites
         /// <returns></returns>
         public static string? ParseKeyboardInputForNumericKeyboard(string newInputCharacter, string? wholeString, int? cursorIndex)
         {
-            //tukaj ostaja samo se X. Ali to potrebujemo?
-            if(newInputCharacter == "Enter")
+            try
             {
-                return wholeString;
-            }
-            if(newInputCharacter == "Backspace")
-            {
-                if(string.IsNullOrEmpty(wholeString))
+                if (newInputCharacter == "Enter")
+                    return wholeString;
+
+                if (newInputCharacter == "Backspace")
                 {
+                    if (string.IsNullOrEmpty(wholeString))
+                        return wholeString;
+
+                    if (cursorIndex.HasValue && cursorIndex.Value > 0 && cursorIndex.Value <= wholeString.Length)
+                        return wholeString.Remove(cursorIndex.Value - 1, 1);
+
+                    if (!cursorIndex.HasValue && wholeString.Length > 0)
+                        return wholeString.Substring(0, wholeString.Length - 1);
+
                     return wholeString;
                 }
-                else
-                {
-                    if (cursorIndex.HasValue)
-                    {
-                        if (cursorIndex.Value > 0) return wholeString.Remove(cursorIndex.Value - 1, 1);
-                        else return wholeString;
-                    }
-                    else
-                    {
-                        return wholeString.Substring(0, wholeString.Length - 1);
-                    }
-                }
-            }
-            if (newInputCharacter == "Clear")
-            {
-                wholeString = string.Empty;
-                return wholeString;
-            }
-            //else if(newInputCharacter == "," || newInputCharacter == "-")
-            //{
-            //    if (string.IsNullOrEmpty(wholeString))
-            //    {
-            //        return wholeString;
-            //    }
-            //    else
-            //    {
-            //        wholeString += newInputCharacter;
-            //        return wholeString;
-            //    }
-            //}
 
-            else
-            {
+                if (newInputCharacter == "Clear")
+                    return string.Empty;
+
                 if (wholeString is null)
                     wholeString = string.Empty;
-                if (wholeString == string.Empty && newInputCharacter == "-") // minus first char
-                    return wholeString + newInputCharacter;
+
+                if (wholeString == string.Empty && newInputCharacter == "-")
+                    return "-" + wholeString;
+
                 try
                 {
                     if (cursorIndex.HasValue && cursorIndex.Value >= 0 && cursorIndex.Value <= wholeString.Length)
@@ -72,17 +52,25 @@ namespace KNTCommon.Business.Utilites
                     }
                     else
                     {
-                        double test = Convert.ToDouble(wholeString += newInputCharacter);
+                        string newValue = wholeString + newInputCharacter;
+                        _ = Convert.ToDouble(newValue); // ali uporabi InvariantCulture, če želiš konsistenco
+                        wholeString = newValue;
                     }
                 }
                 catch
                 {
-                    // remove wrong char
-                    wholeString = wholeString.Substring(0, wholeString.Length - newInputCharacter.Length);
+                    int newLength = wholeString.Length - newInputCharacter.Length;
+                    wholeString = newLength > 0 ? wholeString.Substring(0, newLength) : string.Empty;
                 }
+
                 return wholeString;
-            }  
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
+
         /// <summary>
         /// Adds a character (newInputCharacter) or creates an operation on the whole inserted string (wholeString) for alphanumeric keyboard 
         /// </summary>
@@ -91,66 +79,79 @@ namespace KNTCommon.Business.Utilites
         /// <returns></returns>
         public static string? ParseKeyboardInputForAlphanumericKeyboard(string newInputCharacter, string? wholeString, int? cursorIndex)
         {
-            //Enter - SendValueToParentComponent
-            //arrow-left - izbrise eno vrednost nazaj; ce ni nic, ne naredi nic
-            //ctrl, shift pustimo zaenkrat. Caps bi bilo fajn da bi se tipke spremenile potem...
-            if (newInputCharacter == "Backspace")
+            try
             {
-                if (string.IsNullOrEmpty(wholeString))
+                if (newInputCharacter == "Backspace")
                 {
-                    return wholeString;
-                }
-                else
-                {
-                    if (cursorIndex.HasValue)
+                    if (string.IsNullOrEmpty(wholeString))
                     {
-                        if (cursorIndex.Value > 0) return wholeString.Remove(cursorIndex.Value - 1, 1);
-                        else return wholeString;
+                        return wholeString;
                     }
-                    else
+
+                    if (cursorIndex.HasValue && cursorIndex.Value > 0 && cursorIndex.Value <= wholeString.Length)
+                    {
+                        return wholeString.Remove(cursorIndex.Value - 1, 1);
+                    }
+                    else if (!cursorIndex.HasValue)
                     {
                         return wholeString.Substring(0, wholeString.Length - 1);
                     }
+
+                    return wholeString;
                 }
-            }
-            if (newInputCharacter == "Clear")
-            {
-                wholeString = string.Empty;
-                return wholeString;
-            }
-            if (newInputCharacter == "space") 
-            {
-                if (string.IsNullOrEmpty(wholeString))
+
+                if (newInputCharacter == "Clear")
+                {
+                    return string.Empty;
+                }
+
+                if (newInputCharacter == "space")
+                {
+                    return (wholeString ?? "") + " ";
+                }
+
+                // Ignore special keys
+                var ignoredKeys = new HashSet<string> {
+                    "Escape", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9",
+                    "F10", "F11", "F12", "ScrollLock", "Pause", "Dead", "Insert", "Home",
+                    "PageUp", "Delete", "NumLock", "End", "PageDown", "ArrowUp",
+                    "ArrowLeft", "ArrowDown", "ArrowRight", "Tab", "Shift", "Fn", "Meta",
+                    "Control", "Alt", "AltGraph", "Enter", "CapsLock"
+                };
+
+                if (ignoredKeys.Contains(newInputCharacter))
                 {
                     return wholeString;
+                }
+
+                // Običajen znak
+                if (cursorIndex.HasValue && wholeString is not null)
+                {
+                    int index = cursorIndex.Value;
+
+                    // Preveri mejo
+                    if (index >= 0 && index <= wholeString.Length)
+                    {
+                        wholeString = wholeString.Insert(index, newInputCharacter);
+                    }
+                    else
+                    {
+                        // Out of bounds - dodaj na konec
+                        wholeString += newInputCharacter;
+                    }
                 }
                 else
                 {
-                    wholeString += " ";
-                    return wholeString;
+                    wholeString = (wholeString ?? "") + newInputCharacter;
                 }
-            }
-            if(newInputCharacter == "Escape" || newInputCharacter == "F1" || newInputCharacter == "F2" || newInputCharacter == "F3" || newInputCharacter == "F4"
-                || newInputCharacter == "F5" || newInputCharacter == "F6" || newInputCharacter == "F7" || newInputCharacter == "F8" || newInputCharacter == "F9"
-                || newInputCharacter == "F10" || newInputCharacter == "F11" || newInputCharacter == "F12" || newInputCharacter == "ScrollLock" || newInputCharacter == "Pause"
-                || newInputCharacter == "Dead" || newInputCharacter == "Insert" || newInputCharacter == "Home" || newInputCharacter == "PageUp" || newInputCharacter == "Delete" || newInputCharacter == "NumLock"
-                || newInputCharacter == "End" || newInputCharacter == "PageDown" || newInputCharacter == "ArrowUp" || newInputCharacter == "ArrowLeft" || newInputCharacter == "ArrowDown" || newInputCharacter == "ArrowRight"
-                || newInputCharacter == "Tab" || newInputCharacter == "Shift" || newInputCharacter == "Fn" || newInputCharacter == "Meta"
-                || newInputCharacter == "Control" || newInputCharacter == "Alt" || newInputCharacter == "AltGraph" || newInputCharacter == "Enter" || newInputCharacter == "CapsLock")
-            {
-                //fsta TO DO to bo treba popravit
+
                 return wholeString;
             }
-            else
+            catch
             {
-                if (cursorIndex.HasValue && wholeString is not null)
-                {
-                    
-                    wholeString = wholeString.Insert(cursorIndex.Value, newInputCharacter);
-                }
-                else wholeString += newInputCharacter;
-                return wholeString;
+                return string.Empty;
             }
         }
+
     }
 }

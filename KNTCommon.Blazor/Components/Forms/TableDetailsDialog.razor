@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Forms
 @inject DialogService DialogService
 @inject ITablesRepository TablesRepository
+@inject IParametersRepository ParametersRepository
 @inject KNTCommon.Blazor.Services.HelperService Helper
 @inject KNTCommon.Blazor.Services.WindowsServiceHelper WindowsServiceHelper
 @inject IJSRuntime JSRuntime
@@ -9,7 +10,7 @@
 
 <div class="Animation FlexContainer">
 
-    <RadzenDataGrid Data="@Data" TItem="Dictionary<string, object>" AllowPaging="true" PageSize="1000" PagerAlwaysVisible="true"
+    <RadzenDataGrid Data="@Data" TItem="Dictionary<string, object>" AllowPaging="true" PageSize="@pageSize" PagerAlwaysVisible="true"
                     AllowSorting="true" AllowColumnResize="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
                     ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.And" EditMode="DataGridEditMode.Single"
                     AllowVirtualization="false" @ref="ordersGrid" LoadData="@OnLoadData" Count="@totalCount"
@@ -48,7 +49,7 @@
                 }
             }
 
-            <RadzenDataGridColumn Sortable="false">
+            <RadzenDataGridColumn Sortable="false" Width="35vw">
                 <FilterTemplate>
                     <div class="Animation FixContainer">
                         <RadzenButton class="RadzenGridContextButtons rz-ripple" style="margin-right: 8px" Variant="Variant.Filled" Shade="Shade.Dark" ButtonStyle="ButtonStyle.Light" Icon="refresh" Click="() => OnRefreshClick()" Size="ButtonSize.Large" title=@Localization.Get("ButtonRefresh")></RadzenButton>
@@ -98,9 +99,16 @@
 
     bool isLoading = false;
     int totalCount;
+    int pageSize = 1000;
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            pageSize = Convert.ToInt32(ParametersRepository.GetParametersStr("largeTableLimit"));
+        }
+        catch { }
+
         await LoadData();
         await base.OnInitializedAsync();
     }
@@ -115,7 +123,7 @@
                 new Dictionary<string, object>(), 
                 string.Empty,
                 skip: 0,
-                take: 1000);
+                take: pageSize);
         
         isLoading = false;
     }
@@ -139,7 +147,7 @@
                 filterArray,
                 args.OrderBy,
                 skip: args.Skip ?? 0,
-                take: args.Top ?? 1000);
+                take: args.Top ?? pageSize);
 
         isLoading = false;
     }
@@ -303,7 +311,7 @@
         {
             if (Data is not null && Data.Any())
             {
-                Helper.Notify(await WindowsServiceHelper.ExportToExcel(JSRuntime, Data?.ToList() ?? new List<Dictionary<string, object>>(), TableName ?? "table"));
+                Helper.Notify(await WindowsServiceHelper.ExportToExcel(JSRuntime, Data?.ToList() ?? new(), TableName ?? "table"));
             }
         }
     }
@@ -334,14 +342,11 @@
             return;
 
         var result = await DialogService.OpenAsync<ConfirmationDialog>
-                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL All", "details", TableName, "weight", 0),
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL All", "details", $"{TableName} -> {WindowsServiceHelper.GetDumpPath(TableName, string.Empty)}", "weight", 0),
                 Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {
-            if (Data is not null && Data.Any())
-            {
-                Helper.Notify(await WindowsServiceHelper.GenerateSQLDump(TableName, string.Empty));
-            }
+            Helper.Notify(await WindowsServiceHelper.GenerateSQLDump(TableName, string.Empty));
         }
     }
 
@@ -351,13 +356,13 @@
             return;
 
         var result = await DialogService.OpenAsync<ConfirmationDialog>
-                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL Grid", "details", TableName, "weight", 0),
+                ("", Helper.CreateDialogBlazorComponentParameters("action", "Export SQL Grid", "details", $"{TableName} -> {WindowsServiceHelper.GetDumpPath(TableName, string.Empty)}", "weight", 0),
                 Helper.GetDialogOptions("ConfirmationWrapper"));
         if (result == true)
         {
             if (Data is not null && Data.Any())
             {
-                Helper.Notify(await WindowsServiceHelper.GenerateSQLDumpFromData(TableName, Data.ToList()));
+                Helper.Notify(await WindowsServiceHelper.GenerateSQLDumpFromData(TableName, "_filtered", Data.ToList()));
             }
         }
     }
