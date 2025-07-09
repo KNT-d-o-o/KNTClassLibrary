@@ -1,5 +1,6 @@
 ﻿using KNTCommon.Business.DTOs;
 using KNTCommon.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace KNTCommon.Business.Repositories
 {
@@ -21,5 +22,7 @@ namespace KNTCommon.Business.Repositories
         bool DeleteGroup(UserGroupDTO group);
         void ChangeUserGroupsToDefaultOnGroupDelete(int groupId);
         bool CheckIfUsersExistdInGroup(int groupId);
+        Task<User?> GetOldSmmActiveUserAsync();
+        Task<int?> GetOldSmmActiveUserGroupIdAsync();
     }
 }

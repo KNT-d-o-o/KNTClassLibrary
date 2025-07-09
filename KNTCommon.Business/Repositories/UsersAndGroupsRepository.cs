@@ -333,5 +333,23 @@ namespace KNTCommon.Business.Repositories
             return ret;
         }
 
+
+        public async Task<User?> GetOldSmmActiveUserAsync()
+        {
+            using var context = new EdnKntControllerMysqlContext();
+            var result = await context.Users.Where(x => x.Login == 1).FirstAsync();
+            return result;
+        }
+
+        public async Task<int?> GetOldSmmActiveUserGroupIdAsync()
+        {
+            var result = await GetOldSmmActiveUserAsync();
+
+            if (result == null)
+                return null;
+
+            return result.GroupId;
+        }
+
     }
 }

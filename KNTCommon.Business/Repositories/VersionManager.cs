@@ -1,4 +1,5 @@
-﻿using KNTCommon.Data.Models;
+﻿using Google.Protobuf.Compiler;
+using KNTCommon.Data.Models;
 using KNTToolsAndAccessories;
 using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
@@ -20,7 +21,7 @@ namespace KNTCommon.Business.Repositories
 
         public VersionManager(IEncryption encryption)
         {
-            TestDb();
+            //TestDb();
             _encryption = encryption;
         }
 
@@ -58,18 +59,35 @@ namespace KNTCommon.Business.Repositories
             } 
         }
 
+        /// <summary>
+        /// Run scripts in order: schema, view, data
+        /// </summary>
         public void Upgrade()
         {
             if (CanUpgrade())
             {
-                RunScriptFirstTime("../KNTSMM.Data/Version/4.0.0.0.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.1.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.2.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.3.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.4.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.5.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.6.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.7.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.0_schema.sql", true);
+                RunScriptAndEncryptPassword("../KNTSMM.Data/Version/4.0.0.0_data.sql");
+
+                RunScript("../KNTSMM.Data/Version/4.0.0.1_schema.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.1_data.sql");
+
+                RunScript("../KNTSMM.Data/Version/4.0.0.2_schema.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.2_view.sql");
+
+                RunScript("../KNTSMM.Data/Version/4.0.0.3_schema.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.3_view.sql");
+
+                RunScript("../KNTSMM.Data/Version/4.0.0.4_view.sql");
+
+                RunScript("../KNTSMM.Data/Version/4.0.0.5_view.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.5_data.sql");
+
+                RunScript("../KNTSMM.Data/Version/4.0.0.6_schema.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.6_view.sql");
+                RunScript("../KNTSMM.Data/Version/4.0.0.6_data.sql");
+
+                //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
                 CreateAssemblyVersion();
             }
         }
@@ -252,40 +270,29 @@ namespace KNTCommon.Business.Repositories
 
         }
 
-        public void RunScriptFirstTime(string fileName) // TODO add user columns
+        public void RunScriptAndEncryptPassword(string fileName) // TODO add user columns
         {
-            using var context = new EdnKntControllerMysqlContext();
-            context.Database.SetCommandTimeout(60 * 10);
-            //context.
-            try
-            {
-                var version = fileName.Split("/").Last().Replace(".sql", "");
+            if (WasScriptRun(fileName, true))
+                return;
 
-                var sql = File.ReadAllText(fileName);
-                sql = RemoveSpecialCommands(sql);
-                sql += GetVersionText(version);
-
-                context.Database.ExecuteSqlRaw(sql);
-                //context.Database.ExecuteSqlRaw(sql);
-            } catch (Exception ex)
-            {
-                throw;
-            }
-
-            context.SaveChanges();
-
+            RunScript(fileName, true);            
             EncryptPasswordFirstTime();
         }
 
         void EncryptPasswordFirstTime()
         {
             using var context = new EdnKntControllerMysqlContext();
-            var users = context.Users.Where(x => x.PasswordHash != null || x.Password != null).ToList();
+            var users = context.Users.Where(x => x.PasswordHash == null).ToList();
             foreach (var user in users)
             {
                 var iv = _encryption.GenerateRandomIV();
                 // getawaiter getresult blocks the current thread until the task is not completed
-                var encryptedPassword = _encryption.Encrypt(user.Password!, iv).GetAwaiter().GetResult();
+                var password = string.IsNullOrEmpty(user.Password) ? "" : user.Password;
+
+                if (user.a1 == 1)
+                    password = "<DT-Sum>";
+
+                var encryptedPassword = _encryption.Encrypt(password, iv).GetAwaiter().GetResult();
 
                 user.PasswordHash = encryptedPassword;
                 user.InitializationVector = iv;
@@ -334,25 +341,19 @@ namespace KNTCommon.Business.Repositories
 
         }
 
-
-        public void RunScript(string fileName)
+        public void RunScript(string fileName, bool runFirstTime=false)
         {
-            var version = fileName.Split("/").Last().Replace(".sql", "");
-
-            //if (version < GetMaxVersion())
-            //    return;
-
-            if (ContainVersion(version))
+            if (WasScriptRun(fileName, runFirstTime))
                 return;
-
-            var sql = File.ReadAllText(fileName);
-
-            using var context = new EdnKntControllerMysqlContext();
-            context.Database.SetCommandTimeout(60 * 10);
 
             try
             {
-                
+                var version = fileName.Split("/").Last().Replace(".sql", "");
+
+                using var context = new EdnKntControllerMysqlContext();
+                context.Database.SetCommandTimeout(60 * 10);
+
+                var sql = File.ReadAllText(fileName);
                 sql = RemoveSpecialCommands(sql);
                 sql += GetVersionText(version);
                 context.Database.ExecuteSqlRaw(sql);
@@ -367,10 +368,35 @@ namespace KNTCommon.Business.Repositories
             }
         }
 
+        public bool WasScriptRun(string fileName, bool runFirstTime)
+        {
+            var version = fileName.Split("/").Last().Replace(".sql", "");
+
+            var firstTime = runFirstTime && !TableExists(nameof(AppVersion));
+
+            if (!firstTime)
+                if (ContainVersion(version))
+                    return true;
+
+            return false;
+        }
 
 
 
+        bool TableExists(string tableName)
+        {
+            try
+            {
+                using var context = new EdnKntControllerMysqlContext();
+                var version = context.Database.SqlQueryRaw<int>("SELECT count(*) Value FROM information_schema.tables WHERE table_schema = Database() AND table_name = @p0", tableName).FirstOrDefault();
 
+                return version > 0;
+            } catch (Exception e)
+            {
+
+            }
+            return false;
+        }
 
         bool ContainVersion(string versionNumber)
         {
