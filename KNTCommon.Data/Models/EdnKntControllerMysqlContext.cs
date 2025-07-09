@@ -48,7 +48,7 @@ namespace KNTCommon.Data.Models
 
         public virtual DbSet<Results> Results { get; set; }
 
-        public virtual DbSet<AppVersion> AppVersion { get; set; }
+        public virtual DbSet<App_Version> App_Version { get; set; }
 
         public virtual DbSet<CL_ArchiveIntervalType> CL_ArchiveIntervalType { get; set; }
         public virtual DbSet<CL_ArchiveMode> CL_ArchiveMode { get; set; }

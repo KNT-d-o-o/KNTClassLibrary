@@ -372,7 +372,7 @@ namespace KNTCommon.Business.Repositories
         {
             var version = fileName.Split("/").Last().Replace(".sql", "");
 
-            var firstTime = runFirstTime && !TableExists(nameof(AppVersion));
+            var firstTime = runFirstTime && !TableExists(nameof(App_Version));
 
             if (!firstTime)
                 if (ContainVersion(version))
@@ -401,7 +401,7 @@ namespace KNTCommon.Business.Repositories
         bool ContainVersion(string versionNumber)
         {
             using var context = new EdnKntControllerMysqlContext();
-            var version = context.AppVersion.Where(x => x.VersionNumber == versionNumber).FirstOrDefault();
+            var version = context.App_Version.Where(x => x.VersionNumber == versionNumber).FirstOrDefault();
 
             return version != null;
         }
@@ -410,13 +410,13 @@ namespace KNTCommon.Business.Repositories
         string GetMaxVersion()
         {
             using var context = new EdnKntControllerMysqlContext();
-            var version = context.Database.SqlQueryRaw<string>("select * from appversion order by IdAppVersion desc LIMIT 1").FirstOrDefault();
+            var version = context.Database.SqlQueryRaw<string>("select * from App_Version order by IdAppVersion desc LIMIT 1").FirstOrDefault();
             return version;
         }
 
         string GetVersionText(string version)
         {
-            return $"INSERT INTO appversion (VersionNumber, DateAndTime) VALUES ('{version}', NOW());";
+            return $"INSERT INTO App_Version (VersionNumber, DateAndTime) VALUES ('{version}', NOW());";
         }
 
         string RemoveSpecialCommands(string sql)

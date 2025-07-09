@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KNTCommon.Data.Models;
 
-public partial class AppVersion
+public partial class App_Version
 {
     [Key]
     public int IdAppVersion { get; set; }
