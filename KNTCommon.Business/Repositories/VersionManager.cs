@@ -54,7 +54,7 @@ namespace KNTCommon.Business.Repositories
         private string AssemblyFileVersionFullPath { 
             get {
                 var dir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-                var fullPath = dir + "\\AssemblyVersion.txt";
+                var fullPath = Path.Combine(dir, "AssemblyVersion.txt");
                 return fullPath;
             } 
         }
@@ -66,26 +66,26 @@ namespace KNTCommon.Business.Repositories
         {
             if (CanUpgrade())
             {
-                RunScript("../KNTSMM.Data/Version/4.0.0.0_schema.sql", true);
-                RunScriptAndEncryptPassword("../KNTSMM.Data/Version/4.0.0.0_data.sql");
+                RunScript("4.0.0.0_schema.sql", true);
+                RunScriptAndEncryptPassword("4.0.0.0_data.sql");
 
-                RunScript("../KNTSMM.Data/Version/4.0.0.1_schema.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.1_data.sql");
+                RunScript("4.0.0.1_schema.sql");
+                RunScript("4.0.0.1_data.sql");
 
-                RunScript("../KNTSMM.Data/Version/4.0.0.2_schema.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.2_view.sql");
+                RunScript("4.0.0.2_schema.sql");
+                RunScript("4.0.0.2_view.sql");
 
-                RunScript("../KNTSMM.Data/Version/4.0.0.3_schema.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.3_view.sql");
+                RunScript("4.0.0.3_schema.sql");
+                RunScript("4.0.0.3_view.sql");
 
-                RunScript("../KNTSMM.Data/Version/4.0.0.4_view.sql");
+                RunScript("4.0.0.4_view.sql");
 
-                RunScript("../KNTSMM.Data/Version/4.0.0.5_view.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.5_data.sql");
+                RunScript("4.0.0.5_view.sql");
+                RunScript("4.0.0.5_data.sql");
 
-                RunScript("../KNTSMM.Data/Version/4.0.0.6_schema.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.6_view.sql");
-                RunScript("../KNTSMM.Data/Version/4.0.0.6_data.sql");
+                RunScript("4.0.0.6_schema.sql");
+                RunScript("4.0.0.6_view.sql");
+                RunScript("4.0.0.6_data.sql");
 
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
                 CreateAssemblyVersion();
@@ -346,14 +346,14 @@ namespace KNTCommon.Business.Repositories
             if (WasScriptRun(fileName, runFirstTime))
                 return;
 
+            var version = fileName.Split("/").Last().Replace(".sql", "");
             try
-            {
-                var version = fileName.Split("/").Last().Replace(".sql", "");
-
+            {                
+                var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Version", fileName);
                 using var context = new EdnKntControllerMysqlContext();
                 context.Database.SetCommandTimeout(60 * 10);
 
-                var sql = File.ReadAllText(fileName);
+                var sql = File.ReadAllText(fullPath);
                 sql = RemoveSpecialCommands(sql);
                 sql += GetVersionText(version);
                 context.Database.ExecuteSqlRaw(sql);
@@ -364,6 +364,7 @@ namespace KNTCommon.Business.Repositories
             {
 
                 t.LogEvent2(1, ex.Message);
+                t.LogEvent2(2, $"Version: {version}");
                 throw;
             }
         }
