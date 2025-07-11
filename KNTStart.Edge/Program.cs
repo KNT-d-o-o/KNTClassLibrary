@@ -1,17 +1,33 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Http;
-using WebSocketSharp;
+using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using WebSocketSharp;
 
 namespace KNTLeakTester.Edge
 {
+    /// <summary>
+    /// web server program running
+    /// args:
+    ///  args[0]: port of webserver
+    ///  args[1]: kiosk or fullscreen or normal mode
+    ///  args[2]: check interval for refresh (0 means default 20000ms)
+    ///  args[3]: additional url link for sub page or properties
+    /// </summary>
     class Program
     {
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        const int SW_MINIMIZE = 6;
+        const int SW_MAXIMIZE = 3;
+        const int SW_SHOWNORMAL = 1;
+
         static void Main(string[] args)
         {
             string port = "80";
@@ -35,11 +51,11 @@ namespace KNTLeakTester.Edge
             if (!Directory.Exists(logFolderPath))
                 Directory.CreateDirectory(logFolderPath);
 
-            string shutdownFilePath = Path.Combine(logFolderPath, "shutdown.txt");
             string logFilePath = Path.Combine(logFolderPath, "log.txt");
             if (!File.Exists(logFilePath))
                 File.Create(logFilePath).Dispose();
 
+            string shutdownFilePath = Path.Combine(logFolderPath, "shutdown.txt");
             if (File.Exists(shutdownFilePath))
             {
                 File.Delete(shutdownFilePath);
@@ -48,37 +64,59 @@ namespace KNTLeakTester.Edge
 #endif
             }
 
+            string minimizedFilePath = Path.Combine(logFolderPath, "minimized.txt");
+            if (File.Exists(minimizedFilePath))
+            {
+                File.Delete(minimizedFilePath);
+#if DEBUG
+                Console.WriteLine("Previous minimized file found and deleted.");
+#endif
+            }
+
             using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
                 writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI started.");
 
-            int checkInterval = args.Length > 1 ? int.Parse(args[1]) : 20000;
+            const int REFRESH_INTERVAL = 20000; // default refresh interval in milliseconds
+            int checkInterval = args.Length > 2 ? int.Parse(args[2]) : REFRESH_INTERVAL;
+            if(checkInterval == 0)
+                checkInterval = REFRESH_INTERVAL; // if 0, set default
             string edgePath = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
             string urlServer = "http://localhost:";
             string url = $"{urlServer}{port}";
+            if (args.Length > 3)
+                url += $"{args[3]}";
+
+            string arguments = $"--remote-debugging-port=9222 {url}";
+            if (args.Length > 1)
+            if (args[1] == "kiosk")
+                arguments = $"--kiosk --edge-kiosk-type=fullscreen {arguments}";
+            else if (args[1] == "fullscreen")
+                arguments = $"--start-fullscreen --disable-infobars --noerrdialogs {arguments}";
 
             Process edgeProcess = null;
+            bool minimized = false;
             while (true)
             {
                 Process[] edgeProcesses = Process.GetProcessesByName("msedge");
 
                 // Check if a stop command has been received
                 if (File.Exists(shutdownFilePath))
-                {
-                    using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
-                        writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI stopped.");
+                    {
+                        using (StreamWriter writer = new StreamWriter(logFilePath, append: true))
+                            writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI stopped.");
 #if DEBUG
-                    Console.WriteLine(DateTime.Now + " Shutdown signal received. Exiting...");
+                        Console.WriteLine(DateTime.Now + " Shutdown signal received. Exiting...");
 #endif
 
-                    try
-                    {
-                        edgeProcess.Kill();
-                        edgeProcess.WaitForExit(); // wait for closing process
-                    }
-                    catch { }
+                        try
+                        {
+                            edgeProcess.Kill();
+                            edgeProcess.WaitForExit(); // wait for closing process
+                        }
+                        catch { }
 
-                    break;
-                }
+                        break;
+                    }
 
                 // edge not running, run it
                 if (edgeProcesses.Length == 0 && !File.Exists(shutdownFilePath))
@@ -89,12 +127,13 @@ namespace KNTLeakTester.Edge
                     edgeProcess = Process.Start(new ProcessStartInfo
                     {
                         FileName = edgePath,
-                        Arguments = $"--kiosk --edge-kiosk-type=fullscreen --remote-debugging-port=9222 {urlServer}{port}",
+                        Arguments = arguments,
                         UseShellExecute = true,
                         CreateNoWindow = false
                     });
 
-                    Thread.Sleep(5000); // wait for runnin edge
+                    minimized = false;
+                    Thread.Sleep(500); // wait for runnin edge
                 }
 
                 // check if reloed is needed
@@ -106,14 +145,39 @@ namespace KNTLeakTester.Edge
                         edgeProcess = RestartEdge(edgeProcess, new ProcessStartInfo
                         {
                             FileName = edgePath,
-                            Arguments = $"--kiosk --edge-kiosk-type=fullscreen --remote-debugging-port=9222 {urlServer}{port}",
-
+                            Arguments = arguments,
                             UseShellExecute = true,
                             CreateNoWindow = false
                         });
 #if DEBUG
                         Console.WriteLine(DateTime.Now + " The page has been refreshed.");
 #endif
+                    }
+                }
+
+                // Check minimized state
+                if (edgeProcess != null)
+                {
+                    if (!minimized)
+                    {
+                        if (File.Exists(minimizedFilePath))
+                        {
+                            Console.WriteLine(DateTime.Now + " Edge is running. Minimized...");
+                            ShowWindow(edgeProcess.MainWindowHandle, SW_MINIMIZE);
+                            minimized = true;
+                        }
+                    }
+                    else if (minimized)
+                    {
+                        if (!File.Exists(minimizedFilePath))
+                        {
+                            Console.WriteLine(DateTime.Now + " Edge is running. Maximized...");
+                            if (args[1] == "fullscreen")
+                                ShowWindow(edgeProcess.MainWindowHandle, SW_MAXIMIZE);
+                            else
+                                ShowWindow(edgeProcess.MainWindowHandle, SW_SHOWNORMAL);
+                            minimized = false;
+                        }
                     }
                 }
             }
