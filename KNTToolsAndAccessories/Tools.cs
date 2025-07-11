@@ -20,7 +20,7 @@ namespace KNTToolsAndAccessories
             {
                 using EventLog eventLog = new EventLog("Application");
 
-                eventLog.Source = "Application";
+                eventLog.Source = "KNT Application";
                 eventLog.WriteEntry(msg, EventLogEntryType.Error);
 
             }

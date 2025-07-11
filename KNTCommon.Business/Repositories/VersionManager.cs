@@ -4,6 +4,7 @@ using KNTToolsAndAccessories;
 using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -21,18 +22,69 @@ namespace KNTCommon.Business.Repositories
 
         public VersionManager(IEncryption encryption)
         {
-            //TestDb();
+            TestDb();
             _encryption = encryption;
         }
 
         public void TestDb()
         {
+            var excludeTables = new List<string>() { "UserGroup", "UserSessions" };
+
             using var context = new EdnKntControllerMysqlContext();
-            var ioTasks = context.IoTasks.First();
+            //context.Users.Take(10)
+            var dbSets = context.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.PropertyType.IsGenericType &&
+                        p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>) &&
+                        !excludeTables.Any(x => x.ToLower() == p.PropertyType.GetGenericArguments()[0].Name.ToLower()));
 
-            var user = context.Users.First();
+            foreach (var dbSetProperty in dbSets)
+            {
+                var entityType = dbSetProperty.PropertyType.GetGenericArguments()[0];
+                var tableName = entityType.Name;
 
+                try
+                {                    
+                    // pridobi Set<TEntity>()
+                    var setMethod = typeof(DbContext).GetMethod("Set", Type.EmptyTypes);
+                    var genericSetMethod = setMethod.MakeGenericMethod(entityType);
+                    var dbSet = genericSetMethod.Invoke(context, null);
 
+                    // IQueryable<T>
+                    var queryable = dbSet as IQueryable;
+
+                    // uporabimo Take(10)
+                    var takeMethod = typeof(Queryable)
+                        .GetMethods()
+                        .First(m => m.Name == "Take" && m.GetParameters().Length == 2)
+                        .MakeGenericMethod(entityType);
+
+                    var top10Query = takeMethod.Invoke(null, new object[] { queryable, 10 });
+
+                    // ToList
+                    var toListMethod = typeof(Enumerable)
+                        .GetMethod("ToList")
+                        .MakeGenericMethod(entityType);
+                    Console.WriteLine($"Tabela: {entityType.Name}, Top 10 vrstic:");
+
+                    var top10List = toListMethod.Invoke(null, new[] { top10Query });
+
+                    foreach (var item in (IEnumerable)top10List)
+                    {
+                        Console.WriteLine(item);
+                    }
+
+                    Console.WriteLine(new string('-', 50));
+                } catch(Exception ex)
+                {
+                    var msg = @$"Table name: {tableName};
+InnerException: {ex.InnerException}";
+
+                    t.LogEvent2(4, msg);
+                    throw;
+                }
+                
+            }
         }
 
         /*
@@ -65,7 +117,7 @@ namespace KNTCommon.Business.Repositories
         public void Upgrade()
         {
             if (CanUpgrade())
-            {
+            {                
                 RunScript("4.0.0.0_schema.sql", true);
                 RunScriptAndEncryptPassword("4.0.0.0_data.sql");
 
@@ -86,6 +138,8 @@ namespace KNTCommon.Business.Repositories
                 RunScript("4.0.0.6_schema.sql");
                 RunScript("4.0.0.6_view.sql");
                 RunScript("4.0.0.6_data.sql");
+
+                RunScript("4.0.0.7_data.sql");
 
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
                 CreateAssemblyVersion();
@@ -362,9 +416,9 @@ namespace KNTCommon.Business.Repositories
             }
             catch (Exception ex)
             {
-
+                t.LogEvent2(2, @$"Errror on upgrade script: {fileName}");
                 t.LogEvent2(1, ex.Message);
-                t.LogEvent2(2, $"Version: {version}");
+                t.LogEvent2(3, ex.StackTrace ?? "");
                 throw;
             }
         }
