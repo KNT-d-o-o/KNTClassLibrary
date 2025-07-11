@@ -589,21 +589,106 @@ namespace KNTCommon.BusinessIO.Repositories
                                         copyCommand.ExecuteNonQuery();
                                     }
                                 }
+
                                 // re-create config (non archivable) tables
                                 else
                                 {
+                                    // cancel large tables > 100000 rows
+                                    bool skipTable = false;
+                                    long rowCount = 0;
+                                    try
+                                    {
+                                        var countQuery = $"SELECT COUNT(*) FROM {connStr}.{tableName};";
+                                        
+                                        using (var metaConnection = new MySql.Data.MySqlClient.MySqlConnection(sourceConnectionString))
+                                        {
+                                            metaConnection.Open();
+                                            using (var countCmd = new MySql.Data.MySqlClient.MySqlCommand(countQuery, metaConnection))
+                                            {
+                                                countCmd.CommandTimeout = 3;
+
+                                                object result = countCmd.ExecuteScalar();
+                                                if (result != null && long.TryParse(result.ToString(), out long count))
+                                                {
+                                                    rowCount = count;
+                                                }
+                                            }
+                                        }
+                                        if (rowCount > 100000)
+                                        {
+#if DEBUG
+                                            Console.WriteLine($"Skipping table {tableName} (too large: {rowCount} rows)");
+#endif
+                                            skipTable = true;
+                                        }
+                                    }
+                                    catch (MySql.Data.MySqlClient.MySqlException ex)
+                                    {
+                                        if (ex.Number == 0 || ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+                                        {
+#if DEBUG
+                                            Console.WriteLine($"Skipping table {tableName}: COUNT(*) timeout.");
+#endif
+                                            skipTable = true;
+                                        }
+                                        else
+                                        {
+                                            throw; // other SQL error — rethrow
+                                        }
+                                    }
+
+                                    if (skipTable)
+                                        continue; // cancel table
+
+                                    // find auto-increment columns to remove auto-increment property
+                                    var columnList = new List<string>();
+                                    var autoIncColQuery = $@"
+                                        SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_KEY
+                                        FROM INFORMATION_SCHEMA.COLUMNS
+                                        WHERE TABLE_SCHEMA = '{connStr}'
+                                          AND TABLE_NAME = '{tableName}'
+                                          AND EXTRA LIKE '%auto_increment%';";
+
+
+                                    string alterSql = string.Empty;
+                                    using (var metaConnection = new MySql.Data.MySqlClient.MySqlConnection(sourceConnectionString))
+                                    {
+                                        metaConnection.Open();
+
+                                        using (var columnCmd = new MySql.Data.MySqlClient.MySqlCommand(autoIncColQuery, metaConnection))
+                                        using (var readerAuto = columnCmd.ExecuteReader())
+                                        {
+                                            while (readerAuto.Read())
+                                            {
+                                                var colName = readerAuto.GetString("COLUMN_NAME");
+                                                var colType = readerAuto.GetString("COLUMN_TYPE");
+                                                var isNullable = readerAuto.GetString("IS_NULLABLE") == "YES" ? "NULL" : "NOT NULL";
+                                                var columnKey = readerAuto.GetString("COLUMN_KEY");
+                                                var columnDefault = readerAuto.IsDBNull(readerAuto.GetOrdinal("COLUMN_DEFAULT"))
+                                                                    ? ""
+                                                                    : $"DEFAULT '{readerAuto.GetString("COLUMN_DEFAULT")}'";
+
+                                                alterSql += $@"ALTER TABLE {connStrArchive[0]}.{tableName} MODIFY COLUMN `{colName}` {colType} {isNullable} {columnDefault};";
+                                            }
+                                        }
+                                    }
+
 #if DEBUG
                                     Console.WriteLine($"connStrArchive[0].tableName: {connStrArchive[0]}.{tableName}");
 #endif
-                                    string copyQuery = $@"DROP TABLE IF EXISTS {connStrArchive[0]}.{tableName};
-                                                        CREATE TABLE {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};
-                                                        INSERT INTO {connStrArchive[0]}.{tableName} SELECT * FROM {connStr}.{tableName};";
+                                        string copyQuery = $@"DROP TABLE IF EXISTS {connStrArchive[0]}.{tableName};
+                                                            CREATE TABLE {connStrArchive[0]}.{tableName} LIKE {connStr}.{tableName};
+                                                            {alterSql}
+                                                            INSERT INTO {connStrArchive[0]}.{tableName} SELECT * FROM {connStr}.{tableName};";
+#if DEBUG
+                                    Console.WriteLine($"connStrArchive[0].tableName: {copyQuery}");
+#endif
+
                                     using (var copyCommand = new MySql.Data.MySqlClient.MySqlCommand(copyQuery, targetConnection))
                                     {
                                         copyCommand.ExecuteNonQuery();
                                     }
                                 }
-                                // 
                             }
                         }
                     }
