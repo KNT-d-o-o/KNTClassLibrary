@@ -30,6 +30,7 @@ namespace KNTCommon.BusinessIO.Test
                     services.AddScoped<ExportRepository>();
                     services.AddScoped<DumpRepository>();
                     services.AddScoped<ParametersRepository>();
+                    services.AddScoped<IParametersRepository, ParametersRepository>();
                     services.AddScoped<Localization>();
                     services.AddSingleton<BusinessIOProcess>();                
                 });

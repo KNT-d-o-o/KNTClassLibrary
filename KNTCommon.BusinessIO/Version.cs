@@ -8,10 +8,14 @@ namespace KNTCommon.BusinessIO
 {
     public static class AppInfo
     {
-        public const string Version = "1.0.1.3";
+        public const string Version = "1.0.1.4";
     }
 
-    /* *** Version 1.0.1.x *** 30/05/2025
+    /* *** Version 1.0.1.x *** 11/07/2025
+     * Enhancement:
+     *  DB Export: init - exclude auto-increment.
+     * 
+    /* *** Version 1.0.1.3 *** 30/05/2025
      * Bugs:
      *  DB Export where condition for step 0 stay par3
      * 

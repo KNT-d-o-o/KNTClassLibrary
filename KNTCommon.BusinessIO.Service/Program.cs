@@ -35,6 +35,7 @@ namespace KNTCommon.BusinessIO.Service
                     services.AddScoped<ExportRepository>();
                     services.AddScoped<DumpRepository>();
                     services.AddScoped<ParametersRepository>();
+                    services.AddScoped<IParametersRepository, ParametersRepository>();
                     services.AddScoped<Localization>();
                     services.AddSingleton<BusinessIOProcess>();
                     services.AddHostedService<BusinessIOService>();
