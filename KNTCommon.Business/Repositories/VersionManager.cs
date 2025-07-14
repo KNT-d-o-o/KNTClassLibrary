@@ -22,7 +22,7 @@ namespace KNTCommon.Business.Repositories
 
         public VersionManager(IEncryption encryption)
         {
-            TestDb();
+            //TestDb();
             _encryption = encryption;
         }
 

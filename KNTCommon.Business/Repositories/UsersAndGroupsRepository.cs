@@ -350,6 +350,19 @@ namespace KNTCommon.Business.Repositories
 
             return result.GroupId;
         }
+        public async Task<bool> GetOldSmmActiveUserIsAdmin()
+        {
+            var result = await GetOldSmmActiveUserAsync();
+
+            if (result == null)
+                return false;
+
+            return result.a1 == 1;
+
+        }
+
+
+
 
     }
 }

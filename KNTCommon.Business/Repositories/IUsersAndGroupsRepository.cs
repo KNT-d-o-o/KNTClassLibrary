@@ -24,5 +24,6 @@ namespace KNTCommon.Business.Repositories
         bool CheckIfUsersExistdInGroup(int groupId);
         Task<User?> GetOldSmmActiveUserAsync();
         Task<int?> GetOldSmmActiveUserGroupIdAsync();
+        Task<bool> GetOldSmmActiveUserIsAdmin();
     }
 }
