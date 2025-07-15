@@ -2,7 +2,7 @@
   "profiles": {
     "KNTStart.Edge": {
       "commandName": "Project",
-      "commandLineArgs": "5015 fullscreen 1000 /counters?alone=true"
+      "commandLineArgs": "5005 fullscreen 1000"
     }
   }
 }
