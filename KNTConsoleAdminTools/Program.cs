@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Management;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Management;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ConsoleAdminTools
 {
@@ -18,16 +19,13 @@ namespace ConsoleAdminTools
             try
             {
                 string function = args[0];
-                string ip_address = args[1];
-                string subnet_mask = args[2];
-                string interfaceAlias = string.Empty;
-
-                if (args.Length >= 4)
-                    interfaceAlias = args[3];
 
                 // set IP address and subnet mask for interface Ethernet
                 if (function == "SetIP")
                 {
+                    string ip_address = args[1];
+                    string subnet_mask = args[2];
+
                     ManagementClass objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
                     ManagementObjectCollection objMOC = objMC.GetInstances();
 
@@ -59,6 +57,10 @@ namespace ConsoleAdminTools
 
                 else if (function == "SetIPForAlias")
                 {
+                    string ip_address = args[1];
+                    string subnet_mask = args[2];
+                    string interfaceAlias = args[3];
+
                     // 1. Poišči DeviceID adapterja s podanim NetConnectionID (interfaceAlias)
                     int deviceId = -1;
                     var adapterSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapter WHERE NetConnectionID IS NOT NULL");
@@ -114,6 +116,16 @@ namespace ConsoleAdminTools
                         {
                             File.AppendAllText(logFile, $"SetIPForAlias: Adapter {interfaceAlias} not IP-enabled.{Environment.NewLine}");
                         }
+                    }
+                }
+
+                else if (function == "CreateEventSource")
+                {
+                    string logName = args[1];
+
+                    if (!EventLog.SourceExists(logName))
+                    {
+                        EventLog.CreateEventSource(logName, "Application");
                     }
                 }
             }

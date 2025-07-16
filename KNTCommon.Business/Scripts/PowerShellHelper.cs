@@ -240,5 +240,30 @@ namespace KNTCommon.Business.Scripts
             return null;
         }
 
+        /// <summary>
+        /// CreateEventSource: for logging into Event Log viewer
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        public static void CreateEventSource()
+        {
+            string exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "KNTConsoleAdminTools.exe");
+            string args = $"CreateEventSource 'KNT Application'";
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = exePath,
+                Arguments = args,
+                UseShellExecute = true,
+                Verb = "runas",
+                WorkingDirectory = Path.GetDirectoryName(exePath)
+            };
+            var process = Process.Start(startInfo);
+
+            if (process == null)
+                throw new Exception("Process could not be created.");
+
+            process.WaitForExit();
+        }
+
+
     }
 }
