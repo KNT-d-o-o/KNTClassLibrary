@@ -33,6 +33,7 @@ namespace KNTLeakTester.Edge
         const int SW_MINIMIZE = 6;
         const int SW_MAXIMIZE = 3;
         const int SW_SHOWNORMAL = 1;
+        static DateTime refreshTime = DateTime.Now;
 
         static void Main(string[] args)
         {
@@ -140,13 +141,15 @@ namespace KNTLeakTester.Edge
                             writer.WriteLine(DateTime.Now + " KNT Leak Tester GUI stopped.");
                         DebugWriteline("Shutdown signal received. Exiting...");
 
-                        try
-                        {
-                            edgeProcess.Kill();
-                            edgeProcess.WaitForExit(); // wait for closing process
-                        }
-                        catch { }
-                        break;
+                        if(StopEdge(edgeProcess))
+                            break;
+                    }
+
+                    // restart every day
+                    if (refreshTime.Date != DateTime.Now.Date)
+                    {
+                        if(StopEdge(edgeProcess))
+                            refreshTime = DateTime.Now;
                     }
 
                     // edge not running, run it
@@ -163,23 +166,6 @@ namespace KNTLeakTester.Edge
 
                         Thread.Sleep(500); // wait for runnin edge
                     }
-
-                    // check if reloed is needed // IntPtr 
-                    /* fstaa NOK
-                    if (checkInterval > 0 && !File.Exists(shutdownFilePath))
-                    {
-                        if (IsRefreshNeeded("http://localhost:", debugPort))
-                        {
-                            edgeProcess = RestartEdge(edgeProcess, new ProcessStartInfo
-                            {
-                                FileName = edgePath,
-                                Arguments = arguments,
-                                UseShellExecute = true,
-                                CreateNoWindow = false
-                            });
-                            DebugWriteline("The page has been refreshed.");
-                        }
-                    } */
 
                     Thread.Sleep(checkInterval);
                 }
@@ -221,125 +207,19 @@ namespace KNTLeakTester.Edge
             return false;
         }
 
-        static bool IsRefreshNeeded(string urlServer, int port)
-        {
-            bool needsRefresh = false;
-            ManualResetEventSlim waitHandle = new ManualResetEventSlim(false);
-
-            try
-            {
-                string wsUrl = string.Empty;
-
-                using (var client = new HttpClient())
-                {
-                    string jsonResponse = client.GetStringAsync($"{urlServer}{port}/json").Result;
-                    var jsonArray = JsonDocument.Parse(jsonResponse).RootElement.EnumerateArray().ToList();
-
-                    if (jsonArray.Count > 0)
-                    {
-                        wsUrl = jsonArray[0].GetProperty("webSocketDebuggerUrl").GetString();
-                    }
-                    else
-                    {
-                        DebugWriteline("No browser instances found.");
-                        return true;
-                    }
-                }
-
-                WebSocket ws = new WebSocket(wsUrl);
-
-                int requestId = 1;
-                int outerHtmlRequestId = 2;
-
-                ws.OnMessage += (sender, e) =>
-                {
-                    try
-                    {
-                        var message = JsonDocument.Parse(e.Data).RootElement;
-
-                        if (message.TryGetProperty("id", out var id) && id.GetInt32() == requestId)
-                        {
-                            string bodyNodeId = message.GetProperty("result").GetProperty("root")
-                                .GetProperty("children")[1].GetProperty("nodeId").ToString();
-
-                            string outerHtmlRequest = $"{{\"id\": {outerHtmlRequestId}, \"method\": \"DOM.getOuterHTML\", \"params\": {{\"nodeId\": {bodyNodeId}}}}}";
-                            ws.Send(outerHtmlRequest);
-                        }
-                        else if (message.TryGetProperty("id", out var outerHtmlId) && outerHtmlId.GetInt32() == outerHtmlRequestId)
-                        {
-                            string htmlContent = message.GetProperty("result").GetProperty("outerHTML").GetString();
-
-                            if (htmlContent.Contains("Reload") || htmlContent.Contains("This site can’t be reached"))
-                            {
-                                DebugWriteline("The page needs a refresh!");
-                                needsRefresh = true;
-                            }
-                            else
-                            {
-                                DebugWriteline("The page is OK.");
-                            }
-
-                            waitHandle.Set(); // signal that we're done
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugWriteline($"Error processing WebSocket message: {ex.Message}");
-                        needsRefresh = true;
-                        waitHandle.Set(); // error ends waiting
-                    }
-                };
-
-                ws.OnOpen += (sender, e) =>
-                {
-                    string request = "{\"id\": 1, \"method\": \"DOM.getDocument\"}";
-                    ws.Send(request);
-                };
-
-                ws.Connect();
-
-                // Wait for WebSocket response (max 5 seconds)
-                if (!waitHandle.Wait(TimeSpan.FromSeconds(5)))
-                {
-                    DebugWriteline("Timeout waiting for WebSocket response.");
-                    needsRefresh = true;
-                }
-
-                ws.Close();
-            }
-            catch (Exception ex)
-            {
-                DebugWriteline($"Error checking page status: {ex.Message}");
-                return true;
-            }
-
-            return needsRefresh;
-        }
-
-        static Process RestartEdge(Process edgeProcess, ProcessStartInfo psi)
+        static bool StopEdge(Process edgeProcess)
         {
             try
             {
-                DebugWriteline("Restarting Edge...");
-
-                if (edgeProcess != null && !edgeProcess.HasExited)
-                {
-                    edgeProcess.Kill();
-                    edgeProcess.WaitForExit();
-                }
-
-                Thread.Sleep(1000);
-
-                edgeProcess = Process.Start(psi);
-
-                DebugWriteline("Edge restarted.");
+                edgeProcess.Kill();
+                edgeProcess.WaitForExit();
             }
             catch (Exception ex)
             {
-                DebugWriteline($"Error restarting Edge: {ex.Message}");
+                DebugWriteline("Failed to close old Edge process: " + ex.Message);
+                return false;
             }
-
-            return edgeProcess;
+            return true;
         }
 
         static void DebugWriteline(string str)
