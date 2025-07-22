@@ -1,0 +1,179 @@
+﻿@using KNTCommon.Business.EventHandlers
+@using KNTToolsAndAccessories
+@inject DialogService DialogService
+@inject KNTCommon.Blazor.Services.HelperService Helper
+@inject IIoTasksRepository IoTasksRepository
+@inject KNTCommon.Blazor.Services.TimerService TimerService
+@inject KNTCommon.Business.Scripts.PowerShellHelper PSHelper
+@inject KNTCommon.Blazor.Services.WindowsServiceHelper WHelper
+@inject KNTCommon.Business.Repositories.IParametersRepository Parameters
+@inject IJSRuntime JS
+
+@* ExportOrderEdit *@
+
+<div class="Animation">
+
+    <ExportOrderDynamic></ExportOrderDynamic>
+
+    <EditForm Model="@IoTasks">
+        <div>
+            <RadzenFieldset style="margin-bottom: 20px;">
+
+                <RadzenRow>
+                    <RadzenColumn Size="3">
+                        <RadzenLabel class="labelEdit">Condition</RadzenLabel>
+                    </RadzenColumn>
+                    <RadzenColumn Size="3">
+                        <RadzenLabel class="labelEdit">@IoTaskDetails_0.Par2</RadzenLabel>
+                    </RadzenColumn>
+                    <RadzenColumn Size="1">
+                        <RadzenDropDown 
+                            Data="@findConditions" 
+                            TValue="string" 
+                            Value="@condition" 
+                            Change="@setCondition"
+                            class="dropdown" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="2">
+                        <NumericInput CSSId="CalibrationEditNumericInput" InputValue="@conditionVal" ReturnedValue="setConditionVal" Style="height: 100%"></NumericInput>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow>
+                    <RadzenColumn Size="3">
+                        <RadzenLabel class="labelEdit">Compress to ZIP</RadzenLabel>
+                    </RadzenColumn>
+                    <RadzenColumn Size="9">
+                        <RadzenSwitch TValue="bool" @bind-Value=@zip Change=@ZipChange Style="margin:1vh"></RadzenSwitch>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow>
+                    <RadzenColumn Size="3">
+                        <RadzenLabel class="labelEdit">Dump all</RadzenLabel>
+                    </RadzenColumn>
+                    <RadzenColumn Size="9">
+                        <RadzenSwitch TValue="bool" @bind-Value=@dumpAll Change=@DumpAllChange Style="margin:1vh"></RadzenSwitch>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow>
+                    <RadzenColumn Size="3">
+                        <RadzenLabel class="labelEdit">Export location</RadzenLabel>
+                    </RadzenColumn>
+                    <RadzenColumn Size="9">
+                        <RadzenLabel class="labelEdit">@IoTasks.Par1</RadzenLabel>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenFieldset>
+        </div>
+
+    </EditForm>
+</div>
+
+@code {
+    private IoTasksDTO IoTasks = new();
+    private IoTaskDetailsDTO IoTaskDetails_0 = new();
+    double ProgressValue;
+    ButtonStyle buttonEnableDisableService = ButtonStyle.Light;
+    string ioRunning = string.Empty;
+    string[] par1Array = { };
+    bool zip = false;
+    bool dumpAll = false;
+    static string[] findConditions = { "=", "<", ">", "<=", ">=" };
+    string? condition = findConditions[0];
+    string conditionVal = string.Empty;
+
+    private void setConditionVal(object value)
+    {
+        if (value != null && int.TryParse(value.ToString(), out int measNumCond))
+        {
+            conditionVal = measNumCond.ToString();
+            Helper.Notify(IoTasksRepository.IoTaskSetPar3(IoTasks.IoTaskId, 1, $"{IoTaskDetails_0.Par2}{condition}{conditionVal}"));
+        }
+        LoadData();
+    }
+
+    private void setCondition(object value)
+    {
+        condition = value?.ToString();
+        Helper.Notify(IoTasksRepository.IoTaskSetPar3(IoTasks.IoTaskId, 1, $"{IoTaskDetails_0.Par2}{condition}{conditionVal}"));
+        LoadData();
+    }
+
+    private void Export()
+    {
+        Helper.Notify(IoTasksRepository.IoTaskStart(IoTasks.IoTaskId));
+    }
+
+    void ZipChange(bool toZip)
+    {
+        string pathToPar1 = par1Array[0];
+        if (toZip)
+            pathToPar1 += ";zip";
+
+        Helper.Notify(IoTasksRepository.IoTaskSetPar1(IoTasks.IoTaskId, pathToPar1));
+        LoadData();
+    }
+
+    void DumpAllChange(bool toDumpAll)
+    {
+        string parString = "getOnlyDefined";
+        if (toDumpAll)
+            parString = "getAll";
+        Helper.Notify(IoTasksRepository.IoTaskSetPar5(IoTasks.IoTaskId, 1, parString));
+
+        LoadData();
+    }
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+        base.OnInitialized();
+    }
+
+    private void LoadData()
+    {
+        InvokeAsync(() =>
+        {
+            IoTasks = IoTasksRepository.GetIoTaskByTypeMode(4, 2);
+
+            IoTaskDetails_0 = IoTasksRepository.GetIoTaskDetails(IoTasks.IoTaskId, true).First();
+
+            ProgressValue = IoTasks.Status ?? 0;
+
+            // condition
+            if (IoTaskDetails_0.Par3 != null)
+            {
+                // parsing match
+                var match = Regex.Match(IoTaskDetails_0.Par3, @"(>=|<=|>|<|=)(\d+)");
+                if (match.Success)
+                {
+                    condition = match.Groups[1].Value;
+                    conditionVal = match.Groups[2].Value;
+                }
+            }
+
+            // dump all
+            if (IoTaskDetails_0.Par5 != null)
+            {
+                if (IoTaskDetails_0.Par5.ToLower() == "getall")
+                    dumpAll = true;
+                else
+                    dumpAll = false;
+            }
+
+            // zip boolean flag
+            if (IoTasks.Par1 != null)
+                par1Array = (IoTasks.Par1).Split(';');
+            if (par1Array.Length <= 1)
+                zip = false;
+            else if (par1Array[1].ToLower() == "zip")
+                zip = true;
+            else
+                zip = false;
+
+            StateHasChanged();
+        });
+    }
+
+}

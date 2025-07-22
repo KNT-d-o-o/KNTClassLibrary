@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KNTCommon.BusinessIO.DTOs
+namespace KNTCommon.Business.DTOs
 {
     public class IoTaskDetailsDTO
     {
@@ -19,7 +19,7 @@ namespace KNTCommon.BusinessIO.DTOs
         public string? Par3 { get; set; }
 
         public string? Par4 { get; set; }
-        
+
         public string? Par5 { get; set; }
 
         public string? Par6 { get; set; }

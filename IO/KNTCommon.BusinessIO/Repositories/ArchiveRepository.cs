@@ -23,6 +23,8 @@ using Org.BouncyCastle.Crypto.Utilities;
 using DocumentFormat.OpenXml.Drawing;
 using MySqlConnector;
 using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
+using KNTCommon.Business.DTOs;
+using KNTCommon.Business.Repositories;
 
 namespace KNTCommon.BusinessIO.Repositories
 {

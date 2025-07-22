@@ -1,15 +1,19 @@
-﻿using KNTCommon.BusinessIO;
+﻿using AutoMapper;
 using KNTCommon.Business.Repositories;
-using KNTCommon.BusinessIO.Repositories;
+using KNTCommon.Business.Scripts;
+using KNTCommon.BusinessIO;
 using KNTCommon.BusinessIO.AutoMapper;
+using KNTCommon.BusinessIO.Repositories;
 using KNTCommon.Data.Models;
+using KNTToolsAndAccessories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
 using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 
 namespace KNTCommon.BusinessIO.Test
 {
@@ -39,9 +43,15 @@ namespace KNTCommon.BusinessIO.Test
             var proc = host.Services.GetRequiredService<BusinessIOProcess>();
             using var cts = new CancellationTokenSource();
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // for Event viewer (admin)
+                PowerShellHelper.CreateEventSource();
+                Tools.LogEvent("Start KNT IO console application", EventLogEntryType.Information);
+            }
 
 #if DEBUG
-            Console.WriteLine($"Start KNTCommon.BusinessIO.Test application version {AppInfo.Version}.");
+            Console.WriteLine($"Start KNTCommon.BusinessIO.Test application version {typeof(Program).Assembly.GetName().Version}.");
 #endif
 
             Console.CancelKeyPress += (sender, e) =>

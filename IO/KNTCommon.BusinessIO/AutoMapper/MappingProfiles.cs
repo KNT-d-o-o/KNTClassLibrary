@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using KNTCommon.Business.DTOs;
 using KNTCommon.BusinessIO.DTOs;
 using KNTCommon.Data.Models;
 using System;
@@ -13,8 +14,8 @@ namespace KNTCommon.BusinessIO.AutoMapper
     {
         public MappingProfiles()
         {
-            CreateMap<IoTasks, DTOs.IoTasksDTO>().ReverseMap();
-            CreateMap<DTOs.IoTasksDTO, IoTasks>().ReverseMap();
+            CreateMap<IoTasks, IoTasksDTO>().ReverseMap();
+            CreateMap<IoTasksDTO, IoTasks>().ReverseMap();
 
             CreateMap<IoTaskDetails, IoTaskDetailsDTO>().ReverseMap();
             CreateMap<IoTaskDetailsDTO, IoTaskDetails>().ReverseMap();

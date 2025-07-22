@@ -67,7 +67,8 @@ namespace KNTCommon.Blazor.Services
             options.Resizable = false;
             options.Draggable = false;
             options.CloseDialogOnOverlayClick = true;
-            options.CssClass = Enum.GetName(dialogOptionsType.GetType(), dialogOptionsType);
+            if(dialogOptionsType != null)
+                options.CssClass = Enum.GetName(dialogOptionsType.GetType(), dialogOptionsType);
             return options;
         }
 

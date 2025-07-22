@@ -17,7 +17,7 @@ namespace KNTCommon.Blazor.Services
         public int pageSize { get; set; } = 5;
 
         public int TotalPageResultsNum { get; set; } = 50;
-        public string[] plcService = { };
+        public string[] iService = { };
 
         // TODO TEMP till  permission is done
         public bool IsArchive { get; } = false;

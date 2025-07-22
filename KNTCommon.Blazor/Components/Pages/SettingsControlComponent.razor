@@ -1,5 +1,8 @@
 ﻿@implements IDisposable
 @using KNTCommon.Business.EventHandlers
+@using System.Diagnostics
+@using Microsoft.Win32
+@using System.Xml
 @inject HelperService Helper
 @inject WindowsServiceHelper WHelper
 @inject DialogService DialogService
@@ -12,43 +15,55 @@
 
 <div class="ScrollableOuterDiv Animation">
 
-    @foreach (var service in SharedContainerCommon.plcService)
+    @foreach (var service in SharedContainerCommon.iService)
     {
+        string srvVersion = GetServiceVersion(service);
         <RadzenRow>
             <RadzenColumn Size="3">
                 <RadzenLabel class="labelEdit" Text="@GetServiceName(service)"/>
             </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenLabel class="labelEdit">@srvVersion</RadzenLabel>
+            </RadzenColumn>
             <RadzenColumn Size="3">
                 <RadzenLabel class="labelEdit">@GetServiceStatus(service)</RadzenLabel>
             </RadzenColumn>
-            <RadzenColumn Size="1">
-                <RadzenButton Text="Start" Click="@(async () => await StartService(service))" 
-                class="rz-ripple action-button" Size="ButtonSize.Medium" 
-                Disabled="@IsRunning(service)" ButtonStyle="ButtonStyle.Success" />
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Start" Click="@(async () => await StartService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@IsRunning(service)" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-            <RadzenColumn Size="1">
-                <RadzenButton Text="Stop" Click="@(async () => await StopService(service))" 
-                class="rz-ripple action-button" Size="ButtonSize.Medium" 
-                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Stop" Click="@(async () => await StopService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-            <RadzenColumn Size="1">
-                <RadzenButton Text="Restart" Click="@(async () => await RestartService(service))" 
-                class="rz-ripple action-button" Size="ButtonSize.Medium" 
-                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Restart" Click="@(async () => await RestartService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-
-            <RadzenColumn Size="1">
-                <RadzenButton Text="Pause" Click="@(async () => await PauseService(service))" 
-                class="rz-ripple action-button" Size="ButtonSize.Medium" 
-                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Pause" Click="@(async () => await PauseService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-
-            <RadzenColumn Size="1">
-                <RadzenButton Text="Continue" Click="@(async () => await ContinueService(service))" 
-                class="rz-ripple action-button" Size="ButtonSize.Medium" 
-                Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Continue" Click="@(async () => await ContinueService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@(!IsRunning(service))" ButtonStyle="ButtonStyle.Success" />
             </RadzenColumn>
-
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Install" Click="@(async () => await InstallService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@(IsRunning(service) || srvVersion != "/")" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+            <RadzenColumn Size="2">
+                <RadzenButton Text="Remove" Click="@(async () => await DeleteService(service))"
+                              class="rz-ripple action-button ButtonContainer" Size="ButtonSize.Medium"
+                              Disabled="@(IsRunning(service) || srvVersion == "/")" ButtonStyle="ButtonStyle.Success" />
+            </RadzenColumn>
+ 
         </RadzenRow>
     }
 
@@ -62,7 +77,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        foreach (var service in SharedContainerCommon.plcService)
+        foreach (var service in SharedContainerCommon.iService)
         {
             ServiceStatuses[service] = NONE;
         }
@@ -91,7 +106,7 @@
 
     private async Task RefreshStatuses()
     {
-        foreach (var service in SharedContainerCommon.plcService)
+        foreach (var service in SharedContainerCommon.iService)
         {
             ServiceStatuses[service] = await Task.Run(() => WHelper.GetServiceStatus(service));
         }
@@ -101,16 +116,16 @@
     {
         ServiceStatuses[service] = NONE;
         if (Parameters.GetServiceStatus(service) == 0)
-            if (Parameters.UpdateServiceStatus(service, 1))
-                await Task.Run(() => PSHelper.StartStopService(service, "start"));
+            if (await Task.Run(() => PSHelper.StartStopService(service, "start")))
+                Parameters.UpdateServiceStatus(service, 1);
     }
 
     private async Task StopService(string service)
     {
         ServiceStatuses[service] = NONE;
         if (Parameters.GetServiceStatus(service) == 1)
-            if (Parameters.UpdateServiceStatus(service, 0))
-                await Task.Run(() => PSHelper.StartStopService(service, "stop"));
+            if (await Task.Run(() => PSHelper.StartStopService(service, "stop")))
+                Parameters.UpdateServiceStatus(service, 0);
     }
 
     private async Task RestartService(string service)
@@ -142,5 +157,105 @@
     private string GetServiceStatus(string service) => ServiceStatuses.TryGetValue(service, out var status) ? status : NONE;
 
     private bool IsRunning(string service) => GetServiceStatus(service) == "Running" || GetServiceStatus(service) == "Paused";
+
+    string? GetExePath(string serviceName)
+    {
+        using (var registryKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{serviceName}"))
+        {
+            if (registryKey == null)
+                return null;
+
+            var imagePath = registryKey.GetValue("ImagePath")?.ToString();
+            if (string.IsNullOrEmpty(imagePath))
+                return null;
+
+            imagePath = Environment.ExpandEnvironmentVariables(imagePath.Trim('"'));
+            var exePath = imagePath.Split(' ')[0]; // oonnly path to .exe
+
+            if (!System.IO.File.Exists(exePath))
+                return null;
+            return exePath;
+        }
+    }
+
+    private string GetServiceVersion(string serviceName)
+    {
+        string ret = "/";
+        try
+        {
+            string? path = GetExePath(serviceName);
+            if (path != null)
+            {
+                var versionInfo = FileVersionInfo.GetVersionInfo(path);
+                if (versionInfo.FileVersion != null)
+                    ret = versionInfo.FileVersion;
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+        return ret;
+    }
+
+    private async Task DeleteService(string service)
+    {
+        string? path = GetExePath(service);
+        if (path == null)
+            path = GetFolderDefinition();
+        if (path != null)
+        {
+            string? servicePath = GetServicePath(service);
+            if (servicePath != null)
+                await Task.Run(() => PSHelper.DeleteService(service, Path.Combine(path, servicePath)));
+        }
+    }
+
+    private async Task InstallService(string service)
+    {
+        string? path = GetExePath(service);
+        if (path == null)
+            path = GetFolderDefinition();
+        if (path != null)
+        {
+
+            string? servicePath = GetServicePath(service);
+            if (servicePath != null)
+                if (await Task.Run(() => PSHelper.InstallService(service, Path.Combine(path, servicePath))))
+                Parameters.UpdateServiceStatus(service, 1);
+        }
+    }
+
+    private string? GetServicePath(string serviceName)
+    {
+        foreach (ServiceControlDTO s in services)
+        {
+            if (s.ServiceName == serviceName)
+                return s.path;
+
+        }
+        return null;
+    }
+
+    // get connection string data
+    private string? GetFolderDefinition()
+    {
+        string? productPath = null;
+
+        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+        string configPath = Path.Combine(basePath, "config.xml");
+
+        XmlDocument doc = new();
+        doc.Load(configPath);
+        if (doc.DocumentElement != null)
+        {
+            XmlNode? node = doc.DocumentElement.SelectSingleNode("/config/product_path");
+            if (node != null)
+            {
+                productPath = node.InnerText;
+            }
+        }
+        return productPath;
+    }
 
 }
