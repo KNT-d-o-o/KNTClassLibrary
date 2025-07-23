@@ -1,0 +1,60 @@
+﻿<Window x:Class="KNTInstaller.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KNTInstaller"
+        mc:Ignorable="d"
+        Title="KNT Installer" Height="600" Width="500">
+    <StackPanel Margin="0,0,0,0">
+        <StackPanel.Resources>
+            <Style TargetType="{x:Type Label}">
+                <Setter Property="Margin" Value="10,0,10,10"/>
+            </Style>
+            <Style TargetType="{x:Type Expander}">
+                <Setter Property="Margin" Value="10,0,10,10"/>                
+            </Style>
+
+            <Style TargetType="{x:Type StackPanel}">
+                <Setter Property="Margin" Value="20,0,10,10"/>                
+            </Style>            
+
+            <Style TargetType="{x:Type Button}">
+                <Setter Property="Margin" Value="10,0,10,10"/>
+            </Style>
+
+            <Style TargetType="{x:Type RichTextBox}">
+                <Setter Property="Margin" Value="10,0,10,10"/>
+            </Style>
+        </StackPanel.Resources>
+
+        <Label Content="KNT Installer" FontSize="20" FontWeight="Bold"/>
+        <Expander Header="Common" IsExpanded="True">
+            <StackPanel>
+                <CheckBox x:Name="checkBox_Common_IIS" Content="IIS TODO" Margin="5" />
+                <CheckBox x:Name="checkBox_Common_DotNetHosting" Content="Dot net hosting" Margin="5" />
+                <CheckBox x:Name="checkBox_Common_Edge" Content="Edge" Margin="5" />
+            </StackPanel>
+        </Expander>
+
+        <Expander Header="SMM" IsExpanded="True">
+            <StackPanel>
+                <CheckBox x:Name="checkBox_SMM" Content="SMM" Margin="5" />
+                <CheckBox x:Name="checkBox_SMM_IISCreateApp" Content="IIS create app" Margin="5"/>
+                <CheckBox x:Name="checkBox_SMM_OpenFirewallPort" Content="Open firewall port" Margin="5"/>
+            </StackPanel>
+        </Expander>
+
+        <Expander Header="Services" IsExpanded="True">
+            <StackPanel>
+                <CheckBox x:Name="checkBox_Services_IO" Content="IO TODO" IsEnabled="False" Margin="5" />
+            </StackPanel>
+        </Expander>
+
+        <Button Content="Install" Click="Install_Click" HorizontalAlignment="Right" Width="80" Height="30"/>
+
+        <RichTextBox x:Name="richTextBoxLog" Height="150" VerticalScrollBarVisibility="Visible" IsReadOnly="True">
+        </RichTextBox>
+
+    </StackPanel>
+</Window>
