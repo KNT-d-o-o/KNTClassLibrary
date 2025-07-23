@@ -13,4 +13,6 @@ public partial class ServiceControl
 
     public int? Status { get; set; }
 
+    public string? path { get; set; }
+
 }

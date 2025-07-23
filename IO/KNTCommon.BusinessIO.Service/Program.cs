@@ -1,19 +1,22 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using KNTCommon.Business.Repositories;
+using KNTCommon.Business.Scripts;
 using KNTCommon.BusinessIO;
-using KNTCommon.BusinessIO.Service;
-using System.Diagnostics;
-using KNTCommon.BusinessIO.Repositories;
-using Microsoft.EntityFrameworkCore;
 using KNTCommon.BusinessIO.AutoMapper;
+using KNTCommon.BusinessIO.Repositories;
+using KNTCommon.BusinessIO.Service;
 using KNTCommon.Data.Models;
-using KNTCommon.Business.Repositories;
+using KNTToolsAndAccessories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace KNTCommon.BusinessIO.Service
 {
     public class Program
     {
-        public const string ServiceVersion = AppInfo.Version;
+        public static readonly string ServiceVersion = AppInfo.Version;
 
         public static void Main(string[] args)
         {

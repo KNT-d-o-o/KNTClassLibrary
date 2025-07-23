@@ -1,0 +1,74 @@
+﻿@using System.IO
+@using Radzen
+
+<!-- DiskInfoComponent -->
+
+<RadzenColumn Size="12">
+    <RadzenLabel class="labelEdit" Text="Disk info"></RadzenLabel>
+    @if (drives == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@drives" TItem="DriveInfo" ShowPagingSummary="false" AllowColumnResize>
+            <Columns>
+                <RadzenDataGridColumn TItem="DriveInfo" Property="Name" Title="Name" Width="8%" />
+
+                <RadzenDataGridColumn TItem="DriveInfo" Title="Type">
+                    <Template Context="drive">
+                        @drive.DriveType
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="DriveInfo" Title="Format" Width="12%">
+                    <Template Context="drive">
+                        @(drive.IsReady? drive.DriveFormat: "Not available")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="DriveInfo" Title="Capacity (GB)">
+                    <Template Context="drive">
+                        @(drive.IsReady? ToGB(drive.TotalSize) : "-")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="DriveInfo" Title="Used (GB)">
+                    <Template Context="drive">
+                        @(drive.IsReady? ToGB(drive.TotalSize - drive.TotalFreeSpace) : "-")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="DriveInfo" Title="Free (GB)" Width="25%">
+                    <Template Context="drive">
+                        @(drive.IsReady ? $"{ToGB(drive.TotalFreeSpace)} ({PercentFree(drive)})" : "-")
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenColumn>
+
+@code {
+    private DriveInfo[]? drives;
+
+    protected override void OnInitialized()
+    {
+        drives = DriveInfo.GetDrives();
+    }
+
+    private string ToGB(long bytes)
+    {
+        return (bytes / (1024.0 * 1024 * 1024)).ToString("0.00");
+    }
+
+    private string PercentFree(DriveInfo d)
+    {
+        string ret = "-";
+
+        if (d.IsReady && d.TotalSize > 0)
+            ret = $"{((double)d.TotalFreeSpace / d.TotalSize * 100):0.0} %";
+
+        return ret;
+    }
+}

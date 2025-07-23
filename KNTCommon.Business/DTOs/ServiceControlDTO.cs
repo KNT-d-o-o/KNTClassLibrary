@@ -17,5 +17,7 @@ namespace KNTCommon.Business.DTOs
 
         public int? Status { get; set; }
 
+        public string? path { get; set; }
+
     }
 }

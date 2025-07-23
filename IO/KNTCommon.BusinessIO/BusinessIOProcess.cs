@@ -9,6 +9,8 @@ using KNTCommon.Data.Models;
 using Microsoft.Extensions.DependencyInjection;
 using DocumentFormat.OpenXml.Office.PowerPoint.Y2022.M08.Main;
 using Microsoft.VisualBasic;
+using KNTCommon.Business.DTOs;
+using KNTCommon.Business;
 
 namespace KNTCommon.BusinessIO
 {
@@ -112,9 +114,9 @@ namespace KNTCommon.BusinessIO
 #endif
                 if (ioTasksRepository != null)
                 {
-                    IEnumerable<DTOs.IoTasksDTO> ioTasks = ioTasksRepository.GetIoTasks();
+                    IEnumerable<IoTasksDTO> ioTasks = (IEnumerable<IoTasksDTO>)ioTasksRepository.GetIoTasks();
 
-                    foreach (DTOs.IoTasksDTO ioTask in ioTasks)
+                    foreach (IoTasksDTO ioTask in ioTasks)
                     {
                         if (ioTask.ExecuteDateAndTime < DateTime.Now && ioTask.Status < 100)
                         {
@@ -140,7 +142,7 @@ namespace KNTCommon.BusinessIO
                             break; // execute only first priority task
                         }
                     }
-                    foreach (DTOs.IoTasksDTO ioTask in ioTasks) // set remaining time info
+                    foreach (IoTasksDTO ioTask in ioTasks) // set remaining time info
                     {
                         if (ioTask.ExecuteDateAndTime > DateTime.Now)
                         {
@@ -162,7 +164,7 @@ namespace KNTCommon.BusinessIO
                                     else if (ioTask.Status >= 100 && ioTask.Status != statusPrev) // disable manual
                                     {
                                         ioTasksRepository.IoTaskSetInfo(ioTask.IoTaskId, "Disabled, " + DateTime.Now.ToString(), Const.WARNING);
-                                        statusPrev = ioTask.Status;
+                                        statusPrev = ioTask.Status ?? 999;
                                     }
                                 }
                             }
@@ -204,7 +206,7 @@ namespace KNTCommon.BusinessIO
         string? orderByA;
         int tableOptimizedIdx = 0;
         List<IoTaskDetailsDTO>? taskDetailsA;
-        private async Task ArchiveStep(DTOs.IoTasksDTO task)
+        private async Task ArchiveStep(IoTasksDTO task)
         {
 #if DEBUG
             Console.WriteLine($"ArchiveStep noToArchive: {noToArchive}, noArchived: {noArchived}");
@@ -306,7 +308,7 @@ namespace KNTCommon.BusinessIO
         string? dayWhereR;
         string? orderByR;
         List<IoTaskDetailsDTO>? taskDetailsR;
-        private void RestoreStep(DTOs.IoTasksDTO task)
+        private void RestoreStep(IoTasksDTO task)
         {
             try
             {
@@ -380,7 +382,7 @@ namespace KNTCommon.BusinessIO
         List<IoTaskDetailsDTO>? taskDetailsE;
         string? whereConditionE;
         string? nextDateTimeConditionE;
-        private void ExportExcelStep(DTOs.IoTasksDTO task)
+        private void ExportExcelStep(IoTasksDTO task)
         { 
             try
             {
@@ -392,7 +394,8 @@ namespace KNTCommon.BusinessIO
                     stepExport = 0;
                     taskDetailsE = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId, false);
                     noToExport = taskDetailsE.Count;
-                    filePathXls = (task.Par1 ?? string.Empty).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
+
+                    filePathXls = (task.Par1 ?? string.Empty).Replace("{User}", Environment.UserName).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
                     if (noToExport > 0)
                     {
                         whereConditionE = taskDetailsE[0].Par3 ?? string.Empty;
@@ -520,7 +523,7 @@ namespace KNTCommon.BusinessIO
         string? filePathDump;
         List<IoTaskDetailsDTO>? taskDetailsD;
         bool toZip = false;
-        private void ExportDumpStep(DTOs.IoTasksDTO task)
+        private void ExportDumpStep(IoTasksDTO task)
         { 
             try
             {
@@ -574,7 +577,7 @@ namespace KNTCommon.BusinessIO
                     else
                         toZip = false;
 
-                    filePathDump = (pars1[0]).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
+                    filePathDump = (pars1[0]).Replace("{User}", Environment.UserName).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
                     if (noToDump > 0)
                     {
                         ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);

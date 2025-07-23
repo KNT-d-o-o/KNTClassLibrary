@@ -6,30 +6,42 @@
 
 @* DatabaseTablesComponent *@
 
-<div class="Animation FixContainer">
-    <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText=@Localization.Get("RadzenDataGridColumn_EmptyText")
-    TItem="Dictionary<string, object>"
-    AllowAlternatingRows="false"
-    AllowSorting="true" AllowColumnResize="true" PagerHorizontalAlign="HorizontalAlign.Left"
-    EditMode="DataGridEditMode.Single" style="height: 75vh"
-    >
-        <Columns>
-            <RadzenDataGridColumn TItem="string" Property="." Title="@Localization.Get("LabelTableName")">
-                <Template Context="table">
-                    <span @onclick="(() => OnCellClick(table))" style="cursor: pointer;">@table</span>
-                </Template>
-            </RadzenDataGridColumn>
-            @if (!SharedContainerCommon.IsOldArchiveDatabase)
-            {
-                <RadzenDataGridColumn TItem="string" Property="." Title="SQL" Width="10%">
+<div class="ScrollableOuterDiv Animation">
+
+    <RadzenStack>
+        <RadzenFieldset>
+            <RadzenRow class="RadzenRowMarginFormsSettingsLeft">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenButton class="RadzenGridButtonFormFlex rz-ripple" Text="Export..." ButtonStyle="ButtonStyle.Success" Shade="Shade.Darker" Style="height:100%;" Click="() => OpenExportDialog()"></RadzenButton>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenFieldset>
+    </RadzenStack>
+                    
+    <div class="Animation" style="width: 100%; height: 75%">
+        <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText=@Localization.Get("RadzenDataGridColumn_EmptyText")
+        AllowAlternatingRows="false"
+        AllowSorting="true" AllowColumnResize="true" PagerHorizontalAlign="HorizontalAlign.Left"
+        EditMode="DataGridEditMode.Single" style="height: 100%"
+        >
+            <Columns>
+                <RadzenDataGridColumn TItem="string" Property="." Title="@Localization.Get("LabelTableName")">
                     <Template Context="table">
-                        <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Import" Icon="database" Click="() => OnSql(table)" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
+                        <span @onclick="(() => OnCellClick(table))" style="cursor: pointer;">@table</span>
                     </Template>
                 </RadzenDataGridColumn>
-            }
+                @if (!SharedContainerCommon.IsOldArchiveDatabase)
+                {
+                    <RadzenDataGridColumn TItem="string" Property="." Title="SQL" Width="10%">
+                        <Template Context="table">
+                            <RadzenButton class="RadzenGridContextButtons rz-ripple" title="Import" Icon="database" Click="() => OnSql(table)" ButtonStyle="@ButtonStyle.Info" Shade="Shade.Darker" Size="ButtonSize.Large" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                }
 
-        </Columns>
-    </RadzenDataGrid>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
 </div>
 
 @code {
@@ -84,6 +96,12 @@
             if (await WindowsServiceHelper.GenerateSQLDump(tableName, DateTime.Now.ToString("yyyyMMddHHmmss")))
                 Helper.Notify(await TablesRepository.ExecuteSqlFromFile(filepath));
         }
+    }
+
+    public async Task OpenExportDialog()
+    {
+        string labelName = "Export data order";
+        await DialogService.OpenAsync<ExportOrderEdit>(labelName, null, Helper.GetDialogOptions("MaxSizeWindow"));
     }
 
 }

@@ -8,12 +8,14 @@ namespace KNTCommon.BusinessIO
 {
     public static class AppInfo
     {
-        public const string Version = "1.0.1.4";
+        public static readonly string Version = typeof(AppInfo).Assembly.GetName().Version?.ToString() ?? "unknown";
     }
 
-    /* *** Version 1.0.1.x *** 11/07/2025
+    /* *** Version 1.0.1.x *** 18/07/2025
      * Enhancement:
      *  DB Export: init - exclude auto-increment.
+     *  Excel Export: support user's folder.
+     *  Version in Directory.Build.props.
      * 
     /* *** Version 1.0.1.3 *** 30/05/2025
      * Bugs:

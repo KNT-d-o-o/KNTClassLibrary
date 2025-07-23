@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using KNTCommon.BusinessIO.DTOs;
 using KNTCommon.Data.Models;
 using KNTToolsAndAccessories;
 using Microsoft.EntityFrameworkCore;
@@ -21,10 +20,11 @@ using System.Globalization;
 using DocumentFormat.OpenXml.Vml.Office;
 using System.IO.Compression;
 using DocumentFormat.OpenXml.Office2021.DocumentTasks;
+using KNTCommon.Business.DTOs;
 
-namespace KNTCommon.BusinessIO.Repositories
+namespace KNTCommon.Business.Repositories
 {
-    public class IoTasksRepository
+    public class IoTasksRepository : IIoTasksRepository
     {
         /// <summary>
         /// Tasks:
@@ -62,19 +62,19 @@ namespace KNTCommon.BusinessIO.Repositories
         }
 
         // get actual IO tasks: Priority > 0, Status < 0
-        public IEnumerable<DTOs.IoTasksDTO> GetIoTasks()
+        public IEnumerable<IoTasksDTO> GetIoTasks()
         {
-            var ret = new List<DTOs.IoTasksDTO>();
+            var ret = new List<IoTasksDTO>();
             try
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    ret = AutoMapper.Map<List<DTOs.IoTasksDTO>>(context.IoTasks.Where(x => x.Priority > 0).OrderBy(x => x.Priority));
+                    ret = AutoMapper.Map<List<IoTasksDTO>>(context.IoTasks.Where(x => x.Priority > 0).OrderBy(x => x.Priority));
                 }
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #1 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #1 " + ex.Message);
             }
 
             return ret;
@@ -88,16 +88,35 @@ namespace KNTCommon.BusinessIO.Repositories
             {
                 using (var context = new EdnKntControllerMysqlContext())
                 {
-                    var task = AutoMapper.Map<DTOs.IoTasksDTO>(context.IoTasks.Where(x => x.IoTaskType == type && x.IoTaskMode == mode).First());
+                    var task = AutoMapper.Map<IoTasksDTO>(context.IoTasks.Where(x => x.IoTaskType == type && x.IoTaskMode == mode).First());
                     id = task.IoTaskId;
                 }
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #9 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #9 " + ex.Message);
             }
 
             return id;
+        }
+
+        // get task id by type and mode
+        public IoTasksDTO GetIoTaskByTypeMode(int type, int mode)
+        {
+            var ret = new IoTasksDTO();
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    ret = AutoMapper.Map<IoTasksDTO>(context.IoTasks.Where(x => x.IoTaskType == type && x.IoTaskMode == mode).First());
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #11 " + ex.Message);
+            }
+
+            return ret;
         }
 
         // get IO tasks details except not existed table => Par5 = "none"
@@ -109,7 +128,7 @@ namespace KNTCommon.BusinessIO.Repositories
                 using (var context = new EdnKntControllerMysqlContext())
                 {
                     IEnumerable<IoTaskDetails> details = new List<IoTaskDetails>();
-                    if(ignoreNone)
+                    if (ignoreNone)
                         details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId).OrderBy(x => x.TaskDetailOrder);
                     else
                         details = context.IoTaskDetails.Where(x => x.IoTaskId == taskId && x.Par5 != "none").OrderBy(x => x.TaskDetailOrder);
@@ -119,7 +138,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #2 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #2 " + ex.Message);
             }
 
             return ret;
@@ -138,14 +157,14 @@ namespace KNTCommon.BusinessIO.Repositories
                     // set to none if not exists
                     foreach (IoTaskDetails d in details)
                     {
-                        if(d.Par1 != null)
+                        if (d.Par1 != null)
                             ret.Add(d.Par1);
                     }
                 }
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #10 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #10 " + ex.Message);
             }
 
             return ret;
@@ -191,7 +210,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #3 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #3 " + ex.Message);
             }
 
             return ret;
@@ -214,7 +233,53 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #4 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #4 " + ex.Message);
+            }
+            return ret;
+        }
+
+        public bool IoTaskSetPar1(int taskId, string valStr)
+        {
+            var ret = true;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var task = context.IoTasks.Where(x => x.IoTaskId == taskId).FirstOrDefault();
+                    if (task != null)
+                    {
+                        task.Par1 = valStr;
+                        context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #12 " + ex.Message);
+            }
+            return ret;
+        }
+
+        
+        public bool IoTaskStart(int taskId)
+        {
+            var ret = true;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var task = context.IoTasks.Where(x => x.IoTaskId == taskId).FirstOrDefault();
+                    if (task != null)
+                    {
+                        task.ExecuteDateAndTime = DateTime.Now;
+                        task.Status = 0;
+                        context.SaveChanges();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #12 " + ex.Message);
             }
             return ret;
         }
@@ -283,7 +348,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #5 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #5 " + ex.Message);
             }
             return ret;
         }
@@ -305,7 +370,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #8 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #8 " + ex.Message);
             }
             return ret;
         }
@@ -327,7 +392,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #7 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #7 " + ex.Message);
             }
             return ret;
         }
@@ -351,7 +416,7 @@ namespace KNTCommon.BusinessIO.Repositories
             }
             catch (Exception ex)
             {
-                t.LogEvent("KNTCommon.BusinessIO.Repositories.IoTasksRepository #6 " + ex.Message);
+                t.LogEvent("KNTCommon.Business.Repositories.IoTasksRepository #6 " + ex.Message);
             }
             return true;
         }

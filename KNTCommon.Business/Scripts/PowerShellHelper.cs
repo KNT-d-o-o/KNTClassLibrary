@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Management.Automation;
 using System.Net.NetworkInformation;
+using System.Runtime.Versioning;
 using System.ServiceProcess;
 
 namespace KNTCommon.Business.Scripts
@@ -124,7 +125,7 @@ namespace KNTCommon.Business.Scripts
                 // stop
                 if (!StartStopService(serviceName, "stop"))
                 {
-                    return false; // Če ustavitev ne uspe, ne nadaljujemo
+                    return false; // not success stop, continue
                 }
 
                 // sleep
@@ -238,6 +239,127 @@ namespace KNTCommon.Business.Scripts
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// CreateEventSource: for logging into Event Log viewer
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        public static void CreateEventSource()
+        {
+            string exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "KNTConsoleAdminTools.exe");
+            string args = $"CreateEventSource \"KNT Application\"";
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = exePath,
+                Arguments = args,
+                UseShellExecute = true,
+                Verb = "runas",
+                WorkingDirectory = Path.GetDirectoryName(exePath)
+            };
+            var process = Process.Start(startInfo);
+
+            if (process == null)
+                throw new Exception("Process could not be created.");
+
+            process.WaitForExit();
+        }
+
+        // Delete existing service
+        public bool DeleteService(string serviceName, string exePath)
+        {
+            try
+            {
+                ProcessStartInfo deleteInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c sc delete \"{serviceName}\"",
+                    Verb = "runas",
+                    UseShellExecute = true
+                };
+                Process.Start(deleteInfo)?.WaitForExit();
+                Thread.Sleep(2000);
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("KNTCommon.Business.Scripts #5 " + ex.Message);
+                return false;
+            }
+            return true;
+        }
+
+        public bool InstallService(string serviceName, string exePath)
+        {
+            try
+            {
+                // Delete existing service
+                ProcessStartInfo deleteInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c sc delete \"{serviceName}\"",
+                    Verb = "runas",
+                    UseShellExecute = true
+                };
+                Process.Start(deleteInfo)?.WaitForExit();
+
+                Thread.Sleep(2000);
+                if (!WaitUntilServiceDeleted(serviceName, 10000))
+                {
+                    t.LogEvent($"Service '{serviceName}' still exists after delete attempt.");
+                    return false;
+                }
+
+                // Create new service
+                ProcessStartInfo createInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c SC CREATE \"{serviceName}\" binPath=\"{exePath}\" start=auto",
+                    Verb = "runas",
+                    UseShellExecute = true
+                };
+                Process.Start(createInfo)?.WaitForExit();
+
+                Thread.Sleep(2000);
+
+                // Start new service
+                return StartStopService(serviceName, "start");
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent("InstallService Error: " + ex.Message);
+                return false;
+            }
+        }
+
+        private bool WaitUntilServiceDeleted(string serviceName, int timeoutMs = 10000)
+        {
+            if (!OperatingSystem.IsWindows())
+                return true; // unsupported OS, we can stop waiting
+
+            var sw = Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < timeoutMs)
+            {
+                try
+                {
+                    using var sc = new ServiceController(serviceName);
+                    // try to access the service status
+                    var _ = sc.Status;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Service not exists, we can stop waiting
+                    return true;
+                }
+
+                Thread.Sleep(500); // počakaj malo in preveri znova
+            }
+            return false; // timeout
+        }
+
+        [SupportedOSPlatform("windows")]
+        public bool ServiceExists(string serviceName)
+        {
+            return ServiceController.GetServices().Any(s => s.ServiceName == serviceName);
         }
 
     }
