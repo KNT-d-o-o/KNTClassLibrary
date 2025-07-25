@@ -13,7 +13,7 @@
 
 <div class="Animation">
 
-    <ExportOrderDynamic></ExportOrderDynamic>
+    <ExportOrderDynamic Type="@Type"></ExportOrderDynamic>
 
     <EditForm Model="@IoTasks">
         <div>
@@ -24,7 +24,7 @@
                         <RadzenLabel class="labelEdit">Condition</RadzenLabel>
                     </RadzenColumn>
                     <RadzenColumn Size="3">
-                        <RadzenLabel class="labelEdit">@IoTaskDetails_0.Par2</RadzenLabel>
+                        <RadzenLabel class="labelEdit">@conditionName</RadzenLabel>
                     </RadzenColumn>
                     <RadzenColumn Size="1">
                         <RadzenDropDown 
@@ -71,6 +71,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public int Type { get; set; }
+
     private IoTasksDTO IoTasks = new();
     private IoTaskDetailsDTO IoTaskDetails_0 = new();
     double ProgressValue;
@@ -80,6 +83,7 @@
     bool zip = false;
     bool dumpAll = false;
     static string[] findConditions = { "=", "<", ">", "<=", ">=" };
+    string conditionName = string.Empty;
     string? condition = findConditions[0];
     string conditionVal = string.Empty;
 
@@ -88,7 +92,7 @@
         if (value != null && int.TryParse(value.ToString(), out int measNumCond))
         {
             conditionVal = measNumCond.ToString();
-            Helper.Notify(IoTasksRepository.IoTaskSetPar3(IoTasks.IoTaskId, 1, $"{IoTaskDetails_0.Par2}{condition}{conditionVal}"));
+            Helper.Notify(IoTasksRepository.IoTaskSetPar3(IoTasks.IoTaskId, 1, $"{conditionName}{condition}{conditionVal}"));
         }
         LoadData();
     }
@@ -96,7 +100,7 @@
     private void setCondition(object value)
     {
         condition = value?.ToString();
-        Helper.Notify(IoTasksRepository.IoTaskSetPar3(IoTasks.IoTaskId, 1, $"{IoTaskDetails_0.Par2}{condition}{conditionVal}"));
+        Helper.Notify(IoTasksRepository.IoTaskSetPar3(IoTasks.IoTaskId, 1, $"{conditionName}{condition}{conditionVal}"));
         LoadData();
     }
 
@@ -135,7 +139,7 @@
     {
         InvokeAsync(() =>
         {
-            IoTasks = IoTasksRepository.GetIoTaskByTypeMode(4, 2);
+            IoTasks = IoTasksRepository.GetIoTaskByTypeMode(Type, 2);
 
             IoTaskDetails_0 = IoTasksRepository.GetIoTaskDetails(IoTasks.IoTaskId, true).First();
 
@@ -145,11 +149,12 @@
             if (IoTaskDetails_0.Par3 != null)
             {
                 // parsing match
-                var match = Regex.Match(IoTaskDetails_0.Par3, @"(>=|<=|>|<|=)(\d+)");
+                var match = Regex.Match(IoTaskDetails_0.Par3, @"^(\w+)\s*(>=|<=|>|<|=)\s*(\d+)$");
                 if (match.Success)
                 {
-                    condition = match.Groups[1].Value;
-                    conditionVal = match.Groups[2].Value;
+                    conditionName = match.Groups[1].Value;
+                    condition = match.Groups[2].Value;
+                    conditionVal = match.Groups[3].Value;
                 }
             }
 

@@ -101,7 +101,8 @@
     public async Task OpenExportDialog()
     {
         string labelName = "Export data order";
-        await DialogService.OpenAsync<ExportOrderEdit>(labelName, null, Helper.GetDialogOptions("MaxSizeWindow"));
+        var param = Helper.CreateDialogBlazorComponentParameters("Type", 4);
+        await DialogService.OpenAsync<ExportOrderEdit>(labelName, param, Helper.GetDialogOptions("MaxSizeWindow"));
     }
 
 }

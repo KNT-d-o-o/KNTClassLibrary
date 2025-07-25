@@ -45,6 +45,8 @@
 </div>
 
 @code {
+    [Parameter]
+    public int Type { get; set; }
     
     private IoTasksDTO IoTasks = new();
     ButtonStyle buttonEnableDisableService = ButtonStyle.Light;
@@ -66,7 +68,7 @@
     {
         await InvokeAsync(() =>
         {
-            IoTasks = IoTasksRepository.GetIoTaskByTypeMode(4, 2);
+            IoTasks = IoTasksRepository.GetIoTaskByTypeMode(Type, 2);
 
             ProgressValue = IoTasks.Status ?? 0;
 
