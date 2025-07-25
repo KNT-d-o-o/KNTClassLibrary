@@ -38,23 +38,27 @@
                         <NumericInput CSSId="CalibrationEditNumericInput" InputValue="@conditionVal" ReturnedValue="setConditionVal" Style="height: 100%"></NumericInput>
                     </RadzenColumn>
                 </RadzenRow>
-                <RadzenRow>
-                    <RadzenColumn Size="3">
-                        <RadzenLabel class="labelEdit">Compress to ZIP</RadzenLabel>
-                    </RadzenColumn>
-                    <RadzenColumn Size="9">
-                        <RadzenSwitch TValue="bool" @bind-Value=@zip Change=@ZipChange Style="margin:1vh"></RadzenSwitch>
-                    </RadzenColumn>
-                </RadzenRow>
 
-                <RadzenRow>
-                    <RadzenColumn Size="3">
-                        <RadzenLabel class="labelEdit">Dump all</RadzenLabel>
-                    </RadzenColumn>
-                    <RadzenColumn Size="9">
-                        <RadzenSwitch TValue="bool" @bind-Value=@dumpAll Change=@DumpAllChange Style="margin:1vh"></RadzenSwitch>
-                    </RadzenColumn>
-                </RadzenRow>
+                @if (Type == 4)
+                {
+                    <RadzenRow>
+                        <RadzenColumn Size="3">
+                            <RadzenLabel class="labelEdit">Compress to ZIP</RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="9">
+                            <RadzenSwitch TValue="bool" @bind-Value=@zip Change=@ZipChange Style="margin:1vh"></RadzenSwitch>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow>
+                        <RadzenColumn Size="3">
+                            <RadzenLabel class="labelEdit">Dump all</RadzenLabel>
+                        </RadzenColumn>
+                        <RadzenColumn Size="9">
+                            <RadzenSwitch TValue="bool" @bind-Value=@dumpAll Change=@DumpAllChange Style="margin:1vh"></RadzenSwitch>
+                        </RadzenColumn>
+                    </RadzenRow>
+                }
 
                 <RadzenRow>
                     <RadzenColumn Size="3">
