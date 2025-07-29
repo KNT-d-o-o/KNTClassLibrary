@@ -1,4 +1,5 @@
-﻿using Google.Protobuf.Compiler;
+﻿using DocumentFormat.OpenXml.Math;
+using Google.Protobuf.Compiler;
 using KNTCommon.Data.Models;
 using KNTToolsAndAccessories;
 using Microsoft.EntityFrameworkCore;
@@ -141,7 +142,11 @@ InnerException: {ex.InnerException}";
 
                 RunScript("4.0.0.7_data.sql");
 
+                RunScript("4.0.0.8_data.sql");
+
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
+
+                //RunScript("languagedictionary.sql"); // TODO always modify language
                 CreateAssemblyVersion();
             }
         }

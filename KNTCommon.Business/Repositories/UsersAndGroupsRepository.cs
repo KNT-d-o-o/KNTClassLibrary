@@ -337,7 +337,7 @@ namespace KNTCommon.Business.Repositories
         public async Task<User?> GetOldSmmActiveUserAsync()
         {
             using var context = new EdnKntControllerMysqlContext();
-            var result = await context.Users.Where(x => x.Login == 1).FirstAsync();
+            var result = await context.Users.Where(x => x.Login == 1).FirstOrDefaultAsync();
             return result;
         }
 
