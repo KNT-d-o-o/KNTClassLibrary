@@ -12,7 +12,7 @@ public partial class APP_SettingDTO
 
     public string SettingKey { get; set; } = null!;
 
-    public string SettingValue { get; set; }
+    public required string SettingValue { get; set; }
 
     public string? Comment { get; set; }
 }

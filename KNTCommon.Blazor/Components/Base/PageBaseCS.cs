@@ -10,10 +10,10 @@ namespace KNTCommon.Blazor.Components.Base
     public abstract class PageBaseCS : ComponentBase, IDisposable
     {
         [Inject]
-        protected NavigationManager NavigationManager { get; set; }
+        public required NavigationManager NavigationManager { get; set; }
 
         [Inject]
-        protected HelperService Helper { get; set; }
+        public required HelperService Helper { get; set; }
 
         abstract public Task LoadData();
 
@@ -34,19 +34,28 @@ namespace KNTCommon.Blazor.Components.Base
             Navigate(url);
         }
 
-        public Dictionary<string, object> GetUriData<T>()
+        public Dictionary<string, object>? GetUriData<T>()
         {
             var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
             if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("data", out var json))
             {
                 var dict = new Dictionary<string, object>();
                 var tmpDict = JsonSerializer.Deserialize<Dictionary<string, object>>(json!);
-                var data = JsonSerializer.Deserialize<T>(json!);                
+
+                if (tmpDict is null || tmpDict.Count == 0)
+                    return null;
+
+                var data = JsonSerializer.Deserialize<T>(json!);
                 
                 foreach(var (key, val) in tmpDict)
                 {
-                    var v = data.GetType().GetProperty(key).GetValue(data);
-                    dict.Add(key, v);
+                    var property = data!.GetType().GetProperty(key);
+
+                    if (property is null)
+                        throw new Exception($"Property with name: '{key}' dont exist on model: '{typeof(T)}'"); // for now throw exception later maybe skip this property
+                        //continue;
+                    var v = property.GetValue(data);
+                    dict.Add(key, v!);
                 }
 
                 return dict;

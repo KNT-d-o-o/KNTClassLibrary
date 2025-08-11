@@ -4,8 +4,6 @@
 @using KNTCommon.Blazor.Services;
 @using KNTCommon.Blazor.Components.Forms.ArchiveMaintenance
 
-@using KNTCommon.Blazor.Services
-
 @inject IMaintenanceRepository MaintenanceRepository
 @inject Localization Localization
 @inject SharedContainerCommon SharedContainerCommon
@@ -178,9 +176,9 @@
 
 
 @code {
-    public List<IoTasksDTO> Items { get; set; }
+    public List<IoTasksDTO>? Items { get; set; }
 
-    List<ParameterDTO> parameterDTOs { get; set; }
+    List<ParameterDTO>? parameterDTOs { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

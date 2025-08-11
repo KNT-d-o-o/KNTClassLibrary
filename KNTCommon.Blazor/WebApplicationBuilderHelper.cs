@@ -88,7 +88,7 @@ namespace KNTCommon.Business
 
         static void AddAllRepositorys(WebApplicationBuilder builder)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(x => x.FullName.Contains("KNT"));
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(x => x.FullName!.Contains("KNT"));
 
             var repositoryTypes = assemblies
                 .SelectMany(assembly => assembly.GetTypes())

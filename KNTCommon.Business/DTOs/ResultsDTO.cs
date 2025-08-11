@@ -17,6 +17,6 @@ namespace KNTCommon.Business.DTOs
         public byte Used { get; set; }
 
         [Ignore]
-        public string ResultTranslatedDescription { get; set; }
+        public string ResultTranslatedDescription { get; set; } = null!;
     }
 }

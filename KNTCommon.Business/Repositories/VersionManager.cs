@@ -22,69 +22,7 @@ namespace KNTCommon.Business.Repositories
 
         public VersionManager(IEncryption encryption)
         {
-            //TestDb();
             _encryption = encryption;
-        }
-
-        public void TestDb()
-        {
-            var excludeTables = new List<string>() { "UserGroup", "UserSessions" };
-
-            using var context = new EdnKntControllerMysqlContext();
-            //context.Users.Take(10)
-            var dbSets = context.GetType()
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.PropertyType.IsGenericType &&
-                        p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>) &&
-                        !excludeTables.Any(x => x.ToLower() == p.PropertyType.GetGenericArguments()[0].Name.ToLower()));
-
-            foreach (var dbSetProperty in dbSets)
-            {
-                var entityType = dbSetProperty.PropertyType.GetGenericArguments()[0];
-                var tableName = entityType.Name;
-
-                try
-                {                    
-                    // pridobi Set<TEntity>()
-                    var setMethod = typeof(DbContext).GetMethod("Set", Type.EmptyTypes);
-                    var genericSetMethod = setMethod.MakeGenericMethod(entityType);
-                    var dbSet = genericSetMethod.Invoke(context, null);
-
-                    // IQueryable<T>
-                    var queryable = dbSet as IQueryable;
-
-                    // uporabimo Take(10)
-                    var takeMethod = typeof(Queryable)
-                        .GetMethods()
-                        .First(m => m.Name == "Take" && m.GetParameters().Length == 2)
-                        .MakeGenericMethod(entityType);
-
-                    var top10Query = takeMethod.Invoke(null, new object[] { queryable, 10 });
-
-                    // ToList
-                    var toListMethod = typeof(Enumerable)
-                        .GetMethod("ToList")
-                        .MakeGenericMethod(entityType);
-                    Console.WriteLine($"Tabela: {entityType.Name}, Top 10 vrstic:");
-
-                    var top10List = toListMethod.Invoke(null, new[] { top10Query });
-
-                    foreach (var item in (IEnumerable)top10List)
-                    {
-                        Console.WriteLine(item);
-                    }
-
-                    Console.WriteLine(new string('-', 50));
-                } catch(Exception ex)
-                {
-                    var msg = @$"Table name: {tableName};
-InnerException: {ex.InnerException}";
-
-                    t.LogEvent2(4, msg);
-                    throw;
-                }
-                
-            }
         }
 
         /*
@@ -105,7 +43,7 @@ InnerException: {ex.InnerException}";
 
         private string AssemblyFileVersionFullPath { 
             get {
-                var dir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+                var dir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory)!;
                 var fullPath = Path.Combine(dir, "AssemblyVersion.txt");
                 return fullPath;
             } 
@@ -446,7 +384,7 @@ InnerException: {ex.InnerException}";
                 var version = context.Database.SqlQueryRaw<int>("SELECT count(*) Value FROM information_schema.tables WHERE table_schema = Database() AND table_name = @p0", tableName).FirstOrDefault();
 
                 return version > 0;
-            } catch (Exception e)
+            } catch (Exception)
             {
 
             }
@@ -459,14 +397,6 @@ InnerException: {ex.InnerException}";
             var version = context.App_Version.Where(x => x.VersionNumber == versionNumber).FirstOrDefault();
 
             return version != null;
-        }
-
-
-        string GetMaxVersion()
-        {
-            using var context = new EdnKntControllerMysqlContext();
-            var version = context.Database.SqlQueryRaw<string>("select * from App_Version order by IdAppVersion desc LIMIT 1").FirstOrDefault();
-            return version;
         }
 
         string GetVersionText(string version)

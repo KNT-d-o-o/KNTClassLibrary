@@ -6,6 +6,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+
+#pragma warning disable CS8602, CS8603 // this is external library supress all warnings
+
+
 namespace Clifton.Lib // TODO this is not correct namespace, but it is used at same time
 {
     // Copied from:
@@ -144,3 +148,4 @@ namespace Clifton.Lib // TODO this is not correct namespace, but it is used at s
         }
     }
 }
+#pragma warning restore CS8602, CS8603
