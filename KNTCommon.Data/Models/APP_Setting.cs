@@ -13,7 +13,7 @@ public partial class APP_Setting
 
     public string SettingKey { get; set; } = null!;
 
-    public string SettingValue { get; set; }
+    public required string SettingValue { get; set; }
 
     public string? Comment { get; set; }
 }

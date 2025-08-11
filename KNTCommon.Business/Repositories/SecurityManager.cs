@@ -28,8 +28,8 @@ namespace KNTCommon.Business.Repositories
 
     public class SecurityManager
     {
-        List<CL_Module> _modules;
-        List<CL_ModuleFunctionality> _functionalitys;
+        List<CL_Module> _modules { get; set; } = new();
+        List<CL_ModuleFunctionality> _functionalitys { get; set; }  = new();
 
         public SecurityManager()
         {

@@ -12,11 +12,11 @@ public partial class CL_ModuleDTO
 {
     public int ModuleId { get; set; }
 
-    public string ModuleName { get; set; }
+    public required string ModuleName { get; set; }
 
     public bool Enabled { get; set; }
 
-    public string DescriptionLang { get; set; }
+    public required string DescriptionLang { get; set; }
 
     [Ignore]
     public List<CL_ModuleFunctionalityDTO> ModuleFunctionalityDTO { get; set; } = new();

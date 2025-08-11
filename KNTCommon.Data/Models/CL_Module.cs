@@ -11,9 +11,9 @@ public partial class CL_Module
     [Key]
     public int ModuleId { get; set; }
 
-    public string ModuleName { get; set; }
+    public required string ModuleName { get; set; }
 
-    public string DescriptionLang { get; set; }
+    public required string DescriptionLang { get; set; }
 
     public bool Enabled { get; set; }
 }

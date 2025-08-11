@@ -72,7 +72,7 @@ namespace KNTCommon.Business.Repositories
                 if (result.ResultDescriptionLang is null)
                 {
                     result.ResultDescriptionLang = $"ResultId_{result.ResultId}";
-                    _localization.AddOrUpdateTranslation(result.ResultDescriptionLang, result.ResultDescription, result.ResultDescription, result.ResultDescription, result.ResultDescription, result.ResultDescription);
+                    _localization.AddOrUpdateTranslation(result.ResultDescriptionLang, result.ResultDescription ?? "", result.ResultDescription ?? "", result.ResultDescription ?? "", result.ResultDescription ?? "", result.ResultDescription ?? "");
                 }
         }
 
@@ -85,6 +85,9 @@ namespace KNTCommon.Business.Repositories
         public string GetColor(int resultId)
         {
             var color = Results.Where(x => x.ResultId == resultId).Select(x => x.ResultColour).First();
+
+
+
             return color;
         }
 

@@ -76,7 +76,7 @@ namespace KNTInstaller.Repository
                 else
                     throw new Exception("Inštalacija ni uspela.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

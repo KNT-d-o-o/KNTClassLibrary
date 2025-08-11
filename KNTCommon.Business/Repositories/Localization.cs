@@ -63,8 +63,10 @@ namespace KNTCommon.Business.Repositories
 
 #if DEBUG
             throw new Exception($"Translation is missing. LanguageDictionarie does not contain any keys: '{string.Join(", ", keys)}'");// TODO write in error log
-#endif
+#else
             return "";
+#endif
+
         }
 
         public string Get(string key, Enum @enum, params object[] args)

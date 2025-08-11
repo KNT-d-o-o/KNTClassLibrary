@@ -1,4 +1,5 @@
-﻿
+﻿#pragma warning disable CS8603, CS8601 // this is external library supress all warnings
+
 //using Google.Protobuf.WellKnownTypes;
 using KNTCommon.Business.Models;
 using KNTCommon.Business.Repositories;
@@ -8,7 +9,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
-using KNTCommon.Data.Models;
 
 namespace Clifton.Lib
 {
@@ -260,7 +260,7 @@ namespace Clifton.Lib
 
             var column = searchPageArgs.columns.Where(x => x.FilterColumn == nameof(Results.ResultId)).FirstOrDefault();
 
-            if (column is null || column.FilterParam is null || column.FilterParam == "")
+            if (column is null || column.FilterParam is null || string.IsNullOrEmpty(column.FilterParam.ToString()) || Convert.ToInt32(column.FilterParam) == ResultRepository.ResultIdEmpty)
                 return;
 
             var description = results.Where(x => x.ResultId == (int)column.FilterParam).Select(x => x.ResultDescription).First();
@@ -404,3 +404,6 @@ namespace Clifton.Lib
         */
     }
 }
+
+
+#pragma warning restore CS8603, CS8601

@@ -13,9 +13,9 @@ public partial class CL_ModuleFunctionality
 
     public int ModuleId { get; set; }
 
-    public string FunctionalityName { get; set; }
+    public required string FunctionalityName { get; set; }
 
-    public string DescriptionLang { get; set; }
+    public required string DescriptionLang { get; set; }
 
     public bool Enabled { get; set; }
 }

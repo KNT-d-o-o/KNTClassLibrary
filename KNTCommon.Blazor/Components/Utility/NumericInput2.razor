@@ -42,7 +42,7 @@
     public bool ReadOnly { get; set; }
 
     [Parameter]
-    public string Style { get; set; }
+    public string Style { get; set; } = "";
 
     [Parameter]
     public EventCallback<TValue> ReturnedValue { get; set; }
@@ -199,8 +199,6 @@
             // BUG karkoli pride do sem....
             // če je bindana vrednost int vpišeš pa decimal
             throw new Exception("NumericInput2 cannot parse");
-            await ReturnedValue.InvokeAsync(Value);
-            await ReturnedValueString.InvokeAsync(Value.ToString());
         }
     }
 }

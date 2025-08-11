@@ -2,7 +2,6 @@
 @using KNTCommon.Business.Interface
 @using KNTCommon.Business.DTOs
 @using KNTCommon.Blazor.Services;
-@inject KNTCommon.Blazor.Services.HelperService Helper
 
 @inject IMaintenanceRepository MaintenanceRepository
 @inject Localization Localization
@@ -82,7 +81,7 @@
             }
         };
 
-    public IEnumerable<IoTaskLogsDTO> DataList { get; set; }
+    public IEnumerable<IoTaskLogsDTO>? DataList { get; set; }
 
     [Parameter]
     public int IoTaskId { get; set; }
