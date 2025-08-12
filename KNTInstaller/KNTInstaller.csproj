@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.14.2" />
     <PackageReference Include="Cake.Powershell" Version="4.0.0" />
   </ItemGroup>
 

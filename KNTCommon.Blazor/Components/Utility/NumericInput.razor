@@ -1,7 +1,7 @@
 ﻿@inject DialogService dialogService
 @inject HelperService Helper
 
-<RadzenTextBox Value="@InputValue" @onclick="OpenKeyboard" id="@CSSId" class="defaultNumericInput" Placeholder="@Placeholder" @onkeydown="OpenKeyboard" ReadOnly="@ReadOnly" Style="@Style"></RadzenTextBox>
+<RadzenTextBox Value="@InputValue" @onclick="OpenKeyboard" id="@CSSId" class="defaultNumericInput" Placeholder="@Placeholder" @onkeydown="OpenKeyboard" ReadOnly="@ReadOnly" Style="@Style" Visible="@(!Hidden)"></RadzenTextBox>
 
 @code {
     [Parameter]
@@ -36,6 +36,9 @@
 
     [Parameter]
     public EventCallback<string> ReturnedValue { get; set; }
+
+    [Parameter]
+    public bool Hidden { get; set; }
 
     protected override void OnInitialized()
     {

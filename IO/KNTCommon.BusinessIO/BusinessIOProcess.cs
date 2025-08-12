@@ -378,7 +378,7 @@ namespace KNTCommon.BusinessIO
         // export excel step procedure
         int noToExport;
         int stepExport;
-        string? filePathXls;
+        string filePathXls = string.Empty;
         List<IoTaskDetailsDTO>? taskDetailsE;
         string? whereConditionE;
         string? nextDateTimeConditionE;
@@ -395,7 +395,8 @@ namespace KNTCommon.BusinessIO
                     taskDetailsE = (List<IoTaskDetailsDTO>)ioTasksRepository.GetIoTaskDetails(task.IoTaskId, false);
                     noToExport = taskDetailsE.Count;
 
-                    filePathXls = (task.Par1 ?? string.Empty).Replace("{User}", Environment.UserName).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
+                    filePathXls = (task.Par1 ?? string.Empty).Replace("{User}", ActiveUserHelper.GetActiveUserName()).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
+
                     if (noToExport > 0)
                     {
                         whereConditionE = taskDetailsE[0].Par3 ?? string.Empty;
@@ -478,9 +479,11 @@ namespace KNTCommon.BusinessIO
                             }
                         }
 
-                        if (!exportRepository.ExportExcel(tableName, whereConditionE ?? string.Empty, order, filePathXls ?? "C:/tmp.xlsx", altData, lLabels, out errStr))
+                        if (!exportRepository.ExportExcel(tableName, whereConditionE ?? string.Empty, order, filePathXls, altData, lLabels, out errStr))
                         {
+                            ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
                             ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                            throw new Exception(errStr);
                         }
 
                         bool complete = false;
@@ -577,7 +580,7 @@ namespace KNTCommon.BusinessIO
                     else
                         toZip = false;
 
-                    filePathDump = (pars1[0]).Replace("{User}", Environment.UserName).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
+                    filePathDump = (pars1[0]).Replace("{User}", ActiveUserHelper.GetActiveUserName()).Replace("{DateAndTime}", DateTime.Now.ToString("yyyyMMddHHmmss"));
                     if (noToDump > 0)
                     {
                         ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 0);
@@ -616,7 +619,9 @@ namespace KNTCommon.BusinessIO
                             catch { }
                             if (!dumpRepository.DumpTableSingle(tableName, limit, start, filePathDump ?? "C/:tmp.sql", out errStr))
                             {
+                                ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
                                 ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                                throw new Exception(errStr);
                             }
                         }
                         else
@@ -625,7 +630,9 @@ namespace KNTCommon.BusinessIO
                             {
                                 if (!dumpRepository.DumpTable(tableName, whereCondition, whereColumn, filePathDump ?? "C/:tmp.sql", out errStr))
                                 {
+                                    ioTasksRepository.IoTaskSetStatus(task.IoTaskId, 100);
                                     ioTasksRepository.IoTaskSetInfo(task.IoTaskId, $"Error: {errStr}", Const.ERROR);
+                                    throw new Exception(errStr);
                                 }
                             }
                         }

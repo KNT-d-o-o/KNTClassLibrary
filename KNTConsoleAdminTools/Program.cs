@@ -7,6 +7,7 @@ using System.Management;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.ServiceProcess;
 
 namespace ConsoleAdminTools
 {
