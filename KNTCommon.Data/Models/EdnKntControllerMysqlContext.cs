@@ -1,16 +1,18 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Options;
+using MySql.Data.MySqlClient;
+using MySql.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using MySql.EntityFrameworkCore;
 using System.Xml;
 using System.Xml.Linq;
-using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Options;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace KNTCommon.Data.Models
 {
@@ -67,11 +69,13 @@ namespace KNTCommon.Data.Models
             // charset=utf8mb4 - zaradi cirilice
         }
 
-        public string GetConnectionString()
+        public static string GetConnectionString()
         {
             string[] connStr = GetConnectionData(false);
             return $"server={connStr[2]};database={connStr[0]};user=KNT;password={connStr[1]}";
         }
+
+        const string CONFIG = "config.xml";
 
         // get connection string data
         public static string[] GetConnectionData(bool archive)
@@ -79,7 +83,7 @@ namespace KNTCommon.Data.Models
             string[] connectionData = new string[3];
 
             string basePath = AppDomain.CurrentDomain.BaseDirectory;
-            string configPath = Path.Combine(basePath, "config.xml");
+            string configPath = Path.Combine(basePath, CONFIG);
 
             XmlDocument doc = new();
             doc.Load(configPath);
@@ -106,6 +110,53 @@ namespace KNTCommon.Data.Models
 
             }
             return connectionData;
+        }
+
+        public static string GetPWebApi()
+        {
+            string pWebApi = string.Empty;
+
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string configPath = Path.Combine(basePath, CONFIG);
+
+            XmlDocument doc = new();
+            doc.Load(configPath);
+            if (doc.DocumentElement != null)
+            {
+                XmlNode? node = doc.DocumentElement.SelectSingleNode("/config/pwebapi");
+                if (node != null)
+                {
+                    pWebApi = PManager.DecryptPassword(node.InnerText);
+                }
+            }
+
+            return pWebApi;
+        }
+
+        public static void SetPWebApi(string newKey)
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string configPath = Path.Combine(basePath, CONFIG);
+
+            XmlDocument doc = new();
+            doc.Load(configPath);
+
+            if (doc.DocumentElement != null)
+            {
+                XmlNode? node = doc.DocumentElement.SelectSingleNode("/config/pwebapi");
+                if (node == null)
+                {
+                    // če node ne obstaja, ga naredimo
+                    node = doc.CreateElement("pwebapi");
+                    doc.DocumentElement.AppendChild(node);
+                }
+
+                string encrypted = PManager.EncryptPassword(newKey);
+                node.InnerText = encrypted;
+
+                // shrani spremembe
+                doc.Save(configPath);
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

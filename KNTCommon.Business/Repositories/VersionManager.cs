@@ -80,7 +80,7 @@ namespace KNTCommon.Business.Repositories
 
                 RunScript("4.0.0.7_data.sql");
 
-                RunScript("4.0.0.8_data.sql");
+            //fstaa!!! not included    RunScript("4.0.0.8_data.sql");
 
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
 
@@ -220,9 +220,7 @@ namespace KNTCommon.Business.Repositories
 
         public void RunScript3(string fileName, bool firstRunIgnoreVersion = false)
         {
-            using var context = new EdnKntControllerMysqlContext();
-            
-            using var conn = new MySqlConnection(context.GetConnectionString());
+            using var conn = new MySqlConnection(EdnKntControllerMysqlContext.GetConnectionString());
 
             conn.Open();
 
@@ -301,8 +299,7 @@ namespace KNTCommon.Business.Repositories
 
         public void RunScript9(string fileName)
         {
-            using var context = new EdnKntControllerMysqlContext();
-            using var conn = new MySqlConnection(context.GetConnectionString());
+            using var conn = new MySqlConnection(EdnKntControllerMysqlContext.GetConnectionString());
             conn.Open();
 
             // Avtomatski COMMIT je onemogočen z začetkom transakcije

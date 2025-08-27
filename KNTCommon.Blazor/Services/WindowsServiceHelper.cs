@@ -106,8 +106,7 @@ namespace KNTCommon.Blazor.Services
         {
             var result = new List<Dictionary<string, object>>();
 
-            using var context = new EdnKntControllerMysqlContext();
-            using var connection = new MySqlConnection(context.GetConnectionString());
+            using var connection = new MySqlConnection(EdnKntControllerMysqlContext.GetConnectionString());
 
             await connection.OpenAsync();
 
