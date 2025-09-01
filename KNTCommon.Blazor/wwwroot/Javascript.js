@@ -62,6 +62,23 @@ function openNav() {
     }
     isNavOpen = !isNavOpen;
 }
+
+document.addEventListener("click", function (event) {
+    const sidenav = document.getElementById("mySidenav");
+    const sidenavbtn = document.getElementById("SidenavButton");
+
+    // do nothinh if menu is closed
+    if (!isNavOpen) return;
+
+    // ignore on menu or buton menu click
+    if (sidenav.contains(event.target) || sidenavbtn.contains(event.target)) {
+        return;
+    }
+
+    // Sicer zapri meni
+    closeNav();
+});
+
 function closeNav() {
     const sidenav = document.getElementById("mySidenav");
     sidenav.classList.remove("sidenav-open");

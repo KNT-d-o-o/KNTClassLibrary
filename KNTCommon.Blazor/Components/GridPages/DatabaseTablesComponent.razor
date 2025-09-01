@@ -8,16 +8,6 @@
 
 <div class="ScrollableOuterDiv Animation">
 
-    <RadzenStack>
-        <RadzenFieldset>
-            <RadzenRow class="RadzenRowMarginFormsSettingsLeft">
-                <RadzenColumn Size="12" SizeMD="6">
-                    <RadzenButton class="RadzenGridButtonFormFlex rz-ripple" Text="Export..." ButtonStyle="ButtonStyle.Success" Shade="Shade.Darker" Style="height:100%;" Click="() => OpenExportDialog()"></RadzenButton>
-                </RadzenColumn>
-            </RadzenRow>
-        </RadzenFieldset>
-    </RadzenStack>
-                    
     <div class="Animation" style="width: 100%; height: 68vh">
         <RadzenDataGrid Data="@Tables" TItem="string" ColumnWidth="200px" EmptyText=@Localization.Get("RadzenDataGridColumn_EmptyText")
         AllowAlternatingRows="false"
@@ -98,11 +88,5 @@
         }
     }
 
-    public async Task OpenExportDialog()
-    {
-        string labelName = "Export data order";
-        var param = Helper.CreateDialogBlazorComponentParameters("Type", 4);
-        await DialogService.OpenAsync<ExportOrderEdit>(labelName, param, Helper.GetDialogOptions("MaxSizeWindow"));
-    }
 
 }
