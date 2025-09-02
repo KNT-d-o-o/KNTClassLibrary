@@ -80,11 +80,13 @@ namespace KNTCommon.Business.Repositories
 
                 RunScript("4.0.0.7_data.sql");
 
-            //fstaa!!! not included    RunScript("4.0.0.8_data.sql");
+                RunScript("4.0.0.8_data.sql");
 
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
 
-                //RunScript("languagedictionary.sql"); // TODO always modify language
+                // run always
+                //RunDbExportScript("languagedictionary.sql");
+
                 CreateAssemblyVersion();
             }
         }
@@ -362,6 +364,32 @@ namespace KNTCommon.Business.Repositories
                 throw;
             }
         }
+
+        public void RunDbExportScript(string fileName)
+        {
+            var version = fileName.Split("/").Last().Replace(".sql", "");
+            try
+            {
+                var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DbExport", fileName);
+                using var context = new EdnKntControllerMysqlContext();
+                context.Database.SetCommandTimeout(60 * 10);
+
+                var sql = File.ReadAllText(fullPath);
+                sql = RemoveSpecialCommands(sql);
+                sql += GetVersionText(version);
+                context.Database.ExecuteSqlRaw(sql);
+                //context.Database.ExecuteSqlRaw($"CALL ExecuteSqlWithRollback('{sql}');");
+                //InsertVersion(version);
+            }
+            catch (Exception ex)
+            {
+                t.LogEvent2(2, @$"Errror on upgrade script: {fileName}");
+                t.LogEvent2(1, ex.Message);
+                t.LogEvent2(3, ex.StackTrace ?? "");
+                throw;
+            }
+        }
+
 
         public bool WasScriptRun(string fileName, bool runFirstTime)
         {
