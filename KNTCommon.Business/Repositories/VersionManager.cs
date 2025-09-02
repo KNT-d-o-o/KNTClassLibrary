@@ -85,7 +85,7 @@ namespace KNTCommon.Business.Repositories
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
 
                 // run always
-                //RunDbExportScript("languagedictionary.sql");
+                RunDbExportScript("languagedictionary.sql");
 
                 CreateAssemblyVersion();
             }
