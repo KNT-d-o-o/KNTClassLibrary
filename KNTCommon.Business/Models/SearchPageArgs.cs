@@ -24,6 +24,7 @@ namespace KNTCommon.Business.Models
 
         //Skip(args.Skip.Value).Take(args.Top.Value)
         public string OrderBy { get; set; }
+        public bool OrderByAsc { get; set; } = true; // ASC - true; DESC - false
 
         public SearchPageArgs DeepCopy()
         {
