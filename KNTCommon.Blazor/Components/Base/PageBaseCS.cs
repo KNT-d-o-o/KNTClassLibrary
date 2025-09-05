@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Web;
 using Microsoft.AspNetCore.WebUtilities;
 using KNTCommon.Blazor.Services;
+using KNTCommon.Business.Repositories;
 
 
 namespace KNTCommon.Blazor.Components.Base
@@ -15,9 +16,17 @@ namespace KNTCommon.Blazor.Components.Base
         [Inject]
         public required HelperService Helper { get; set; }
 
+        [Inject]
+        Localization _Localization { get; set; }
+
         abstract public Task LoadData();
 
         public List<string> visibleColumns = new(); // NOTE should be in SearchPageBaseCS, but some pages have visibility and not searching....
+
+        public void SetTitle()
+        {
+            SharedContainerCommon.actionTitle = _Localization.Get(this.GetType().Name);
+        }
 
         public void Navigate(string pageName)
         {
