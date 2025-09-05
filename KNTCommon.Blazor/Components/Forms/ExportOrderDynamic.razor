@@ -47,7 +47,7 @@
 @code {
     [Parameter]
     public int Type { get; set; }
-    
+
     private IoTasksDTO IoTasks = new();
     ButtonStyle buttonEnableDisableService = ButtonStyle.Light;
     double ProgressValue;
@@ -68,6 +68,9 @@
     {
         await InvokeAsync(() =>
         {
+            if (!SharedContainerCommon.iService.Any(x => x == "KNTCommon.BusinessIO"))
+                return;
+
             IoTasks = IoTasksRepository.GetIoTaskByTypeMode(Type, 2);
 
             ProgressValue = IoTasks.Status ?? 0;

@@ -24,6 +24,7 @@ namespace KNTCommon.Business.Repositories
     public enum FunctionalityType
     {
         Counter = 1,
+        Version = 2,
     }
 
     public class SecurityManager
@@ -48,8 +49,9 @@ namespace KNTCommon.Business.Repositories
             return _modules.Where(x => x.ModuleId == (int)moduleType).Select(x => x.Enabled).FirstOrDefault();
         }
 
+        // TODO also check if module ot this Functionality is enabled
         public bool IsFunctionalityEnabled(FunctionalityType functionalityType) {
-            return _functionalitys.Where(x => x.FunctionalityId == (int)functionalityType).Select(x => x.Enabled).FirstOrDefault(); ;
+            return _functionalitys.Where(x => x.FunctionalityId == (int)functionalityType).Select(x => x.Enabled).FirstOrDefault();
         }
     }
 }

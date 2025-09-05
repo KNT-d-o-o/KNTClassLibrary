@@ -427,6 +427,8 @@ namespace KNTCommon.BusinessIO
                         List<string> lLabels = new();
                         List<string> kLabels = new();
                         string labels = taskDetailsE[stepExport].Par6 ?? string.Empty;
+                        labels = labels.Trim(); // Par6 remove any extra spaces, affect localization  
+
                         if (labels.Length > 0)
                             kLabels = labels.Split(';').ToList();
                         if (localization != null)
