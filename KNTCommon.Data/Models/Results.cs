@@ -14,7 +14,7 @@ namespace KNTCommon.Data.Models
         public string? ResultDescription { get; set; }
         public string? ResultDescriptionLang { get; set; }
         public string? ResultCustomer { get; set; }
-        public string? ResultColour { get; set; }
+        public string? ResultColour { get; set; } // TODO for new SMM fix in database as not null
         public byte Used { get; set; }
     }
 }

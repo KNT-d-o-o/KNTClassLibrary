@@ -10,9 +10,9 @@ namespace KNTCommon.Business.Models
 {
     public class Column()
     {
-        public string FilterColumn { get; set; }
-        public object FilterParam { get; set; }
-        public string FilterCondition { get; set; }
+        public required string FilterColumn { get; set; }
+        public required object FilterParam { get; set; }
+        public required string FilterCondition { get; set; } = string.Empty;
     }
 
     public class SearchPageArgs()
@@ -23,7 +23,7 @@ namespace KNTCommon.Business.Models
 
 
         //Skip(args.Skip.Value).Take(args.Top.Value)
-        public string OrderBy { get; set; }
+        public string OrderBy { get; set; } = string.Empty;
         public bool OrderByAsc { get; set; } = true; // ASC - true; DESC - false
 
         public SearchPageArgs DeepCopy()

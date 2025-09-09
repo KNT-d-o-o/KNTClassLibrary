@@ -86,9 +86,7 @@ namespace KNTCommon.Business.Repositories
         {
             var color = Results.Where(x => x.ResultId == resultId).Select(x => x.ResultColour).First();
 
-
-
-            return color;
+            return color!;
         }
 
         public string GetColor(ResultTypes resultType)

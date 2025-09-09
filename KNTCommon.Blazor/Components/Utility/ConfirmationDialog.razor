@@ -24,7 +24,7 @@
     public int weight { get; set; }
 
     string LocalizedAction { get {
-            if (action == string.Empty)
+            if (string.IsNullOrEmpty(action))
                 return "";
 
             if (Localization.ContainKey(action))

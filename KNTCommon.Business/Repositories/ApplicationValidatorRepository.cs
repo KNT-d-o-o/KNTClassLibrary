@@ -13,20 +13,21 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.DirectoryServices.ActiveDirectory;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Data.SqlClient;
 
 namespace KNTCommon.Business.Repositories
 {
     public class ValidatorMissingTranslation
     {
-        public string table_name { get; set; }
-        public string column_name { get; set; }
+        public required string table_name { get; set; }
+        public required string column_name { get; set; }
     }
 
     class EFTableColumnDiff()
     {
-        public string table_name { get; set; }
-        public string column_name { get; set; }
-        public string data_type { get; set; }
+        public required string table_name { get; set; }
+        public required string column_name { get; set; }
+        public required string data_type { get; set; }
     }
 
 
@@ -154,11 +155,11 @@ namespace KNTCommon.Business.Repositories
                 var tableTypeName = dbSet.PropertyType.GetGenericArguments()[0].ToString().Split(".").Last();
                 var tableVariableName = dbSet.Name;
 
-                var a = dbSet.PropertyType.FullName.Replace("Microsoft.EntityFrameworkCore.DbSet`1[[", "").Replace("]]", "").Split(",");
+                var a = dbSet.PropertyType.FullName!.Replace("Microsoft.EntityFrameworkCore.DbSet`1[[", "").Replace("]]", "").Split(",");
                 var type = Type.GetType($"{a[0]}, {a[1]}");
 
                 var tableName = a[0];
-                var properties = type.GetProperties();
+                var properties = type!.GetProperties();
                 var entityName = (tableTypeName != tableVariableName) ? $"{tableTypeName}/{tableVariableName}" : $"{tableTypeName}";
 
                 // entity -> db
@@ -173,7 +174,7 @@ namespace KNTCommon.Business.Repositories
 
                     if (tableTypeName != tableVariableName)
                     {
-                        // when different sometimes tableTypeName is table name, but sometimes tableVariableName.
+                        // when different sometimes tableTypeName but sometimes tableVariableName is table name is db.
                         errors.Add($"Wrong table name, tableTypeName and tableVariableName do not match. They must be the same. TableTypeName: {tableTypeName} and tableVariableName: {tableVariableName} ");
                     } 
                     else if (isFoundColumn.Count == 1)
@@ -259,20 +260,23 @@ namespace KNTCommon.Business.Repositories
             
             var tablesNotIn = $"'{string.Join("','", excludeTables)}'";
 
-            var result = context.Database.SqlQueryRaw<ValidatorMissingTranslation>($@"SELECT 
-                                                            c.table_name,
-                                                            c.column_name
-                                                        FROM 
-                                                            information_schema.columns c
-	                                                        LEFT JOIN LanguageDictionary ld on c.column_name = ld.Key
-                                                        WHERE 
-                                                            table_schema = DATABASE()
-                                                            AND ld.Key is null
-                                                            AND c.table_name NOT IN ({tablesNotIn})
-                                                            AND c.table_name NOT like 'x_tmp_%' -- temp table similar as CTE
-                                                        ORDER BY 
-                                                            table_name, ordinal_position
-                                                        LIMIT 9999;").ToList();
+            var sql = $@"SELECT 
+                            c.table_name,
+                            c.column_name
+                        FROM 
+                            information_schema.columns c
+	                        LEFT JOIN LanguageDictionary ld on c.column_name = ld.Key
+                        WHERE 
+                            table_schema = DATABASE()
+                            AND ld.Key is null
+                            AND c.table_name NOT IN ({tablesNotIn})
+                            AND c.table_name NOT like 'x_tmp_%' -- temp table similar as CTE
+                        ORDER BY 
+                            table_name, ordinal_position
+                        LIMIT 9999;";
+
+            var result = context.Database.SqlQueryRaw<ValidatorMissingTranslation>(sql).ToList();            
+
 
             return result;
         }

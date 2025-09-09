@@ -98,7 +98,7 @@
 
         if (u != null)
         {
-            return (obj == null) ? default(T) : (T)Convert.ChangeType(obj, u);
+            return (obj is null || string.IsNullOrEmpty(obj.ToString())) ? default(T)! : (T)Convert.ChangeType(obj, u);
         }
         else
         {

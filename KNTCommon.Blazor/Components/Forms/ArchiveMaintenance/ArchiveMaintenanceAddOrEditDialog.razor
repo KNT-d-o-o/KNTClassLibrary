@@ -201,13 +201,6 @@
         data = await MaintenanceRepository.GetIoTaskAsync(IoTaskId);
     }
 
-    async Task OnArchiveModeChange()
-    {
-        //await LoadData();
-
-        //MaintenanceRepository.ModifyIoTasksDTO(data);
-    }
-
     async Task SaveForm()
     {
         var result = await MaintenanceRepository.SetIoTaskAsync(data);
