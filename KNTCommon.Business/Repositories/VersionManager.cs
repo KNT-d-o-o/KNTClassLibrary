@@ -82,6 +82,9 @@ namespace KNTCommon.Business.Repositories
 
                 RunScript("4.0.0.8_data.sql");
 
+                RunScript("4.0.0.9_schema.sql");
+                RunScript("4.0.0.9_data.sql");
+
                 //RunScript("../KNTSMM.Data/Version/4.0.0.5excluded.sql");
 
                 // run always
