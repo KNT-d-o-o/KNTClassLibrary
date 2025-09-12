@@ -723,5 +723,71 @@ namespace KNTCommon.BusinessIO.Repositories
             }
         }
 
+        // create archive database if not exists
+        public bool CheckOrCreateArchiveUser(out string? err)
+        {
+            const string USER = "readonly_KNT";
+            err = string.Empty;
+            var ret = true;
+            try
+            {
+                using (var context = new EdnKntControllerMysqlContext())
+                {
+                    var connectionString = context.Database.GetConnectionString(); // get from current - not archive
+
+                    using (var connection = new MySql.Data.MySqlClient.MySqlConnection(connectionString))
+                    {
+                        connection.Open();
+
+                        // check, if user readonly_KNT exists
+                        string checkUserSql = $"SELECT COUNT(*) FROM mysql.user WHERE User = '{USER}';";
+                        using (var cmd = new MySql.Data.MySqlClient.MySqlCommand(checkUserSql, connection))
+                        {
+                            var count = Convert.ToInt32(cmd.ExecuteScalar());
+
+                            if (count == 0)
+                            {
+                                // create user
+                                string createUserSql =
+                                    $"CREATE USER IF NOT EXISTS '{USER}'@'%' IDENTIFIED WITH mysql_native_password BY '1234';";
+                                using (var createCmd = new MySql.Data.MySqlClient.MySqlCommand(createUserSql, connection))
+                                {
+                                    createCmd.ExecuteNonQuery();
+#if DEBUG
+                                    Console.WriteLine($"created user {USER}");
+#endif
+                                }
+                            }
+
+                            // add privileges for archive database only
+                            string grantSql =
+                                $"GRANT SELECT ON `edn_knt_machinemanagement_archive`.* TO '{USER}'@'%';";
+                            using (var grantCmd = new MySql.Data.MySqlClient.MySqlCommand(grantSql, connection))
+                            {
+                                grantCmd.ExecuteNonQuery();
+                            }
+
+                            // flush privileges
+                            using (var flushCmd = new MySql.Data.MySqlClient.MySqlCommand("FLUSH PRIVILEGES;", connection))
+                            {
+                                flushCmd.ExecuteNonQuery();
+                            }
+#if DEBUG
+                            Console.WriteLine($"set readonly privileges for user {USER}");
+#endif
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                err = "KNTCommon.BusinessIO.Repositories.ArchiveRepository #10 " + ex.Message;
+                t.LogEvent(err);
+                ret = false;
+            }
+
+            return ret;
+        }
+
     }
 }

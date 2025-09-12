@@ -91,6 +91,12 @@ namespace KNTCommon.BusinessIO
             if (archiveRepository.CheckOrCreateArchiveDb(out error))
             {
                 ret = archiveRepository.CheckOrCreateArchiveTables(null, out error);
+
+                if (ret)
+                {
+                    // create readonly user
+                    ret = archiveRepository.CheckOrCreateArchiveUser(out error);
+                }
             }
             if (!ret)
             {

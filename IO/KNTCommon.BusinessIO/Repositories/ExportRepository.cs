@@ -29,6 +29,7 @@ using ClosedXML.Excel;
 using System.Globalization;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using KNTCommon.Business.Repositories;
 
 namespace KNTCommon.BusinessIO.Repositories
 {
