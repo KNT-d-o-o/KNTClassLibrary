@@ -28,9 +28,9 @@ namespace Clifton.Lib
 
     public class Filter
     {
-        public string PropertyName { get; set; }
-        public Op Operation { get; set; }
-        public object Value { get; set; }
+        public required string PropertyName { get; set; }
+        public required Op Operation { get; set; }
+        public required object Value { get; set; }
     }
 
     public static class ExpressionBuilder
@@ -222,7 +222,7 @@ namespace Clifton.Lib
             {
                 if (string.IsNullOrEmpty(column.FilterCondition))
                     column.FilterCondition = "=";
-                if (column.FilterParam == "..." || column.FilterParam.ToString() == ResultRepository.ResultIdEmpty.ToString()) // TODO TEMP SOLUTION for result description ... mean empty
+                if (column.FilterParam is null || column.FilterParam.ToString() == "..." || column.FilterParam.ToString() == ResultRepository.ResultIdEmpty.ToString()) // TODO TEMP SOLUTION for result description ... mean empty
                     column.FilterParam = string.Empty;
             }                
         }

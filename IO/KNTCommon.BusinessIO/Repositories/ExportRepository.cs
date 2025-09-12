@@ -278,9 +278,14 @@ namespace KNTCommon.BusinessIO.Repositories
 
                                 row++;
                             }
+
+                            // excel as table for searching, filtering..
+                            var tableRange = worksheet.Range(3,1, row-1, columns.Count);
+                            tableRange.CreateTable();
                         }
                         // auto adjustment
                         worksheet.Columns().AdjustToContents();
+
                         // save
                         workbook.SaveAs(filePath);                   
                     }

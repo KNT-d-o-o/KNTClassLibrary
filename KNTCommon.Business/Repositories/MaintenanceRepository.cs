@@ -38,7 +38,7 @@ namespace KNTSMM.Business.Repositories
         {
             using var context = new EdnKntControllerMysqlContext();
             
-            var parameterDTO = await _autoMapper.ProjectTo<ParameterDTO>(context.Parameters.Where(x => new List<string>() { "archiveDays", "archiveStep" }.Contains(x.ParName) )).ToListAsync();
+            var parameterDTO = await _autoMapper.ProjectTo<ParameterDTO>(context.Parameters.Where(x => new List<string>() { "archiveDays", "archiveStep" }.Contains(x.ParName!) )).ToListAsync();
 
             return parameterDTO;
         }

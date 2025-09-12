@@ -521,7 +521,7 @@ namespace KNTCommon.Business.Repositories
                             }
                         }
 
-                        insertQueries.Add($"INSERT INTO {tableName} ({string.Join(",", columnNames)}) VALUES ({string.Join(",", values)});");
+                        insertQueries.Add($"INSERT INTO {tableName} ({string.Join(",", columnNames.Select(x => $"`{x}`") )}) VALUES ({string.Join(",", values)});");
                     }
                 }
             }

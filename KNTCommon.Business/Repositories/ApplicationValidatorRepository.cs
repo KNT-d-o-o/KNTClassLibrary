@@ -11,9 +11,26 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.DirectoryServices.ActiveDirectory;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Data.SqlClient;
 
 namespace KNTCommon.Business.Repositories
-{   
+{
+    public class ValidatorMissingTranslation
+    {
+        public required string table_name { get; set; }
+        public required string column_name { get; set; }
+    }
+
+    class EFTableColumnDiff()
+    {
+        public required string table_name { get; set; }
+        public required string column_name { get; set; }
+        public required string data_type { get; set; }
+    }
+
+
     public class ApplicationValidatorRepository : IApplicationValidatorRepository
     {
         private readonly Tools t = new();
@@ -34,7 +51,10 @@ namespace KNTCommon.Business.Repositories
             foreach (var dbSetProperty in dbSets)
             {
                 var entityType = dbSetProperty.PropertyType.GetGenericArguments()[0];
-                var tableName = entityType.Name;
+                // looks like EF use both?
+                var tableTypeName = entityType.Name;
+                var tableVariableName = dbSetProperty.Name;
+
                 var fullName = entityType.FullName;
 
                 try
@@ -59,6 +79,8 @@ namespace KNTCommon.Business.Repositories
                 } 
                 catch(Exception ex)
                 {
+                    var tableName = (tableTypeName != tableVariableName) ? $"{tableTypeName}/{tableVariableName}" : $"{tableTypeName}";
+
                     // ex.InnerException FormatException: Table 'edn_knt_machinemanagement.usersessions' doesn't exist
                     if (ex.InnerException != null && Regex.Match(ex.InnerException.Message, @"Table '(.+?)' doesn't exist").Success)
                     {
@@ -105,6 +127,105 @@ namespace KNTCommon.Business.Repositories
             return errors;
         }
 
+        //[DebuggerHidden] // Suppress the exception window in this method, it is displayed only on the method's first call.
+        public List<string> DbEfTableValidation<TContext>(params string[] excludeTables) where TContext : DbContext, IDisposable, new()
+        {
+            var errors = new List<string>();
+
+            using var context = new TContext();
+            var result = context.Database.SqlQueryRaw<EFTableColumnDiff>($@"SELECT 
+                                            table_name,
+                                            column_name,
+                                            data_type
+                                        FROM 
+                                            information_schema.columns
+                                        WHERE 
+                                            table_schema = DATABASE()
+                                        ORDER BY 
+                                            table_name, ordinal_position");
+
+            var dbSets = context.GetType()
+                                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                .Where(p => p.PropertyType.IsGenericType &&
+                                            p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>) &&
+                                            !excludeTables.ToList().Any(x => x.Equals(p.Name, StringComparison.CurrentCultureIgnoreCase)));
+
+
+            foreach (var dbSet in dbSets) {
+                var tableTypeName = dbSet.PropertyType.GetGenericArguments()[0].ToString().Split(".").Last();
+                var tableVariableName = dbSet.Name;
+
+                var a = dbSet.PropertyType.FullName!.Replace("Microsoft.EntityFrameworkCore.DbSet`1[[", "").Replace("]]", "").Split(",");
+                var type = Type.GetType($"{a[0]}, {a[1]}");
+
+                var tableName = a[0];
+                var properties = type!.GetProperties();
+                var entityName = (tableTypeName != tableVariableName) ? $"{tableTypeName}/{tableVariableName}" : $"{tableTypeName}";
+
+                // entity -> db
+                foreach (var property in properties)
+                {
+                    var propertyName = property.Name;
+                    var protperyType = (Nullable.GetUnderlyingType(property.PropertyType) != null) ? Nullable.GetUnderlyingType(property.PropertyType)!.Name : property.PropertyType.Name;
+
+                    var isFoundColumn = result.Where(x => (x.table_name == tableTypeName || x.table_name == tableVariableName) && x.column_name == propertyName).ToList();
+                    Nullable.GetUnderlyingType(property.PropertyType);
+
+
+                    if (tableTypeName != tableVariableName)
+                    {
+                        // when different sometimes tableTypeName but sometimes tableVariableName is table name is db.
+                        errors.Add($"Wrong table name, tableTypeName and tableVariableName do not match. They must be the same. TableTypeName: {tableTypeName} and tableVariableName: {tableVariableName} ");
+                    } 
+                    else if (isFoundColumn.Count == 1)
+                    {
+
+                        var column = isFoundColumn.First();
+                        if (DbTypeToCS(column.data_type) != protperyType)
+                        {
+                            errors.Add($"Missing column: {property}, on table {entityName}, with type: {protperyType}, db: {column.data_type}");
+                        }
+                    }
+                    else
+                    {
+                        errors.Add($"Missing column: {property}, on table {entityName}");
+                    }
+
+                //if (isFoundColumnAndType.Count > 0)
+                //   errors.Add($"Missing column: {property}, on table {entityName}, with type: {protperyType}, db: {isFoundColumnAndType[0].data_type}");
+                }
+
+                // TODO 
+                // db -> entity
+            }
+
+
+            return errors;
+        }
+
+
+        public string DbTypeToCS(string dataType)
+        {
+            switch (dataType)
+            {
+                case "datetime":
+                    return "DateTime";
+                case "int":
+                    return "Int32";
+                case "varchar":
+                    return "String";
+                case "varbinary":
+                    return "Byte[]";
+                case "tinyint":
+                    return "Int32"; // in bool?
+                case "double":
+                    return "Double";
+
+            }
+            throw new Exception($"This datatype: '{dataType}' is not supported!");
+        }
+
+
         public List<string> FindCorruptData()
         {
             using var context = new EdnKntControllerMysqlContext();
@@ -132,6 +253,37 @@ namespace KNTCommon.Business.Repositories
             return sql;
         }
 
+
+        public IEnumerable<ValidatorMissingTranslation> GetMissingEntityTranslation(params string[] excludeTables)
+        {
+            using var context = new EdnKntControllerMysqlContext();
+            
+            var tablesNotIn = $"'{string.Join("','", excludeTables)}'";
+
+            var sql = $@"SELECT 
+                            c.table_name,
+                            c.column_name
+                        FROM 
+                            information_schema.columns c
+	                        LEFT JOIN LanguageDictionary ld on c.column_name = ld.Key
+                        WHERE 
+                            table_schema = DATABASE()
+                            AND ld.Key is null
+                            AND c.table_name NOT IN ({tablesNotIn})
+                            AND c.table_name NOT like 'x_tmp_%' -- temp table similar as CTE
+                        ORDER BY 
+                            table_name, ordinal_position
+                        LIMIT 9999;";
+
+            var result = context.Database.SqlQueryRaw<ValidatorMissingTranslation>(sql).ToList();            
+
+
+            return result;
+        }
+
+
+
+        
 
     }
 }

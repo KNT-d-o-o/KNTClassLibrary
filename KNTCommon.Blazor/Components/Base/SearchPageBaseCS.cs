@@ -40,10 +40,13 @@ namespace KNTCommon.Blazor.Components.Base
         {
             var column = GetColumn(key);
 
-            if (value is null || string.IsNullOrEmpty(value.ToString()) || value == "...")
+            if (string.IsNullOrEmpty(column.FilterParam.ToString()))
+                column.FilterParam = string.Empty;
+
+            if (value is null || value.ToString() == "...")
                 column.FilterCondition = string.Empty;
             else
-                column.FilterCondition = value.ToString();
+                column.FilterCondition = value.ToString()!;
 
             if (column.FilterParam.ToString() != "")
                 await LoadData();
@@ -66,7 +69,10 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 column.FilterParam = string.Empty;
 
-            column.FilterParam = value;
+            if(value is null)
+                column.FilterParam = string.Empty;
+            else 
+                column.FilterParam = value;
 
             if (loadData)
                 await LoadData();
@@ -79,7 +85,7 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 return null;
 
-            return bool.Parse(column.FilterParam.ToString());
+            return bool.Parse(column.FilterParam.ToString()!);
         }
 
         public async Task SetBoolValue(string key, object? value, bool loadData = true)
@@ -89,7 +95,10 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 column.FilterParam = string.Empty;
 
-            column.FilterParam = value;
+            if (value is null)
+                column.FilterParam = string.Empty;
+            else
+                column.FilterParam = value;
 
             if (loadData)
                 await LoadData();
@@ -102,7 +111,7 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 return null;
 
-            return int.Parse(column.FilterParam.ToString());
+            return int.Parse(column.FilterParam.ToString()!);
         }
 
         public async Task SetIntValue(string key, object? value, bool loadData = true)
@@ -112,7 +121,11 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 column.FilterParam = string.Empty;
 
-            column.FilterParam = value;
+            if (value is null)
+                column.FilterParam = string.Empty;
+            else
+                column.FilterParam = value;
+
 
             if (loadData)
                 await LoadData();
@@ -125,7 +138,7 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 return null;
 
-            return DateTime.Parse(column.FilterParam.ToString());
+            return DateTime.Parse(column.FilterParam.ToString()!);
         }
 
         public async Task SetDateTimeValue(string key, DateTime? value, bool loadData = true)
@@ -135,7 +148,10 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 column.FilterParam = string.Empty;
 
-            column.FilterParam = value.ToString();
+            if (value is null)
+                column.FilterParam = string.Empty;
+            else
+                column.FilterParam = value;
 
             if (loadData)
                 await LoadData();
@@ -161,7 +177,11 @@ namespace KNTCommon.Blazor.Components.Base
             if (string.IsNullOrEmpty(column.FilterParam.ToString()))
                 column.FilterParam = string.Empty;
 
-            column.FilterParam = value;
+            if (value is null)
+                column.FilterParam = string.Empty;
+            else
+                column.FilterParam = value;
+
             await LoadData();
         }
 

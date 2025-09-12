@@ -24,7 +24,7 @@ namespace Clifton.Lib // TODO this is not correct namespace, but it is used at s
 
             var keys = key.Split(" ");
             var column = keys.First();
-            var ascending = (keys.Count() > 1 && keys[1] == "desc") ? false : true;
+            var ascending = (keys.Count() > 1 && keys[1].ToLower() == "desc") ? false : true;
             var ascendingStr = ascending ? "asc" : "desc";
             return query.OrderBy(column, ascending);
             //return query.OrderBy(column, ascendingStr);
@@ -116,6 +116,9 @@ namespace Clifton.Lib // TODO this is not correct namespace, but it is used at s
 
         public static IOrderedQueryable<TSource> OrderBy<TSource>(this IQueryable<TSource> source, string field, bool asc)
         {
+            if (string.IsNullOrEmpty(field))
+                throw new Exception("OrderBy field cannot be empty!");
+
             // parametro => expressão
             var parametro = Expression.Parameter(typeof(TSource), "r");
             var expressao = Expression.Property(parametro, field);

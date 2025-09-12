@@ -228,7 +228,7 @@
         }
         else
         {
-            result = await DialogService.OpenAsync<ConfirmationDialog>("", Helper.CreateDialogBlazorComponentParameters(nameof(ConfirmationDialog.action), "Run", nameof(ConfirmationDialog.details), Localization.Get("ConfirmIoTaskLabel", ioTasksDTO.IoTaskName), nameof(ConfirmationDialog.weight), 0), Helper.GetDialogOptions("ConfirmationWrapper"));
+            result = await DialogService.OpenAsync<ConfirmationDialog>("", Helper.CreateDialogBlazorComponentParameters(nameof(ConfirmationDialog.action), "Run", nameof(ConfirmationDialog.details), Localization.Get("ConfirmIoTaskLabel", ioTasksDTO.IoTaskName!), nameof(ConfirmationDialog.weight), 0), Helper.GetDialogOptions("ConfirmationWrapper"));
         }
 
         if (result == true)
