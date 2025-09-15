@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregled podatkov</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        h2 {
+            margin-top: 40px;
+        }
+
+        .timestamp {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data overview</h1>
+
+    <h2>Last Transaction</h2>
+    <button class="refresh-btn" onclick="refreshTransaction()">Refresh</button>
+    <div id="transaction"></div>
+    <div class="timestamp" id="transaction-time"></div>
+
+    <h2>Last Events</h2>
+    <button class="refresh-btn" onclick="refreshEvents()">Refresh</button>
+    <div id="events"></div>
+    <div class="timestamp" id="events-time"></div>
+
+    <script>
+        function getApiKeyFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("apiKey") || "";
+        }
+
+        // dynamically get base URL (protocol + host + port)
+        const baseUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
+
+        async function loadData(endpoint, containerId, timeId) {
+            try {
+                const apiKey = getApiKeyFromUrl();
+                if (!apiKey) {
+                    document.getElementById(containerId).innerText = "Missing API key in URL.";
+                    return;
+                }
+
+                const url = `${baseUrl}/data/${endpoint}?apiKey=${encodeURIComponent(apiKey)}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    document.getElementById(containerId).innerText =
+                        `Error: ${response.status} ${response.statusText}`;
+                    return;
+                }
+                const data = await response.json();
+                if (data.length === 0) {
+                    document.getElementById(containerId).innerText = "No data.";
+                    return;
+                }
+
+                // build table
+                let table = "<table><thead><tr>";
+                for (let col in data[0]) {
+                    table += `<th>${col}</th>`;
+                }
+                table += "</tr></thead><tbody>";
+
+                for (let row of data) {
+                    table += "<tr>";
+                    for (let col in row) {
+                        table += `<td>${row[col] ?? ""}</td>`;
+                    }
+                    table += "</tr>";
+                }
+                table += "</tbody></table>";
+
+                document.getElementById(containerId).innerHTML = table;
+
+                // update last updated time
+                const now = new Date();
+                document.getElementById(timeId).innerText =
+                    "Last updated at " + now.toLocaleTimeString();
+            } catch (err) {
+                document.getElementById(containerId).innerText = "Error: " + err;
+            }
+        }
+
+        function refreshTransaction() {
+            loadData("last-transaction", "transaction", "transaction-time");
+        }
+
+        function refreshEvents() {
+            loadData("last-events", "events", "events-time");
+        }
+
+        // 🔹 first call
+        refreshTransaction();
+        refreshEvents();
+
+        // 🔹 periodic refresh every 60 sec
+        setInterval(refreshTransaction, 60000);
+        setInterval(refreshEvents, 60000);
+
+    </script>
+
+</body>
+</html>

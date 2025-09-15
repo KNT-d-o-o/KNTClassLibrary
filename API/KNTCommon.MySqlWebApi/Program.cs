@@ -12,6 +12,17 @@ Console.WriteLine($"Start KNTCommon.MySqlWebApi application version {typeof(Prog
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 👇 CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // 👇 Windows Service support
 builder.Host.UseWindowsService();
 
@@ -24,6 +35,13 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 var app = builder.Build();
+
+// 👇 enable index.html from wwwroot/
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// 👇 include CORS
+app.UseCors("AllowAll");
 
 // 📌 Connection string
 string? connectionString = EdnKntControllerMysqlContext.GetConnectionString();
@@ -41,14 +59,21 @@ app.Use(async (context, next) =>
         return;
     }
 
-    if (!context.Request.Headers.TryGetValue("X-API-Key", out var key) || key != apiKey)
+    // for other check API key (header or query string)
+    string? key1 = context.Request.Headers["X-API-Key"].FirstOrDefault();
+    if (string.IsNullOrEmpty(key1))
+        key1 = context.Request.Query["apiKey"].FirstOrDefault();
+
+    if (string.IsNullOrEmpty(key1) || key1 != apiKey)
     {
         context.Response.StatusCode = 401;
         await context.Response.WriteAsync("Unauthorized");
         return;
     }
+
     await next();
 });
+
 
 // 📌 Endpoint to get data
 app.MapGet("/data/{name}", async (string name, HttpContext context) =>
@@ -106,6 +131,36 @@ app.MapGet("/data/{name}", async (string name, HttpContext context) =>
             sb.AppendLine();
         }
         return Microsoft.AspNetCore.Http.Results.Text(sb.ToString(), "text/plain; charset=utf-8");
+    }
+    else if (string.Equals(format, "html", StringComparison.OrdinalIgnoreCase))
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("<html><head><meta charset='utf-8'><style>");
+        sb.AppendLine("table { border-collapse: collapse; }");
+        sb.AppendLine("td, th { border: 1px solid #ccc; padding: 4px; }");
+        sb.AppendLine("</style></head><body>");
+        sb.AppendLine("<table>");
+
+        if (results.Count > 0)
+        {
+            // header
+            sb.AppendLine("<tr>");
+            foreach (var col in results[0].Keys)
+                sb.AppendLine($"<th>{col}</th>");
+            sb.AppendLine("</tr>");
+
+            // rows
+            foreach (var row in results)
+            {
+                sb.AppendLine("<tr>");
+                foreach (var val in row.Values)
+                    sb.AppendLine($"<td>{val}</td>");
+                sb.AppendLine("</tr>");
+            }
+        }
+        sb.AppendLine("</table></body></html>");
+
+        return Microsoft.AspNetCore.Http.Results.Text(sb.ToString(), "text/html; charset=utf-8");
     }
 
     return Microsoft.AspNetCore.Http.Results.Json(results);

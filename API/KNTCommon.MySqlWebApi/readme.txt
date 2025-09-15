@@ -16,6 +16,15 @@ curl -H "X-API-Key: mojskrivnikljuc" http://<ip address>:5025/data/last-events?f
 curl -H "X-API-Key: mojskrivnikljuc" http://<ip address>:5025/data/last-transaction
 curl -H "X-API-Key: mojskrivnikljuc" http://<ip address>:5025/data/last-transaction?format=text
 
+using browser:
+http://<ip address>:5025/data/last-events?apiKey=mojskrivnikljuc
+http://<ip address>:5025/data/last-events?apiKey=mojskrivnikljuc&format=html
+http://<ip address>:5025/data/last-transaction?apiKey=mojskrivnikljuc
+http://<ip address>:5025/data/last-transaction?apiKey=mojskrivnikljuc&format=html
+
+all data example (periodic refresh, button refresh)
+http://<ip address>:5025/?apiKey=mojskrivnikljuc
+
 set key from localhost (set key "novMojKljuč123"):
 
 curl -X POST http://localhost:5025/admin/set-key -d "{\"newKey\":\"novMojKljuč123\"}" -H "Content-Type: application/json"
