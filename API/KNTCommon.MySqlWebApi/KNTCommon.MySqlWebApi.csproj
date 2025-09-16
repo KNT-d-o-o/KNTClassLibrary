@@ -16,6 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\..\KNTSMM\KNTSMM.Blazor\DbExport\webapiquery.sql" Link="SQL\webapiquery.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="wwwroot\index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -35,6 +38,10 @@
     <None Update="readme.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="SQL\" />
   </ItemGroup>
 
 </Project>
