@@ -11,11 +11,12 @@ namespace KNTCommon.BusinessIO
         public static readonly string Version = typeof(AppInfo).Assembly.GetName().Version?.ToString() ?? "unknown";
     }
 
-    /* *** Version 1.0.1.x *** 18/07/2025
+    /* *** Version 1.0.1.6 *** 17/09/2025
      * Enhancement:
      *  DB Export: init - exclude auto-increment.
      *  Excel Export: support user's folder.
      *  Version in Directory.Build.props.
+     *  Create readonly user for mysql.
      * 
     /* *** Version 1.0.1.3 *** 30/05/2025
      * Bugs:
