@@ -1,4 +1,5 @@
-﻿using Sharp7;
+﻿using KNTPlc.S7.Models;
+using Sharp7;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,8 @@ namespace KNTPlc.S7
         // read all data in station
         public (bool, int) ReadEntireDb(StationInfo station)
         {
-            if (!IsConnected || _client == null) return (false, S7Consts.errTCPConnectionFailed);
+            if (!IsConnected || _client == null) 
+                return (false, S7Consts.errTCPConnectionFailed);
 
             int dbSize = CalculateDbSize(station); // count bajtes for all types
             byte[] allBuffer = new byte[dbSize];
@@ -38,6 +40,34 @@ namespace KNTPlc.S7
 
             // split buffer to arrays
             ParseAllBuffer(allBuffer, station);
+            return (true, err);
+        }
+
+        // read additional station data
+        public (bool, int) ReadAddStationDb(StationInfo station)
+        {
+            if (!IsConnected || _client == null)
+                return (false, S7Consts.errTCPConnectionFailed);
+
+            if (station.Fields == null || station.Fields.Count == 0)
+                return (false, /* custom err code */ S7Consts.errCliItemNotAvailable);
+
+            // Inicializiraj AddStationMemory (ustvari arr[] za Vsako polje)
+            station.AddStationMemory.Initialize(station.Fields);
+
+            int dbSize = station.AddStationMemory.CalculateSize();
+            if (dbSize <= 0) return (true, 0);
+
+            byte[] allBuffer = new byte[dbSize];
+
+            // klic k klientu (predpostavka: _client.ReadDb(...) vrne (bool ok, int err) ali podobno)
+            var (ok, err) = _client.ReadDb(station.AddStationDB, 0, allBuffer);
+            if (!ok)
+                return (false, err);
+
+            // parsaj v tipizirane array-e
+            station.AddStationMemory.Parse(allBuffer);
+
             return (true, err);
         }
 
@@ -118,6 +148,28 @@ namespace KNTPlc.S7
                 int dtlCount = (station.DtlEndPos - station.DtlStartPos) / 12 + 1;
                 station.Memory.DtlArr = new DateTime[dtlCount];
             }
+        }
+
+        // dynamic memory for additional station
+        public void InitAddStationMemory(StationInfo station, List<AddStationFieldInfo> fields)
+        {
+            station.Fields = fields;
+            station.AddStationMemory.Data.Clear(); // počisti obstoječe podatke
+
+            foreach (var field in fields.OrderBy(f => f.OrderIndex))
+            {
+                Array arr = field.DataType switch
+                {
+                    "Int16" => new short[field.Length],
+                    "Int32" => new int[field.Length],
+                    "Real" => new float[field.Length],
+                    string s when s.StartsWith("String") => new char[field.Length, (field.StringSize ?? 0) + 2],
+                    _ => throw new NotSupportedException($"Unsupported DataType {field.DataType}")
+                };
+
+                station.AddStationMemory.Data[field.FieldName] = arr;
+            }
+
         }
 
         // parse all data from station

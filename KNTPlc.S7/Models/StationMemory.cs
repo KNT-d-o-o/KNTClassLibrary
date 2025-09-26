@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KNTPlc.S7
+namespace KNTPlc.S7.Models
 {
     public class StationMemory
     {
